@@ -5,4 +5,13 @@ import kotlinx.serialization.Serializable
 sealed interface SaleRoute {
     @Serializable
     data object InputAmount : SaleRoute
+
+    @Serializable
+    data object InsertCard : SaleRoute
+
+    @Serializable
+    data object ConfirmTransaction : SaleRoute
+
+    @Serializable
+    data object TransactionStatus : SaleRoute
 }

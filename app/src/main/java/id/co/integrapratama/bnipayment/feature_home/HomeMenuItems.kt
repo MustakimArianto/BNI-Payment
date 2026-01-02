@@ -1,34 +1,38 @@
 package id.co.integrapratama.bnipayment.feature_home
 
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.MenuItem
+import id.co.integrapratama.bnipayment.common.model.MenuItem
 
-
-val homeMenuItems = listOf(
+fun getHomeMenuItems(
+    onNavigateToMiniATM: () -> Unit,
+    onNavigateToSale: () -> Unit,
+    onNavigateToContactlessSale: () -> Unit,
+    onNavigateToVoid: () -> Unit,
+    onNavigateToSettlement: () -> Unit
+): List<MenuItem> = listOf(
     MenuItem(
         title = "Mini ATM",
         selectedIcon = R.drawable.ic_government_program,
-        destination = ""
+        onClick = onNavigateToMiniATM
     ),
     MenuItem(
         title = "Sale",
         selectedIcon = R.drawable.ic_government_program,
-        destination = ""
+        onClick = onNavigateToSale
     ),
     MenuItem(
         title = "Contactless Sale",
         selectedIcon = R.drawable.ic_government_program,
-        destination = ""
+        onClick = onNavigateToContactlessSale
     ),
     MenuItem(
         title = "Void",
         selectedIcon = R.drawable.ic_government_program,
-        destination = ""
+        onClick = onNavigateToVoid
     ),
     MenuItem(
         title = "Settlement",
         selectedIcon = R.drawable.ic_government_program,
-        destination = ""
+        onClick = onNavigateToSettlement
     )
 )
-
