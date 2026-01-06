@@ -9,8 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import id.co.integrapratama.bnipayment.common.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.common.ui.InputAmountTextField
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar

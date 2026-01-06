@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,14 +14,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar
-import id.co.integrapratama.bnipayment.ui.theme.PrimaryButtonColor
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
 fun InsertCardScreen(
-    isReading: Boolean = false,
     onNavigationBack: () -> Unit
 ) {
     Column(
@@ -44,19 +40,9 @@ fun InsertCardScreen(
 
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = if (isReading)
-                    "Membaca kartu..."
-                else
-                    "Gesek kartu debit nasabah Anda pada magnetik reader atau masukkan pada bagian bawah mesin EDC Android",
+                text = "Gesek kartu debit nasabah Anda pada magnetik reader atau masukkan pada bagian bawah mesin EDC Android",
                 textAlign = TextAlign.Center
             )
-
-            if (isReading) {
-                VerticalSpacer(SpacerSize.LARGE)
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp), color = PrimaryButtonColor
-                )
-            }
         }
     }
 }

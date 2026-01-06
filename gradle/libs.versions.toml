@@ -23,13 +23,17 @@ okhttp = "4.12.0"
 retrofit = "2.11.0"
 gson = "2.11.0"
 
-room = "2.6.1"
+room = "2.7.0"
 
 coilCompose = "3.0.4"
 
 ksp = "2.2.10-2.0.2"
 
 serialization = "1.7.3"
+
+terminalSdkHelper = "1.0.0-beta01-landiatom41-pinpad01"
+logSdk = "1.0.3"
+iso8583Sdk = "1.2.0-no-padding"
 
 [libraries]
 # Core
@@ -82,9 +86,13 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor" 
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
-
 # Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+
+# Integra SDKs
+integra-terminal-sdk-helper = { group = "id.co.integra-pratama.terminalsdkhelper", name = "terminal-sdk-helper", version.ref = "terminalSdkHelper" }
+integra-log-sdk = { group = "id.co.integrapratama", name = "logsdk", version.ref = "logSdk" }
+integra-iso8583-sdk = {group = "id.co.integrapratama", name = "iso8583sdk", version.ref = "iso8583Sdk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

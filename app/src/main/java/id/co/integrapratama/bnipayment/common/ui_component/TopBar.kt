@@ -13,9 +13,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.spacer.HorizontalSpacer
-import id.co.integrapratama.bnipayment.common.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.HorizontalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
 fun TopBar(

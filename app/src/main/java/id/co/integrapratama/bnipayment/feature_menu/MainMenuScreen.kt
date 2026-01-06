@@ -20,6 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import id.co.integrapratama.bnipayment.feature_account.AccountScreen
 import id.co.integrapratama.bnipayment.feature_admin.AdminScreen
+import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
 import id.co.integrapratama.bnipayment.feature_home.HomeMenuScreen
 import id.co.integrapratama.bnipayment.feature_information.InformationScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
@@ -73,9 +74,7 @@ internal fun MainMenuScreen(
                     InformationScreen()
                 }
 
-                composable<AppRoute.Admin> {
-                    AdminScreen()
-                }
+                adminNavGraph(bottomNavController)
 
                 composable<AppRoute.Account> {
                     AccountScreen()
