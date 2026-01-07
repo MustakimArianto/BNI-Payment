@@ -25,7 +25,7 @@ class CapkMasterRepositoryImpl(
     override fun getCapkMaster(): Flow<Resource<CapkMasterResponseDto>> {
         return flow {
             try {
-                emit(Resource.Loading("Getting CAPK Master.."))
+                emit(Resource.Loading("Mendownload Data CAPK.."))
 
                 val request = CapkMasterRequestDto(
                     RequestCapkMaster(

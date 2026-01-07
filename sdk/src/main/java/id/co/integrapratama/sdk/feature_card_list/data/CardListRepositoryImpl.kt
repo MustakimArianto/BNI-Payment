@@ -1,13 +1,12 @@
-package id.co.integrapratama.sdk.feature_aid_master.data
+package id.co.integrapratama.sdk.feature_card_list.data
 
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
-import id.co.integrapratama.sdk.feature_aid_master.data.dto.AidMasterRequestDto
-import id.co.integrapratama.sdk.feature_aid_master.data.dto.RequestAidMaster
-import id.co.integrapratama.sdk.feature_aid_master.data.dto.toModel
-import id.co.integrapratama.sdk.feature_aid_master.data.local.AidMasterEntity
-import id.co.integrapratama.sdk.feature_aid_master.data.remote.AidMasterApi
-import id.co.integrapratama.sdk.feature_aid_master.domain.AidMasterRepository
-import id.co.integrapratama.sdk.feature_aid_master.domain.AidMasterResponse
+import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListRequestDto
+import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListResponseDto
+import id.co.integrapratama.sdk.feature_card_list.data.dto.RequestCardList
+import id.co.integrapratama.sdk.feature_card_list.data.dto.toEntity
+import id.co.integrapratama.sdk.feature_card_list.data.remote.CardListApi
+import id.co.integrapratama.sdk.feature_card_list.domain.CardListRepository
 import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtility
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -15,39 +14,40 @@ import kotlinx.coroutines.flow.flow
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import javax.inject.Inject
 
-class AidMasterRepositoryImpl(
-    private val api: AidMasterApi,
+class CardListRepositoryImpl @Inject constructor(
+    val api: CardListApi,
     private val db: AppDatabase,
     private val deviceManagerUtility: DeviceManagerUtility
-) : AidMasterRepository {
-    val aidDao = db.aidMasterDao()
+) : CardListRepository {
+    val cardListDao = db.cardListDao()
 
-    override fun getAidMaster(): Flow<Resource<AidMasterResponse>> {
+    override fun getCardList(): Flow<Resource<CardListResponseDto>> {
         return flow {
             try {
-                emit(Resource.Loading("Mendownload Data Aid.."))
+                emit(Resource.Loading("Mendownload Daftar Kartu.."))
 
-                val request = AidMasterRequestDto(
-                    RequestAidMaster(
+                val request = CardListRequestDto(
+                    RequestCardList(
                         sn = deviceManagerUtility.getSerialNumberDevice()
                     )
                 )
 
-                val result = api.getAidMaster(request)
+                val result = api.getCardList(request)
 
                 if (result.isSuccessful) {
-                    aidDao.clearAidMaster()
+                    cardListDao.clearCardList()
 
                     val data = result.body()!!
 
-                    val aidMasterData = data.rows.map { aid ->
-                        AidMasterEntity(aids = aid)
+                    val cardListData = data.data.map { card ->
+                        card.toEntity()
                     }
 
-                    aidDao.insertAll(aidMasterData)
+                    cardListDao.insertAll(cardListData)
 
-                    emit(Resource.Success(data.toModel()))
+                    emit(Resource.Success(data))
                 } else {
                     emit(Resource.Error(result.message()))
                 }
