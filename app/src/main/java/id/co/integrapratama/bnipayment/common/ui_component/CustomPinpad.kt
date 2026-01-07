@@ -3,6 +3,7 @@ package id.co.integrapratama.bnipayment.common.ui_component
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
@@ -39,6 +41,16 @@ import androidx.compose.ui.window.DialogProperties
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadKeyCode
+import kotlin.collections.chunked
+import kotlin.collections.forEach
+import kotlin.collections.last
+import kotlin.collections.map
+import kotlin.collections.set
+import kotlin.collections.shuffled
+import kotlin.collections.take
+import kotlin.collections.toMutableList
+import kotlin.text.isEmpty
+import kotlin.text.isNotBlank
 
 @Composable
 fun PinPadButton(
@@ -52,7 +64,10 @@ fun PinPadButton(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = text, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = contentColor
+            text = text,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = contentColor
         )
     }
 }
@@ -62,6 +77,7 @@ fun CustomPinpad(
     pin: String,
     modifier: Modifier = Modifier,
     isPhysicalKeyboard: Boolean,
+    disorder: Boolean = false,
     onUpdatePinpadMapping: (container: CustomPinpadUiBounds, buttons: List<CustomPinpadUiBounds>) -> Unit
 ) {
     // Collect button + container bounds
@@ -69,10 +85,21 @@ fun CustomPinpad(
     var containerRect by remember { mutableStateOf<Rect?>(null) }
     var hasReported by remember { mutableStateOf(false) }
 
-    val componentModifier = Modifier.graphicsLayer { alpha = if (isPhysicalKeyboard) 0f else 1f }
+    // Number List
+    var numberList by remember {
+        var resultNumberList = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
+        if (disorder) {
+            resultNumberList = resultNumberList.shuffled()
+        }
+        mutableStateOf(resultNumberList)
+    }
+
+    val componentModifier = Modifier
+        .graphicsLayer { alpha = if (isPhysicalKeyboard) 0f else 1f }
 
     Dialog(
-        onDismissRequest = {}, properties = DialogProperties(
+        onDismissRequest = {},
+        properties = DialogProperties(
             dismissOnBackPress = false,
             dismissOnClickOutside = false,
             usePlatformDefaultWidth = false
@@ -81,7 +108,12 @@ fun CustomPinpad(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f)),
+                .background(Color.Black.copy(alpha = 0.6f))
+                .then(
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures { }
+                    }
+                ),
             contentAlignment = Alignment.BottomCenter
         ) {
             Column(
@@ -91,7 +123,8 @@ fun CustomPinpad(
                     .background(Color.White, shape = RectangleShape)
                     .onGloballyPositioned { coords ->
                         containerRect = coords.boundsInWindow()
-                    }, horizontalAlignment = Alignment.CenterHorizontally
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // PIN preview
                 Row(
@@ -124,13 +157,12 @@ fun CustomPinpad(
                 }
 
                 // Button rows
-                val rows = listOf(
-                    listOf("1", "2", "3"),
-                    listOf("4", "5", "6"),
-                    listOf("7", "8", "9"),
-                    listOf("", "0", ""),
-                    listOf("CANCEL", "CLEAR", "ENTER"),
-                )
+                val rows = numberList
+                    .take(9)
+                    .chunked(3)
+                    .toMutableList()
+                rows.add(listOf("", numberList.last(), ""))
+                rows.add(listOf("CANCEL", "CLEAR", "ENTER"))
 
                 var backgroundModifier: Modifier = Modifier
                 if (isPhysicalKeyboard) {
@@ -140,7 +172,8 @@ fun CustomPinpad(
                 }
 
                 Box(
-                    modifier = backgroundModifier, contentAlignment = Alignment.Center
+                    modifier = backgroundModifier,
+                    contentAlignment = Alignment.Center
                 ) {
                     Column(
                         modifier = Modifier
@@ -170,7 +203,8 @@ fun CustomPinpad(
                                             else -> Color(0XFFF2F2F2)
                                         },
                                         contentColor = if (label in listOf(
-                                                "CANCEL", "ENTER"
+                                                "CANCEL",
+                                                "ENTER"
                                             )
                                         ) Color.White else Color.Black
                                     )
@@ -229,13 +263,17 @@ fun CustomPinpad(
         if (!hasReported && buttonRects.size == 13 && containerRect != null) {
             Log.d(
                 "PinPad",
-                "📦 Container: " + "x=${containerRect!!.left}, y=${containerRect!!.top}, " + "w=${containerRect!!.width}, h=${containerRect!!.height}"
+                "📦 Container: " +
+                    "x=${containerRect!!.left}, y=${containerRect!!.top}, " +
+                    "w=${containerRect!!.width}, h=${containerRect!!.height}"
             )
 
             buttonRects.forEach { (label, rect) ->
                 Log.d(
                     "PinPad",
-                    "🔘 $label -> " + "x=${rect.left}, y=${rect.top}, " + "w=${rect.width}, h=${rect.height}"
+                    "🔘 $label -> " +
+                        "x=${rect.left}, y=${rect.top}, " +
+                        "w=${rect.width}, h=${rect.height}"
                 )
             }
 

@@ -10,4 +10,9 @@ sealed class SaleUiEvent {
         val containerInfo: CustomPinpadUiBounds,
         val pinpadMap: List<CustomPinpadUiBounds>,
     ) : SaleUiEvent()
+
+    data class MappingOfflinePinpad(
+        val containerInfo: CustomPinpadUiBounds,
+        val pinpadMap: List<CustomPinpadUiBounds>,
+    ) : SaleUiEvent()
 }

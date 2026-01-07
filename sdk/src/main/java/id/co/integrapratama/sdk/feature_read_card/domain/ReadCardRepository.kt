@@ -2,6 +2,7 @@ package id.co.integrapratama.sdk.feature_read_card.domain
 
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
+import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import id.co.payment2go.terminalsdkhelper.ingenico.emv.VerifyEMVResult
@@ -19,6 +20,11 @@ interface ReadCardRepository {
         onInsertOnlinePinAction: OnInsertOnlinePinAction?
     ): Flow<PinPadEvent>
 
+    suspend fun physicalOfflinePinpad(
+        cardNumber: String,
+        onInsertOfflinePinAction: OnInsertOfflinePinAction?
+    ): Flow<OfflinePinPadEvent>
+
     suspend fun screenPinpad(
         cardNumber: String,
         containerInfo: CustomPinpadUiBounds,
@@ -26,7 +32,16 @@ interface ReadCardRepository {
         onInsertOnlinePinAction: OnInsertOnlinePinAction?,
     ): Flow<PinPadEvent>
 
+    suspend fun screenOfflinePinpad(
+        cardNumber: String,
+        containerInfo: CustomPinpadUiBounds,
+        pinpadMap: List<CustomPinpadUiBounds>,
+        onInsertOfflinePinAction: OnInsertOfflinePinAction?
+    ): Flow<OfflinePinPadEvent>
+
     suspend fun confirmInputPin(pin: String, isNonePin: Boolean)
+
+    suspend fun confirmOfflineInputPin(pin: String, isNonePin: Boolean)
 
     suspend fun verifyEMVHost(
         emvHost: String?,
