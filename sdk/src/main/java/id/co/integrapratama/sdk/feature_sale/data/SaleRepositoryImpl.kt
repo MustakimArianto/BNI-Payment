@@ -3,6 +3,7 @@ package id.co.integrapratama.sdk.feature_sale.data
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
+import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
@@ -21,40 +22,64 @@ class SaleRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "SaleRepositoryImpl"
         private const val FINANCIAL_REQUEST_MTI = "0200"
-        private const val PAYMENT_FROM_SAVING_PROCODE = "501000"
-        private const val PAYMENT_FROM_CHECKING_PROCODE = "502000"
+        private const val SALE_DEBIT_PROCODE = "000000"
+        private const val SALE_CREDIT_PROCODE = "020000"
     }
 
     override suspend fun postSaleTransaction(
-        isFromSaving: Boolean,
+        cardClassification: CardClassification,
         request: CardReadOutput,
         transactionDateTime: String
     ): Flow<Resource<ByteArray>> {
         return flow {
             try {
                 emit(Resource.Loading("Harap tunggu"))
-                val requestData = mapOf(
-                    3 to if (isFromSaving) PAYMENT_FROM_SAVING_PROCODE else PAYMENT_FROM_CHECKING_PROCODE,
-                    4 to request.txnAmount.padAmount(),
-                    7 to transactionDateTime,
-                    11 to request.STAN.padStart(6, '0'),
-                    12 to DateUtils.getTransactionTime(transactionDateTime), // Time
-                    13 to DateUtils.getTransactionDate(transactionDateTime), // Date
-                    18 to "0125", // Merchant Type
-                    22 to request.posEntryMode + "1",
-                    24 to "041", // NII
-                    32 to "1234567890123456789012", // Acquiring Institution ID
-                    35 to request.track2Data,
-                    41 to "12345678", // TID
-                    42 to "123456789012345", // MID
-                    48 to "01551111000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111namenamenamenamenamenamenamenamenamenamenamenamenamenamename11110099999999777777777777777777777777777777777777777777777777777777777777888888888888888888883333333333333333333344444444444444444444666666666666666666", // CSM Data
-                    52 to request.pinBlock,
-                    55 to request.emvData
-                )
+                val requestData = if (cardClassification == CardClassification.DEBIT) {
+                    mapOf(
+                        2 to request.cardNo,
+                        3 to SALE_DEBIT_PROCODE,
+                        4 to request.txnAmount.padAmount(),
+                        11 to request.STAN.padStart(6, '0'),
+                        14 to request.cardExpiry.replace("/", ""),
+                        22 to request.posEntryMode + "1",
+                        24 to "041", // NII
+                        25 to "00", // NII
+                        35 to request.track2Data,
+                        37 to "000051000004", // RRN
+                        38 to "030059", // Approval Code
+                        41 to "12345678", // TID
+                        42 to "123456789012345", // MID
+                        52 to request.pinBlock,
+                        55 to request.emvData,
+                        62 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
+                    )
+                } else {
+                    mapOf(
+                        3 to SALE_CREDIT_PROCODE,
+                        4 to request.txnAmount.padAmount(),
+                        11 to request.STAN.padStart(6, '0'),
+                        12 to DateUtils.getTransactionTime(transactionDateTime), // Time
+                        13 to DateUtils.getTransactionDate(transactionDateTime), // Date
+                        22 to request.posEntryMode + "1",
+                        23 to request.PANSEQ,
+                        24 to "041", // NII
+                        25 to "00", // NII
+                        35 to request.track2Data,
+                        37 to "000051000004", // RRN
+                        38 to "030059", // Approval Code
+                        39 to "00", // Approval Code
+                        41 to "12345678", // TID
+                        42 to "123456789012345", // MID
+                        57 to "1".repeat(300), // Reserved From TLE
+                        61 to "2".repeat(300), // Transaction Details
+                        62 to "2".repeat(300), // Additional Data Private
+                        64 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
+                    )
+                }
+
                 val packedData = isoRepository.createRequest(
                     FINANCIAL_REQUEST_MTI,
                     requestData,
-                    IsoConfig.saleRequest
                 )
 
                 if (packedData.isEmpty()) {

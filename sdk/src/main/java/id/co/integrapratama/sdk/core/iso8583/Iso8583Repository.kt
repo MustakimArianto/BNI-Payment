@@ -35,7 +35,7 @@ class Iso8583Repository @Inject constructor(
         }
     }
 
-    fun createRequest(mti: String, data: Map<Int, String>, spec: IsoSpecConfiguration): ByteArray {
+    fun createRequest(mti: String, data: Map<Int, String>, spec: IsoSpecConfiguration = IsoConfig.genericSpec): ByteArray {
         val isoMessage = IsoMessage(spec).apply {
             setMTI(mti)
             data.forEach { (idx, value) ->

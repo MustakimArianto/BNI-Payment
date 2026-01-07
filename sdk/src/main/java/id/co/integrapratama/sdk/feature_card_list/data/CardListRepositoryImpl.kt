@@ -1,5 +1,6 @@
 package id.co.integrapratama.sdk.feature_card_list.data
 
+import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListRequestDto
 import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListResponseDto
@@ -21,6 +22,9 @@ class CardListRepositoryImpl @Inject constructor(
     private val db: AppDatabase,
     private val deviceManagerUtility: DeviceManagerUtility
 ) : CardListRepository {
+    companion object {
+        const val TAG = "CardListRepositoryImpl"
+    }
     val cardListDao = db.cardListDao()
 
     override fun getCardList(): Flow<Resource<CardListResponseDto>> {
@@ -52,6 +56,7 @@ class CardListRepositoryImpl @Inject constructor(
                     emit(Resource.Error(result.message()))
                 }
             } catch (e: Exception) {
+                LogSdk.error(TAG, e.stackTraceToString())
                 when (e) {
                     is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
                     is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))

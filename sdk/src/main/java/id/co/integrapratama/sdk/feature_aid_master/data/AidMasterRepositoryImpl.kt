@@ -1,5 +1,6 @@
 package id.co.integrapratama.sdk.feature_aid_master.data
 
+import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.feature_aid_master.data.dto.AidMasterRequestDto
 import id.co.integrapratama.sdk.feature_aid_master.data.dto.RequestAidMaster
@@ -21,6 +22,9 @@ class AidMasterRepositoryImpl(
     private val db: AppDatabase,
     private val deviceManagerUtility: DeviceManagerUtility
 ) : AidMasterRepository {
+    companion object {
+        const val TAG = "AidMasterRepositoryImpl"
+    }
     val aidDao = db.aidMasterDao()
 
     override fun getAidMaster(): Flow<Resource<AidMasterResponse>> {
@@ -52,6 +56,7 @@ class AidMasterRepositoryImpl(
                     emit(Resource.Error(result.message()))
                 }
             } catch (e: Exception) {
+                LogSdk.error(TAG, e.stackTraceToString())
                 when (e) {
                     is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
                     is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))

@@ -1,5 +1,6 @@
 package id.co.integrapratama.sdk.feature_capk_master.data
 
+import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.feature_capk_master.data.dto.CapkMasterRequestDto
 import id.co.integrapratama.sdk.feature_capk_master.data.dto.CapkMasterResponseDto
@@ -20,6 +21,9 @@ class CapkMasterRepositoryImpl(
     private val db: AppDatabase,
     private val deviceManagerUtility: DeviceManagerUtility
 ) : CapkMasterRepository {
+    companion object {
+        const val TAG = "CapkMasterRepositoryImpl"
+    }
     val capkDao = db.capkMasterDao()
 
     override fun getCapkMaster(): Flow<Resource<CapkMasterResponseDto>> {
@@ -51,6 +55,7 @@ class CapkMasterRepositoryImpl(
                     emit(Resource.Error(result.message()))
                 }
             } catch (e: Exception) {
+                LogSdk.error(TAG, e.stackTraceToString())
                 when (e) {
                     is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
                     is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))

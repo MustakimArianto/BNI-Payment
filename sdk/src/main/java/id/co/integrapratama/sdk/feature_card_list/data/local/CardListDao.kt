@@ -13,6 +13,13 @@ interface CardListDao {
     @Query("SELECT * FROM card_list")
     suspend fun getCardLists(): List<CardListEntity>
 
+    @Query("""
+        SELECT * FROM card_list
+        WHERE :pan BETWEEN minValue AND maxValue
+        LIMIT 1
+    """)
+    suspend fun findCardByCardNumber(pan: Long): CardListEntity?
+
     @Query("DELETE FROM card_list")
     suspend fun clearCardList()
 

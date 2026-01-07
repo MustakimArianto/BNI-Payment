@@ -9,6 +9,9 @@ import id.co.integrapratama.iso8583sdk.IsoMessage
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
@@ -34,6 +37,7 @@ class SaleViewModel @Inject constructor(
     private val deviceTypeManager: DeviceTypeManager,
     private val saleRepository: SaleRepository,
     private val readCardRepository: ReadCardRepository,
+    private val binRangeRepository: BinRangeRepository
 ) : ViewModel() {
     companion object {
         private const val TAG = "SaleViewModel"
@@ -230,13 +234,7 @@ class SaleViewModel @Inject constructor(
                                 )
                             }
 
-                            viewModelScope.launch {
-                                postSaleTransaction(
-                                    isFromSaving = true,
-                                    cardReadOutput = uiState.value.cardReadOutput
-                                        ?: CardReadOutput()
-                                )
-                            }
+                            checkBinRange(resourceReadCard.data?.cardReadOutput?.cardNo ?: "")
                         }
 
                         is Resource.Error -> {
@@ -252,7 +250,54 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    fun postSaleTransaction(isFromSaving: Boolean, cardReadOutput: CardReadOutput) {
+    fun checkBinRange(cardNumber: String) {
+        viewModelScope.launch {
+            binRangeRepository.getBinType(cardNumber).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false
+                            )
+                        }
+
+                        val cardClassification =
+                            binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
+
+                        postSaleTransaction(
+                            cardClassification,
+                            cardReadOutput = uiState.value.cardReadOutput
+                                ?: CardReadOutput()
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    fun postSaleTransaction(
+        cardClassification: CardClassification,
+        cardReadOutput: CardReadOutput
+    ) {
         _uiState.update {
             it.copy(
                 transactionDateTime = DateUtils.getCurrentTransactionDateTime()
@@ -261,7 +306,7 @@ class SaleViewModel @Inject constructor(
 
         viewModelScope.launch {
             saleRepository.postSaleTransaction(
-                isFromSaving,
+                cardClassification,
                 cardReadOutput,
                 uiState.value.transactionDateTime
             )
@@ -279,7 +324,7 @@ class SaleViewModel @Inject constructor(
                         is Resource.Success -> {
                             val response = IsoMessage().unpack(
                                 data = resource.data ?: byteArrayOf(),
-                                specs = IsoConfig.saleRequest,
+                                specs = IsoConfig.genericSpec,
                                 headerLength = 2
                             )
 
