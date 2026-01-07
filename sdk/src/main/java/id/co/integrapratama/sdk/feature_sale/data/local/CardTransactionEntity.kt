@@ -4,7 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import id.co.integrapratama.sdk.feature_sale.domain.TransactionModel
 
-@Entity
+@Entity(
+    tableName = "card_transaction"
+)
 data class CardTransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = 0,
