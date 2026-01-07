@@ -33,7 +33,8 @@ internal fun MainMenuScreen(
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
-    onNavigateToSettlement: () -> Unit
+    onNavigateToSettlement: () -> Unit,
+    onNavigateToInstallment: () -> Unit
 ) {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
@@ -66,7 +67,8 @@ internal fun MainMenuScreen(
                         onNavigateToSale = onNavigateToSale,
                         onNavigateToContactlessSale = onNavigateToContactlessSale,
                         onNavigateToVoid = onNavigateToVoid,
-                        onNavigateToSettlement = onNavigateToSettlement
+                        onNavigateToSettlement = onNavigateToSettlement,
+                        onNavigateToInstallment = onNavigateToInstallment
                     )
                 }
 

@@ -22,6 +22,9 @@ sealed interface AppRoute {
     data object Void : AppRoute
 
     @Serializable
+    data object Installment : AppRoute
+
+    @Serializable
     data object Settlement : AppRoute
 
     @Serializable
