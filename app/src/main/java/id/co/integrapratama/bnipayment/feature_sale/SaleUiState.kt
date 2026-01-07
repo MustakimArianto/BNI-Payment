@@ -30,7 +30,8 @@ data class SaleUiState(
     val isTransactionFinished: Boolean = false,
 
     // UI feedback
-    val statusMessage: String = "",
+    val loadingMessage: String = "",
     val presentCardAgainMessage: String = "",
     val errorMessage: String = "",
+    val transactionResultMessage: String = "",
 )

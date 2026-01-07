@@ -78,7 +78,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resourceAids.message ?: "Harap tunggu"
+                                loadingMessage = resourceAids.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -108,7 +108,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resourceCapks.message ?: "Harap tunggu"
+                                loadingMessage = resourceCapks.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -117,7 +117,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                statusMessage = ""
+                                loadingMessage = ""
                             )
                         }
                         readCard()
@@ -139,7 +139,7 @@ class SaleViewModel @Inject constructor(
     private fun readCard() {
         viewModelScope.launch {
             val cardOption = CardOption(
-                supportContactless = true,
+                supportContactless = false,
                 supportSwipe = false,
                 supportDip = true
             )
@@ -179,7 +179,7 @@ class SaleViewModel @Inject constructor(
                                 it.copy(
                                     isLoading = true,
                                     isReadingCard = true,
-                                    statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                    loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                 )
                             }
 
@@ -190,7 +190,7 @@ class SaleViewModel @Inject constructor(
                                         cardNumber = cardReadOutput.cardNo,
                                         maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
                                         isFinishedReadCard = true,
-                                        statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                        loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                     )
                                 }
                             }
@@ -271,7 +271,7 @@ class SaleViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     isLoading = true,
-                                    statusMessage = resource.message ?: "Harap tunggu"
+                                    loadingMessage = resource.message ?: "Harap tunggu"
                                 )
                             }
                         }
@@ -326,7 +326,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resource.message ?: "Harap tunggu"
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -335,7 +335,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                statusMessage = "",
+                                loadingMessage = "",
                                 isCardConfirmed = true
                             )
                         }
@@ -386,7 +386,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isShowPinpad = false,
-                                statusMessage = "Confirm Card..."
+                                loadingMessage = "Confirm Card..."
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -441,7 +441,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isShowPinpad = false,
                                 isLoading = true,
-                                statusMessage = "Konfirmasi kartu"
+                                loadingMessage = "Konfirmasi kartu"
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -493,7 +493,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resource.message ?: "Harap tunggu"
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -502,9 +502,8 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                loadingMessage = "",
                                 isTransactionFinished = true,
-                                errorMessage = "",
-                                statusMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -514,7 +513,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 isTransactionFinished = true,
-                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
                     }

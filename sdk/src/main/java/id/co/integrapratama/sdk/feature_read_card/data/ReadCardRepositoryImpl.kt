@@ -312,7 +312,7 @@ class ReadCardRepositoryImpl @Inject constructor(
                     }
 
                     override fun error(code: Int, message: String) {
-                        trySend(Resource.Error(message))
+                        trySend(Resource.Error("Kartu ditolak"))
                     }
                 })
 

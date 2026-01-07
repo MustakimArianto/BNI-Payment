@@ -74,8 +74,8 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                 onNavigationBack = { navController.popBackStack() }
             )
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
@@ -107,12 +107,11 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                 }
             }
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
-
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
@@ -147,8 +146,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             SaleTransactionStatus(
-                errorMessage = uiState.errorMessage,
-                isTransactionFinished = uiState.isTransactionFinished,
+                transactionResultMessage = uiState.transactionResultMessage,
                 onGoToHome = { navController.navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )
