@@ -20,20 +20,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpad
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.ui.theme.DisabledInputFieldColor
 import id.co.integrapratama.bnipayment.ui.theme.TextGray
+import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 
 @Composable
 fun SaleConfirmTransactionScreen(
+    pin: String = "",
     cardNumber: String,
+    isPhysicalKeyboard: Boolean,
+    showPinpad: Boolean = false,
     onCancel: () -> Unit,
     onNext: () -> Unit,
-    onNavigationBack: () -> Unit
+    onNavigationBack: () -> Unit,
+    onButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -94,5 +100,13 @@ fun SaleConfirmTransactionScreen(
                 onClick = onNext
             )
         }
+    }
+
+    if (showPinpad) {
+        CustomPinpad(
+            pin = pin,
+            isPhysicalKeyboard = isPhysicalKeyboard,
+            onUpdatePinpadMapping = onButtonMapReady
+        )
     }
 }

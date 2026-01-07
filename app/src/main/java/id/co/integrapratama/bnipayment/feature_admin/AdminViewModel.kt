@@ -98,6 +98,8 @@ class AdminViewModel @Inject constructor(
     }
 
     fun clearUiState() {
-        _uiState.value = AdminUiState()
+        _uiState.update {
+            AdminUiState()
+        }
     }
 }

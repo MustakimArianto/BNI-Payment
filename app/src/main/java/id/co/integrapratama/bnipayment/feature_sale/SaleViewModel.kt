@@ -5,12 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.bnipayment.common.maskCardNumber
+import id.co.integrapratama.iso8583sdk.IsoMessage
+import id.co.integrapratama.sdk.core.iso8583.IsoConfig
+import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
+import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
+import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
+import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
+import id.co.payment2go.terminalsdkhelper.common.pinpad.OnPinPadResult
+import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import id.co.payment2go.terminalsdkhelper.core.util.Util
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +31,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SaleViewModel @Inject constructor(
+    private val deviceTypeManager: DeviceTypeManager,
     private val saleRepository: SaleRepository,
     private val readCardRepository: ReadCardRepository,
 ) : ViewModel() {
@@ -40,6 +48,20 @@ class SaleViewModel @Inject constructor(
         when (event) {
             is SaleUiEvent.OnAmountChange -> {
                 _uiState.value = _uiState.value.copy(amount = event.amount)
+            }
+
+            is SaleUiEvent.OnConfirmCard -> {
+                confirmCard()
+            }
+
+            is SaleUiEvent.MappingPinpad -> {
+                val deviceTypeValue = deviceTypeManager.getDeviceTypeValue()
+
+                if (deviceTypeValue.isPhysicalKeypadSupported) {
+                    physicalPinpad()
+                } else {
+                    screenPinpad(event.containerInfo, event.pinpadMap)
+                }
             }
         }
     }
@@ -117,16 +139,14 @@ class SaleViewModel @Inject constructor(
     private fun readCard() {
         viewModelScope.launch {
             val cardOption = CardOption(
-                supportContactless = false,
+                supportContactless = true,
                 supportSwipe = false,
                 supportDip = true
             )
 
             readCardRepository.readCard(
                 cardOption = cardOption,
-                amount = uiState.value.amount.toLong()
-            )
-                .collect { resourceReadCard ->
+            ).collect { resourceReadCard ->
                     when (resourceReadCard) {
                         is Resource.Loading -> {
                             val loadingMessage: String = resourceReadCard.message.toString()
@@ -174,6 +194,29 @@ class SaleViewModel @Inject constructor(
                                     )
                                 }
                             }
+
+
+                            if (resourceReadCard.data != null) {
+                                if (resourceReadCard.data!!.isShowPinpad) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isShowPinpad = true,
+                                            isPhysicalKeyboard =
+                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                            onInsertOnlinePinAction =
+                                                resourceReadCard.data!!.onInsertOnlinePinAction,
+                                        )
+                                    }
+                                }
+
+                                if (parsingPresentingCardAgainMessageResult.isNotBlank()) {
+                                    _uiState.update {
+                                        it.copy(
+                                            presentCardAgainMessage = parsingPresentingCardAgainMessageResult
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         is Resource.Success -> {
@@ -181,7 +224,6 @@ class SaleViewModel @Inject constructor(
                                 it.copy(
                                     isLoading = false,
                                     isReadingCard = false,
-                                    isFinishedReadCard = true,
                                     cardReadOutput = resourceReadCard.data?.cardReadOutput,
                                     cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
                                         ?: "",
@@ -211,8 +253,18 @@ class SaleViewModel @Inject constructor(
     }
 
     fun postSaleTransaction(isFromSaving: Boolean, cardReadOutput: CardReadOutput) {
+        _uiState.update {
+            it.copy(
+                transactionDateTime = DateUtils.getCurrentTransactionDateTime()
+            )
+        }
+
         viewModelScope.launch {
-            saleRepository.postSaleTransaction(isFromSaving, cardReadOutput)
+            saleRepository.postSaleTransaction(
+                isFromSaving,
+                cardReadOutput,
+                uiState.value.transactionDateTime
+            )
                 .collect { resource ->
                     when (resource) {
                         is Resource.Loading -> {
@@ -225,12 +277,31 @@ class SaleViewModel @Inject constructor(
                         }
 
                         is Resource.Success -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    isTransactionSuccess = true,
-                                    statusMessage = resource.message ?: "Harap tunggu"
+                            val response = IsoMessage().unpack(
+                                data = resource.data ?: byteArrayOf(),
+                                specs = IsoConfig.saleRequest,
+                                headerLength = 2
+                            )
+
+                            val responseCode = response.getField(39)
+
+                            if (responseCode == "00") {
+                                val emvData = response.getField(55)
+                                val authCode = response.getField(38)
+
+                                verifyEmvHost(
+                                    emvHost = emvData,
+                                    authCode = authCode,
+                                    arc = responseCode,
+                                    authorizeFlag = "00"
                                 )
+                            } else {
+                                _uiState.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        errorMessage = resource.message ?: "Terjadi kesalahan",
+                                    )
+                                }
                             }
                         }
 
@@ -244,6 +315,229 @@ class SaleViewModel @Inject constructor(
                         }
                     }
             }
+        }
+    }
+
+    fun confirmCard() {
+        viewModelScope.launch {
+            readCardRepository.confirmCard(uiState.value.amount.toLong()).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                statusMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                statusMessage = "",
+                                isCardConfirmed = true
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun physicalPinpad() {
+        viewModelScope.launch {
+            readCardRepository.physicalPinpad(
+                cardNumber = uiState.value.cardNumber,
+                onInsertOnlinePinAction = null
+            ).collect { pinpadEvent ->
+                val result = pinpadEvent.result
+                val action = pinpadEvent.action
+
+                when (result) {
+                    is OnPinPadResult.OnInput -> {
+                        val maskedText = "*".repeat(result.p1)
+                        _uiState.update {
+                            it.copy(
+                                pin = maskedText
+                            )
+                        }
+                    }
+
+                    is OnPinPadResult.OnError -> {
+                        _uiState.update {
+                            it.copy(isShowPinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.FAIL
+                        )
+                    }
+
+                    is OnPinPadResult.OnConfirm -> {
+                        _uiState.update {
+                            it.copy(
+                                isShowPinpad = false,
+                                statusMessage = "Confirm Card..."
+                            )
+                        }
+                        val pinBlock = String(result.data ?: byteArrayOf())
+                        confirmInputPin(
+                            pinBlock,
+                            result.isNonPin
+                        )
+                    }
+
+                    is OnPinPadResult.OnCancel -> {
+                        _uiState.update {
+                            it.copy(isShowPinpad = false)
+                        }
+
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.CANCEL
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun screenPinpad(
+        containerInfo: CustomPinpadUiBounds,
+        pinpadMap: List<CustomPinpadUiBounds>
+    ) {
+        viewModelScope.launch {
+            readCardRepository.screenPinpad(
+                cardNumber = uiState.value.cardNumber,
+                containerInfo = containerInfo,
+                pinpadMap = pinpadMap,
+                onInsertOnlinePinAction = uiState.value.onInsertOnlinePinAction
+            ).collect { pinpadEvent ->
+                val result = pinpadEvent.result
+                val action = pinpadEvent.action
+
+                when (result) {
+                    OnPinPadResult.OnCancel -> {
+                        _uiState.update {
+                            it.copy(isShowPinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.CANCEL
+                        )
+                    }
+
+                    is OnPinPadResult.OnConfirm -> {
+                        _uiState.update {
+                            it.copy(
+                                isShowPinpad = false,
+                                isLoading = true,
+                                statusMessage = "Konfirmasi kartu"
+                            )
+                        }
+                        val pinBlock = String(result.data ?: byteArrayOf())
+                        confirmInputPin(pinBlock, result.isNonPin)
+                    }
+
+                    is OnPinPadResult.OnError -> {
+                        _uiState.update {
+                            it.copy(isShowPinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.FAIL
+                        )
+                    }
+
+                    is OnPinPadResult.OnInput -> {
+                        val maskedText = "*".repeat(result.p1)
+                        _uiState.update {
+                            it.copy(
+                                pin = maskedText
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    fun confirmInputPin(pinBlock: String, nonPin: Boolean) {
+        viewModelScope.launch {
+            readCardRepository.confirmInputPin(pinBlock, nonPin)
+        }
+    }
+
+    fun verifyEmvHost(
+        emvHost: String?,
+        authCode: String?,
+        arc: String?,
+        authorizeFlag: String?
+    ) {
+        viewModelScope.launch {
+            readCardRepository.verifyEMVHost(
+                emvHost, authCode, arc, authorizeFlag
+            ).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                statusMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                errorMessage = "",
+                                statusMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun setErrorMessage(message: String) {
+        _uiState.update {
+            it.copy(errorMessage = message)
+        }
+    }
+
+    fun clearErrorMessage() {
+        _uiState.update {
+            it.copy(errorMessage = "")
+        }
+    }
+
+    fun clearUiState() {
+        _uiState.update {
+            SaleUiState()
         }
     }
 

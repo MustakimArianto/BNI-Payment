@@ -9,8 +9,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object DeviceTypeManagerModule {
+object DeviceTypeModule {
     @Provides
     @Singleton
-    fun provideDeviceTypeManager(): DeviceTypeManager = DeviceTypeManager()
+    fun provideDeviceTypeManager(): DeviceTypeManager {
+        return DeviceTypeManager()
+    }
 }

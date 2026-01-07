@@ -91,5 +91,4 @@ object AppModule {
     fun provideTraceNumberManager(sharedPreferences: SharedPreferences): TraceNumberManager {
         return TraceNumberManager(sharedPreferences)
     }
-
 }

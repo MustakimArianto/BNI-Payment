@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -10,6 +11,7 @@ import androidx.navigation.compose.navigation
 import id.co.integrapratama.bnipayment.common.ext.navigateFromCurrent
 import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
+import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
@@ -22,11 +24,33 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+            LaunchedEffect(Unit) {
+                viewModel.clearUiState()
+            }
+
             InputAmountScreen(
                 amount = uiState.amount,
                 onAmountChanged = { amount -> viewModel.onEvent(SaleUiEvent.OnAmountChange(amount)) },
-                onNextClick = { navController.navigateFromCurrent(SaleRoute.InsertCard) },
-                onNavigationBack = { navController.navigateToHome() })
+                onNextClick = {
+                    if (uiState.amount.isNotEmpty()) {
+                        navController.navigateFromCurrent(SaleRoute.InsertCard)
+                    } else {
+                        viewModel.setErrorMessage("Nominal tidak boleh kosong")
+                    }
+                },
+                onNavigationBack = { navController.navigateToHome() }
+            )
+
+            if (uiState.errorMessage.isNotEmpty()) {
+                ErrorDialog(
+                    title = uiState.title,
+                    message = uiState.errorMessage,
+                    textButton = "Ok",
+                    onCloseIconClick = {
+                        viewModel.clearErrorMessage()
+                    },
+                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() })
+            }
         }
 
         composable<SaleRoute.InsertCard> {
@@ -40,11 +64,11 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             LaunchedEffect(uiState.isFinishedReadCard) {
                 if (uiState.isFinishedReadCard) {
                     navController.navigateFromCurrent(
-                        SaleRoute.ConfirmTransaction, isInclusive = true
+                        SaleRoute.ConfirmTransaction,
+                        isInclusive = true
                     )
                 }
             }
-
 
             InsertCardScreen(
                 onNavigationBack = { navController.popBackStack() }
@@ -53,19 +77,66 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
                 LoadingDialog(message = uiState.statusMessage)
             }
+
+            if (uiState.errorMessage.isNotEmpty()) {
+
+                ErrorDialog(
+                    title = uiState.title,
+                    message = uiState.errorMessage,
+                    textButton = "Ok",
+                    onCloseIconClick = {
+                        navController.navigateToHome()
+                    },
+                    onPrimaryButtonClicked = { navController.navigateToHome() })
+            }
         }
 
         composable<SaleRoute.ConfirmTransaction> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+            if (uiState.isShowPinpad) {
+                BackHandler {
+
+                }
+            }
+
+            LaunchedEffect(uiState.isTransactionFinished) {
+                if (uiState.isCardConfirmed) {
+                    navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
+                }
+            }
+
+            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.statusMessage)
+            }
+
+            if (uiState.errorMessage.isNotEmpty()) {
+
+                ErrorDialog(
+                    title = uiState.title,
+                    message = uiState.errorMessage,
+                    textButton = "Ok",
+                    onCloseIconClick = {
+                        navController.navigateToHome()
+                    },
+                    onPrimaryButtonClicked = { navController.navigateToHome() })
+            }
             SaleConfirmTransactionScreen(
+                pin = uiState.pin,
+                isPhysicalKeyboard = uiState.isPhysicalKeyboard,
                 cardNumber = uiState.maskedCardNumber,
                 onCancel = { navController.popBackStack() },
                 onNext = {
-                    navController.navigateFromCurrent(
-                        SaleRoute.TransactionStatus,
-                        isInclusive = true
+                    viewModel.onEvent(SaleUiEvent.OnConfirmCard)
+                },
+                showPinpad = uiState.isShowPinpad,
+                onButtonMapReady = { containerInfo, pinpadMap ->
+                    viewModel.onEvent(
+                        SaleUiEvent.MappingPinpad(
+                            containerInfo = containerInfo,
+                            pinpadMap = pinpadMap
+                        )
                     )
                 },
                 onNavigationBack = { navController.popBackStack() })
@@ -77,7 +148,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
 
             SaleTransactionStatus(
                 errorMessage = uiState.errorMessage,
-                isTransactionSuccess = uiState.isTransactionSuccess,
+                isTransactionFinished = uiState.isTransactionFinished,
                 onGoToHome = { navController.navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )

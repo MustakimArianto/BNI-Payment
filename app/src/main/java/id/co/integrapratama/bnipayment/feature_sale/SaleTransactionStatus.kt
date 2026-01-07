@@ -26,11 +26,11 @@ import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
 @Composable
 fun SaleTransactionStatus(
     errorMessage: String,
-    isTransactionSuccess: Boolean,
+    isTransactionFinished: Boolean,
     onGoToHome: () -> Unit,
     onPrintReceipt: () -> Unit
 ) {
-    if (isTransactionSuccess) {
+    if (errorMessage.isEmpty()) {
         Box(
             Modifier
                 .fillMaxSize()

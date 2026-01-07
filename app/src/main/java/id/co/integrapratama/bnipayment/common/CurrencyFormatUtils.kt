@@ -1,12 +1,5 @@
 package id.co.integrapratama.bnipayment.common
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale

@@ -4,18 +4,26 @@ import android.util.Log
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
+import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.AidUtil
 import id.co.integrapratama.sdk.feature_capk_master.data.local.toCapkParam
+import id.co.integrapratama.sdk.feature_read_card.domain.PinPadEvent
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardModel
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
+import id.co.payment2go.terminalsdkhelper.common.SupportCustomPinpad
 import id.co.payment2go.terminalsdkhelper.common.emv.AidKernelConfig
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVResponse
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVUtility
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
+import id.co.payment2go.terminalsdkhelper.common.pinpad.PinpadUtility
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
+import id.co.payment2go.terminalsdkhelper.ingenico.emv.VerifyEMVResult
 import id.co.payment2go.terminalsdkhelper.landi.LandiBytesUtil
+import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadButtonLayout
+import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadKeyCode
+import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinpadParameter
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -27,10 +35,11 @@ import javax.inject.Inject
 class ReadCardRepositoryImpl @Inject constructor(
     private val appDatabase: AppDatabase,
     private val emvUtility: EMVUtility,
+    private val pinpadUtility: PinpadUtility,
     private val stanManager: StanManager
 ) : ReadCardRepository {
     companion object {
-        private const val TAG = "ReadCardImpl"
+        private const val TAG = "ReadCardRepositoryImpl"
     }
 
     override suspend fun readCard(
@@ -209,6 +218,105 @@ class ReadCardRepositoryImpl @Inject constructor(
     override suspend fun confirmCard(amount: Long): Flow<Resource<Unit>> {
         return flow {
             emvUtility.confirmCardRecord(amount)
+            emit(Resource.Success(Unit))
+        }
+    }
+
+    override suspend fun physicalPinpad(
+        cardNumber: String, onInsertOnlinePinAction: OnInsertOnlinePinAction?
+    ): Flow<PinPadEvent> {
+        return callbackFlow {
+            pinpadUtility.showPinPad(
+                disorder = false, cardNumber = cardNumber, onPinpadResult = { pinpadResult ->
+                    trySend(
+                        PinPadEvent(
+                            result = pinpadResult, action = onInsertOnlinePinAction
+                        )
+                    )
+                })
+
+            awaitClose { }
+        }
+    }
+
+    override suspend fun screenPinpad(
+        cardNumber: String,
+        containerInfo: CustomPinpadUiBounds,
+        pinpadMap: List<CustomPinpadUiBounds>,
+        onInsertOnlinePinAction: OnInsertOnlinePinAction?,
+    ): Flow<PinPadEvent> {
+        return callbackFlow {
+            if (pinpadUtility is SupportCustomPinpad) {
+                val containerInfo = containerInfo
+                val pinpadMap = pinpadMap
+                pinpadUtility.showCustomPinPad(
+                    disorder = false,
+                    cardNumber = cardNumber,
+                    customPinpadParameter = CustomPinpadParameter(
+                        width = containerInfo.width,
+                        height = containerInfo.height,
+                        x = containerInfo.x.toInt(),
+                        y = containerInfo.y.toInt(),
+                        pinButtonLayouts = pinpadMap.map {
+                            CustomPinPadButtonLayout(
+                                width = it.width,
+                                height = it.height,
+                                x = it.x.toInt(),
+                                y = it.y.toInt(),
+                                keyCode = it.value as? CustomPinPadKeyCode
+                                    ?: CustomPinPadKeyCode.KEY_ENTER
+                            )
+                        }),
+                    onPinpadResult = { pinpadResult ->
+                        trySend(
+                            PinPadEvent(
+                                result = pinpadResult,
+                                action = onInsertOnlinePinAction,
+                                pinpadState = null
+                            )
+                        )
+
+                    },
+                    onUpdatePinPadState = { pinpadState ->
+                        trySend(
+                            PinPadEvent(
+                                result = null,
+                                action = onInsertOnlinePinAction,
+                                pinpadState = pinpadState
+                            )
+                        )
+                    })
+            } else {
+                close(Exception("Custom pinpad not supported"))
+            }
+
+            awaitClose { }
+        }
+    }
+
+    override suspend fun confirmInputPin(
+        pin: String, isNonePin: Boolean
+    ) {
+        emvUtility.confirmPinInput(pin, isNonePin)
+    }
+
+    override suspend fun verifyEMVHost(
+        emvHost: String?, authCode: String?, arc: String?, authorizeFlag: String?
+    ): Flow<Resource<Unit>> {
+        return callbackFlow {
+            trySend(Resource.Loading("Verifikasi kartu"))
+            emvUtility.verifyEMVHost(
+                emvHost, authCode, arc, authorizeFlag, onResult = object : VerifyEMVResult {
+                    override fun success() {
+                        trySend(Resource.Success(Unit))
+                    }
+
+                    override fun error(code: Int, message: String) {
+                        trySend(Resource.Error(message))
+                    }
+                })
+
+            awaitClose { }
         }
     }
 }
