@@ -2,6 +2,7 @@ package id.co.integrapratama.sdk.feature_card_list.data
 
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
+import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListRequestDto
 import id.co.integrapratama.sdk.feature_card_list.data.dto.CardListResponseDto
 import id.co.integrapratama.sdk.feature_card_list.data.dto.RequestCardList
@@ -57,12 +58,7 @@ class CardListRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error("Terjadi kesalahan"))
-                }
+                emit(e.toResourceError())
             }
         }
     }

@@ -3,6 +3,7 @@ package id.co.integrapratama.sdk.feature_bin_range.data
 import android.database.sqlite.SQLiteException
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
+import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
@@ -32,11 +33,7 @@ class BinRangeRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
-                if (e is SQLiteException) {
-                    emit(Resource.Error("Terjadi kesalahan saat menegecek jenis kartu"))
-                } else {
-                    emit(Resource.Error("Terjadi kesalahan"))
-                }
+                emit(e.toResourceError())
             }
         }
     }

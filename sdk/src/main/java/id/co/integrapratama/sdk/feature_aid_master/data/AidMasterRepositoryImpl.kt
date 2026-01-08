@@ -2,6 +2,7 @@ package id.co.integrapratama.sdk.feature_aid_master.data
 
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
+import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_aid_master.data.dto.AidMasterRequestDto
 import id.co.integrapratama.sdk.feature_aid_master.data.dto.RequestAidMaster
 import id.co.integrapratama.sdk.feature_aid_master.data.dto.toModel
@@ -13,9 +14,6 @@ import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtil
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 class AidMasterRepositoryImpl(
     private val api: AidMasterApi,
@@ -57,12 +55,7 @@ class AidMasterRepositoryImpl(
                 }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error("Terjadi kesalahan"))
-                }
+                emit(e.toResourceError())
             }
         }
     }

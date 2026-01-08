@@ -5,6 +5,7 @@ import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.padAmount
+import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
@@ -13,9 +14,6 @@ import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import javax.inject.Inject
 
 class SaleRepositoryImpl @Inject constructor(
@@ -38,46 +36,51 @@ class SaleRepositoryImpl @Inject constructor(
             try {
                 emit(Resource.Loading("Harap tunggu"))
                 val requestData = if (cardClassification == CardClassification.DEBIT) {
-                    mapOf(
-                        2 to request.cardNo,
-                        3 to SALE_DEBIT_PROCODE,
-                        4 to request.txnAmount.padAmount(),
-                        11 to request.STAN.padStart(6, '0'),
-                        14 to request.cardExpiry.replace("/", ""),
-                        22 to request.posEntryMode + "1",
-                        24 to "041", // NII
-                        25 to "00", // NII
-                        35 to request.track2Data,
-                        37 to "000051000004", // RRN
-                        38 to "030059", // Approval Code
-                        41 to "12345678", // TID
-                        42 to "123456789012345", // MID
-                        52 to request.pinBlock,
-                        55 to request.emvData,
-                        62 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
-                    )
+                    mutableMapOf<Int, String>().apply {
+                        put(2, request.cardNo)
+                        put(3, SALE_DEBIT_PROCODE)
+                        put(4, request.txnAmount.padAmount())
+                        put(11, request.STAN.padStart(6, '0'))
+                        put(14, request.cardExpiry.replace("/", ""))
+                        put(22, request.posEntryMode + "1")
+                        put(24, "041") // NII
+                        put(25, "00") // NII
+                        put(35, request.track2Data.dropLast(1))
+                        put(37, "000051000004") // RRN
+                        put(38, "030059") // Approval Code
+                        put(41, "12345678") // TID
+                        put(42, "123456789012345") // MID
+                        put(52, request.pinBlock)
+                        if (request.emvData.isNotEmpty()) {
+                            put(55, request.emvData)
+                        }
+                        put(62, "0006123456789012") // Private Use - Invoice or ECR Reference Number
+                    }
                 } else {
-                    mapOf(
-                        3 to SALE_CREDIT_PROCODE,
-                        4 to request.txnAmount.padAmount(),
-                        11 to request.STAN.padStart(6, '0'),
-                        12 to DateUtils.getTransactionTime(transactionDateTime), // Time
-                        13 to DateUtils.getTransactionDate(transactionDateTime), // Date
-                        22 to request.posEntryMode + "1",
-                        23 to request.PANSEQ,
-                        24 to "041", // NII
-                        25 to "00", // NII
-                        35 to request.track2Data,
-                        37 to "000051000004", // RRN
-                        38 to "030059", // Approval Code
-                        39 to "00", // Approval Code
-                        41 to "12345678", // TID
-                        42 to "123456789012345", // MID
-                        57 to "1".repeat(300), // Reserved From TLE
-                        61 to "2".repeat(300), // Transaction Details
-                        62 to "2".repeat(300), // Additional Data Private
-                        64 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
-                    )
+                    mutableMapOf<Int, String>().apply {
+                        put(3, SALE_CREDIT_PROCODE)
+                        put(4, request.txnAmount.padAmount())
+                        put(11, request.STAN.padStart(6, '0'))
+                        put(12, DateUtils.getTransactionTime(transactionDateTime)) // Time
+                        put(13, DateUtils.getTransactionDate(transactionDateTime)) // Date
+                        put(22, request.posEntryMode + "1")
+                        put(23, request.PANSEQ + "1")
+                        put(24, "041") // NII
+                        put(25, "00") // NII
+                        put(35, request.track2Data.dropLast(1))
+                        put(37, "000051000004") // RRN
+                        put(38, "030059") // Approval Code
+                        put(39, "00") // Approval Code
+                        put(41, "12345678") // TID
+                        put(42, "123456789012345") // MID
+                        if (request.emvData.isNotEmpty()) {
+                            put(55, request.emvData)
+                        }
+                        put(57, "1".repeat(300)) // Reserved From TLE
+                        put(61, "2".repeat(300)) // Transaction Details
+                        put(62, "2".repeat(300)) // Additional Data Private
+                        put(64, "0006123456789012") // Private Use - Invoice or ECR Reference Number
+                    }
                 }
 
                 val packedData = isoRepository.createRequest(
@@ -107,12 +110,7 @@ class SaleRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error("Terjadi kesalahan"))
-                }
+                emit(e.toResourceError())
             }
         }
     }
@@ -190,7 +188,7 @@ class SaleRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
-                emit(Resource.Error("Terjadi kesalahan"))
+                emit(e.toResourceError())
             }
         }
     }

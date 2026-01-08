@@ -13,10 +13,7 @@ sealed interface AppRoute {
     data object MiniATM : AppRoute
 
     @Serializable
-    data object Sale : AppRoute
-
-    @Serializable
-    data object ContactlessSale : AppRoute
+    data class Sale(val isContactless: Boolean) : AppRoute
 
     @Serializable
     data object Void : AppRoute

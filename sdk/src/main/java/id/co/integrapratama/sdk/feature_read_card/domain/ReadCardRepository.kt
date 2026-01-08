@@ -8,7 +8,7 @@ import id.co.payment2go.terminalsdkhelper.ingenico.emv.VerifyEMVResult
 import kotlinx.coroutines.flow.Flow
 
 interface ReadCardRepository {
-    suspend fun readCard(cardOption: CardOption): Flow<Resource<ReadCardModel>>
+    suspend fun readCard(amount: Long, cardOption: CardOption): Flow<Resource<ReadCardModel>>
     suspend fun injectAids(): Flow<Resource<Unit>>
     suspend fun injectCapks(): Flow<Resource<Unit>>
 

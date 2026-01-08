@@ -1,39 +1,50 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 
 data class SaleUiState(
     // Transaction data
-    val title: String = "Sale",
-    val amount: String = "",
-    val cardNumber: String = "",
-    val maskedCardNumber: String = "",
-    val cardType: Int? = null,
-    val cvmMethod: Int? = null,
-    val cardReadOutput: CardReadOutput? = null,
-    val pin: String = "",
-    val pinBlock: String = "",
-    val transactionDateTime: String = "",
-    val binType: BinType = BinType.UNKNOWN,
+    var isContactless: Boolean = false,
+    var amount: String = "",
+    var cardNumber: String = "",
+    var maskedCardNumber: String = "",
+    var cardType: Int? = null,
+    var cvmMethod: Int? = null,
+    var cardReadOutput: CardReadOutput? = null,
+    var pin: String = "",
+    var pinBlock: String = "",
+    var transactionDateTime: String = "",
+    var binType: BinType = BinType.UNKNOWN,
 
     // Process flags
-    val isLoading: Boolean = false,
-    val isReadingCard: Boolean = false,
-    val isProcessing: Boolean = false,
-    val isCardConfirmed: Boolean = false,
-    val isShowPinpad: Boolean = false,
-    val onInsertOnlinePinAction: OnInsertOnlinePinAction? = null,
-    val isPhysicalKeyboard: Boolean = false,
+    var isLoading: Boolean = false,
+    var isReadingCard: Boolean = false,
+    var isProcessing: Boolean = false,
+    var isCardConfirmed: Boolean = false,
+    var isShowPinpad: Boolean = false,
+    var onInsertOnlinePinAction: OnInsertOnlinePinAction? = null,
+    var isPhysicalKeyboard: Boolean = false,
 
     // Completion states
-    val isFinishedReadCard: Boolean = false,
-    val isTransactionFinished: Boolean = false,
+    var isFinishedReadCard: Boolean = false,
+    var isTransactionFinished: Boolean = false,
 
     // UI feedback
-    val loadingMessage: String = "",
-    val presentCardAgainMessage: String = "",
-    val errorMessage: String = "",
-    val transactionResultMessage: String = "",
-)
+    var loadingMessage: String = "",
+    var presentCardAgainMessage: String = "",
+    var errorMessage: String = "",
+    var transactionResultMessage: String = "",
+) {
+    // Computed property that always reflects current value
+    val title: String
+        get() = "Sale ${if (isContactless) "Contactless" else ""}"
+    val cardOption: CardOption
+        get() = CardOption(
+            supportContactless = isContactless,
+            supportDip = !isContactless,
+            supportSwipe = false
+        )
+}

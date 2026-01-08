@@ -13,8 +13,8 @@ fun NavGraphBuilder.homeNavGraph(navController: NavController) {
         composable<HomeRoute.Menu> {
             HomeMenuScreen(
                 onNavigateToMiniATM = { navController.navigate(AppRoute.MiniATM) },
-                onNavigateToSale = { navController.navigate(AppRoute.Sale) },
-                onNavigateToContactlessSale = { navController.navigate(AppRoute.ContactlessSale) },
+                onNavigateToSale = { navController.navigate(AppRoute.Sale(isContactless = false)) },
+                onNavigateToContactlessSale = { navController.navigate(AppRoute.Sale(isContactless = true)) },
                 onNavigateToVoid = { navController.navigate(AppRoute.Void) },
                 onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) })
         }

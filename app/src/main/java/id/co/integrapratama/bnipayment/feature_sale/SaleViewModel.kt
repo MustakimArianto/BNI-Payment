@@ -20,7 +20,6 @@ import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
 import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
 import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
-import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.pinpad.OnPinPadResult
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
@@ -72,6 +71,14 @@ class SaleViewModel @Inject constructor(
                     physicalPinpad()
                 } else {
                     screenPinpad(event.containerInfo, event.pinpadMap)
+                }
+            }
+
+            is SaleUiEvent.SetContactless -> {
+                _uiState.update {
+                    it.copy(
+                        isContactless = event.isContactless
+                    )
                 }
             }
         }
@@ -152,14 +159,9 @@ class SaleViewModel @Inject constructor(
             stanManager.increaseStan()
             traceNumberManager.increment()
 
-            val cardOption = CardOption(
-                supportContactless = false,
-                supportSwipe = false,
-                supportDip = true
-            )
-
             readCardRepository.readCard(
-                cardOption = cardOption,
+                amount = uiState.value.amount.toLong(),
+                cardOption = uiState.value.cardOption,
             ).collect { resourceReadCard ->
                     when (resourceReadCard) {
                         is Resource.Loading -> {
@@ -336,7 +338,6 @@ class SaleViewModel @Inject constructor(
                             val response = IsoMessage().unpack(
                                 data = resource.data ?: byteArrayOf(),
                                 specs = IsoConfig.genericSpec,
-                                headerLength = 2
                             )
 
                             val responseCode = response.getField(39)
@@ -345,12 +346,24 @@ class SaleViewModel @Inject constructor(
                                 val emvData = response.getField(55)
                                 val authCode = response.getField(38)
 
-                                verifyEmvHost(
-                                    emvHost = emvData,
-                                    authCode = authCode,
-                                    arc = responseCode,
-                                    authorizeFlag = "00"
-                                )
+                                if (uiState.value.isContactless) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isLoading = false,
+                                            loadingMessage = "",
+                                            isTransactionFinished = true,
+                                        )
+                                    }
+
+                                    saveTransactionToDatabase()
+                                } else {
+                                    verifyEmvHost(
+                                        emvHost = emvData,
+                                        authCode = authCode,
+                                        arc = responseCode,
+                                        authorizeFlag = "00"
+                                    )
+                                }
                             } else {
                                 _uiState.update {
                                     it.copy(

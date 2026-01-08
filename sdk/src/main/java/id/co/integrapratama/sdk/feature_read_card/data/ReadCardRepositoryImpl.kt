@@ -13,6 +13,8 @@ import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.payment2go.terminalsdkhelper.common.SupportCustomPinpad
 import id.co.payment2go.terminalsdkhelper.common.emv.AidKernelConfig
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
+import id.co.payment2go.terminalsdkhelper.common.emv.ContactlessCardParameter
+import id.co.payment2go.terminalsdkhelper.common.emv.ContactlessCardSearchPurpose
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVResponse
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVUtility
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
@@ -43,6 +45,7 @@ class ReadCardRepositoryImpl @Inject constructor(
     }
 
     override suspend fun readCard(
+        amount: Long,
         cardOption: CardOption,
     ): Flow<Resource<ReadCardModel>> {
         return callbackFlow {
@@ -105,7 +108,12 @@ class ReadCardRepositoryImpl @Inject constructor(
                         LogSdk.info(TAG, "onError: $message")
                         trySend(Resource.Error(message))
                     }
-                }
+                },
+                contactlessCardParameter = ContactlessCardParameter(
+                    contactlessCardSearchPurpose = ContactlessCardSearchPurpose.Transaction(
+                        amount = amount
+                    )
+                )
             )
 
             awaitClose {
