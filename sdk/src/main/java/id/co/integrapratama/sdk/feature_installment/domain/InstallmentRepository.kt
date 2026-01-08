@@ -14,4 +14,10 @@ interface InstallmentRepository {
         request: CardReadOutput,
         transactionDateTime: String
     ): Flow<Resource<ByteArray>>
+
+    suspend fun printReceiptBasedLastTraceNo(): Flow<Resource<Unit>>
+
+    suspend fun printReceiptBasedTraceNo(
+        traceNo: String
+    ): Flow<Resource<Unit>>
 }

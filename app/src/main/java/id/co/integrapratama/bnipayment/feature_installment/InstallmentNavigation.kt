@@ -183,7 +183,8 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
 
             InstallmentTransactionStatus(
                 errorMessage = uiState.errorMessage,
-                isTransactionFinished = uiState.isTransactionFinished,
+                isLoading = uiState.isLoading,
+                statusMessage = uiState.statusMessage,
                 onGoToHome = { navController.navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )

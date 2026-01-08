@@ -13,9 +13,8 @@ import kotlinx.coroutines.flow.flow
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import javax.inject.Inject
 
-class SaleRepositoryImpl @Inject constructor(
+class SaleRepositoryImpl(
     private val isoRepository: Iso8583Repository,
 ) : SaleRepository {
     companion object {

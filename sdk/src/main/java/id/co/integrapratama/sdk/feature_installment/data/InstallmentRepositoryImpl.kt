@@ -1,26 +1,48 @@
 package id.co.integrapratama.sdk.feature_installment.data
 
+import android.util.Log
 import id.co.integrapratama.logsdk.LogSdk
+import id.co.integrapratama.sdk.core.StanManager
+import id.co.integrapratama.sdk.core.TerminalBatchManager
+import id.co.integrapratama.sdk.core.TraceNumberManager
+import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
+import id.co.integrapratama.sdk.core.utils.CardUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.core.utils.padAmount
+import id.co.integrapratama.sdk.feature_installment.common.InstallmentPrintTemplateFactory
+import id.co.integrapratama.sdk.feature_installment.data.local.InstallmentCardTransactionEntity
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentRepository
+import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderValueComponent
+import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtility
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
+import id.co.payment2go.terminalsdkhelper.core.util.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import javax.inject.Inject
+import java.util.Date
+import kotlin.String
 
-class InstallmentRepositoryImpl @Inject constructor(
+class InstallmentRepositoryImpl(
     private val isoRepository: Iso8583Repository,
+    private val printRepository: PrintRepository,
+    private val appDatabase: AppDatabase,
+    private val traceNumberManager: TraceNumberManager,
+    private val terminalBatchManager: TerminalBatchManager,
+    private val deviceManagerUtility: DeviceManagerUtility,
+    private val stanManager: StanManager
 ) : InstallmentRepository {
     companion object {
         private const val TAG = "InstallmentRepositoryImpl"
@@ -105,6 +127,109 @@ class InstallmentRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
+    private fun test() {
+        val branchNamePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "BranchName",
+            value = "BRI 1"
+        )
+        val branchAddressPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "BranchAddress",
+            value = "JL. JENDRAL SUDIRMAN"
+        )
+        val branchCityPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "BranchCity",
+            value = "JAKARTA"
+        )
+        val terminalIdPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "TerminalId",
+            value = "1234567890"
+        )
+        val merchantIdPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "MerchantId",
+            value = "1234567890"
+        )
+        val cardTypePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "CardType",
+            value = "BRI MASTERCARD"
+        )
+        val expPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "Exp",
+            value = "3/23"
+        )
+        val cardNumberWithTypePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "CartNumberWithType",
+            value = "6013*******3881 (SWIPE)"
+        )
+        val saleLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleLabel",
+            value = "SALE"
+        )
+        val saleDatePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleDate",
+            value = "5 FEB 2020"
+        )
+        val saleTimePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleTime",
+            value = "13:31:09"
+        )
+        val saleBatchPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleBatch",
+            value = "000002"
+        )
+        val saleTracePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleTrace",
+            value = "000008"
+        )
+        val saleRefPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleRef",
+            value = "000047111620000"
+        )
+        val saleApprPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleAppr",
+            value = "711162"
+        )
+        val saleAmountPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "SaleAmount",
+            value = "Rp. 20500"
+        )
+        val pinVerificationSuccessLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "PinVerificationSuccessLabel",
+            value = "*** PIN VERIFICATION SUCCESS ***"
+        )
+        val totalAmountAgreementLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "TotalAmountAgreementLabel",
+            value = "I AGREE TO PAY ABOVE TOTAL AMOUNT"
+        )
+        val accordingToCardLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "AccordingToCardLabel",
+            value = "ACCORDING TO CARD ISSUER AGREEMENT"
+        )
+        val copyLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "CopyLabel",
+            value = "*** CUSTOMER COPY ***"
+        )
+        val versionPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "Version",
+            value = "V2019.1.0.0.8"
+        )
+        val machineSerialNumberPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "MachineSerialNumber",
+            value = "14169CT22114673"
+        )
+        val linePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "Line",
+            value = ""
+        )
+        val headerImagePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "HeaderImage",
+            value = "integra-pratama.png"
+        )
+        val qrisContentPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "QrisContent",
+            value = "00020101021126680016ID.CO.TELKOM.WWW011893600898029183533402150001952918353340303UMI51440014ID.CO.QRIS.WWW0215ID10232753331940303UMI5204549953033605502015802ID5913Samuel Mareno6013KOTA SEMARANG61055026562220511893318458550703A106304A92B"
+        )
+    }
+
     override suspend fun postInstallmentTransaction(
         isFromSaving: Boolean,
         request: CardReadOutput,
@@ -149,6 +274,109 @@ class InstallmentRepositoryImpl @Inject constructor(
                         }
 
                         is Resource.Success -> {
+                            val currentDate = Date()
+                            val currentTraceNoText = Util.addZerosToNumber(
+                                traceNumberManager.getCurrentTraceNo(),
+                                desiredDigits = 6
+                            )
+                            val currentBatchNoText = Util.addZerosToNumber(
+                                terminalBatchManager.getCurrentBatch(),
+                                desiredDigits = 6
+                            )
+                            val currentStanText = Util.addZerosToNumber(
+                                stanManager.getCurrentStan(),
+                                desiredDigits = 6
+                            )
+                            val amountText = StringUtil.formatRupiahCurrency(request.txnAmount)
+                            val authCode = "711162"
+                            val refNo = "000047111620000"
+                            val installmentPrintTemplateFactory = InstallmentPrintTemplateFactory(
+                                branchName = "DUMMY TRX",
+                                branchAddress = "JL. JENDRAL SUDIRMAN",
+                                branchCity = "JAKARTA",
+                                terminalId = "1234567890",
+                                merchantId = "1234567890",
+                                cardType = request.cardAppName,
+                                exp = request.cardExpiry,
+                                cardNumber = request.cardNo,
+                                cardMethod = CardUtil.getCardMethodFromPosEntryMode(request.posEntryMode),
+                                date = DateUtils.getReceiptTransactionDate(currentDate),
+                                time = DateUtils.getReceiptTransactionTime(currentDate),
+                                batch = currentBatchNoText,
+                                trace = currentTraceNoText,
+                                ref = refNo,
+                                appr = authCode,
+                                amount = amountText,
+                                version = "V2019.1.0.0.8",
+                                serialNumber = deviceManagerUtility.getSerialNumberDevice(),
+                            )
+                            val installmentPrintBasedOnTemplateParameter = installmentPrintTemplateFactory.getPrintBasedOnTemplateParameter {}
+                            appDatabase.installmentCardTransactionDao().insert(
+                                InstallmentCardTransactionEntity(
+                                    invoice = currentTraceNoText,
+                                    invoiceDate = DateUtils.getFullTransactionDateTime(currentDate),
+                                    issuerID = "",
+                                    issuerName = "",
+                                    saleType = "",
+                                    batchNo = currentTraceNoText,
+                                    authCode = authCode,
+                                    amount = request.txnAmount.toLongOrNull() ?: 0,
+                                    payID = "",
+                                    pan = request.cardNo,
+                                    mID = "",
+                                    tID = "",
+                                    printFormats = "",
+                                    refNo = refNo,
+                                    txnTypeId = "",
+                                    programName = "",
+                                    cardExpiry = request.cardExpiry,
+                                    cardAID = request.cardAID,
+                                    cardAppName = request.cardAppName,
+                                    customerName = request.customerName,
+                                    currencyCode = request.currencyCode,
+                                    tVRData = request.terminalVerificationResults,
+                                    tSIData = request.TSIData,
+                                    txnCatCode = request.txnCategoryCode,
+                                    txnCert = request.transactionCertificate,
+                                    stan = currentStanText,
+                                    maskedCardNo = StringUtil.formatRupiahCurrency(request.cardNo),
+                                    insertModeCode = request.insertModeCode,
+                                    rRNO = refNo,
+                                    txnStatus = "Success",
+                                    cardType = "",
+                                    cardTypeCode = "",
+                                    acquiringBank = "",
+                                    secureData = "",
+                                    posEntryMode = request.posEntryMode,
+                                    tipAmount = 0,
+                                    cashAMT = 0,
+                                    feeAmount = 0,
+                                    refTxnTypeId = "",
+                                    tenure = "",
+                                    bankTID = "",
+                                    bankMID = "",
+                                    cashierID = "",
+                                    terminalCapability = request.terminalCapability,
+                                    jsonReq = "",
+                                    jsonResp = "",
+                                    eMIAmount = 0L,
+                                    redeemAmount = 0L,
+                                    pinBlock = request.pinBlock,
+                                    isTxnActive = false,
+                                    isTxnVoid = false,
+                                    isVoidApplicable = false,
+                                    isLoyaltyVoid = false,
+                                    loyaltyData = "",
+                                    panSeq = request.PANSEQ,
+                                    iccData = request.emvData,
+                                    responseCode = "",
+                                    mti = "",
+                                    jsonReceipt = installmentPrintBasedOnTemplateParameter.jsonString,
+                                    templateJsonReceipt = installmentPrintBasedOnTemplateParameter.printTemplateJsonString
+                                )
+                            )
+                            traceNumberManager.increment()
+                            stanManager.increaseStan()
                             emit(Resource.Success(response.data ?: byteArrayOf()))
                         }
 
@@ -157,6 +385,47 @@ class InstallmentRepositoryImpl @Inject constructor(
                         }
                     }
                 }
+            } catch (e: Exception) {
+                LogSdk.error(TAG, e.stackTraceToString())
+                when (e) {
+                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
+                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
+                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
+                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
+                }
+            }
+        }
+    }
+
+    override suspend fun printReceiptBasedLastTraceNo(): Flow<Resource<Unit>> {
+        return printReceiptBasedTraceNo(
+            Util.addZerosToNumber(
+                traceNumberManager.getCurrentLastTraceNo(),
+                desiredDigits = 6
+            )
+        )
+    }
+
+    override suspend fun printReceiptBasedTraceNo(
+        traceNo: String
+    ): Flow<Resource<Unit>> {
+        return flow {
+            try {
+                emit(Resource.Loading("Mencari data"))
+                val installmentCardTransactionEntity = appDatabase.installmentCardTransactionDao()
+                    .getTrxDataByTraceNo(traceNo)
+                if (installmentCardTransactionEntity == null) {
+                    emit(Resource.Error("Data tidak ditemukan"))
+                    return@flow
+                }
+                emit(Resource.Loading("Mencetak struk"))
+                printRepository.printWithBuilder(
+                    builder = PrintBasedOnTemplateParameterBuilder().fromJson(
+                        valueComponentJsonString = installmentCardTransactionEntity.jsonReceipt,
+                        templateComponentJsonString = installmentCardTransactionEntity.templateJsonReceipt
+                    )
+                ).collect()
+                emit(Resource.Success(Unit))
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
                 when (e) {

@@ -7,6 +7,7 @@ import id.co.integrapratama.sdk.feature_aid_master.data.local.AidMasterEntity
 import id.co.integrapratama.sdk.feature_capk_master.data.local.CapkMasterDao
 import id.co.integrapratama.sdk.feature_capk_master.data.local.CapkMasterEntity
 import id.co.integrapratama.sdk.feature_installment.data.local.InstallmentCardPrevTransactionEntity
+import id.co.integrapratama.sdk.feature_installment.data.local.InstallmentCardTransactionDao
 import id.co.integrapratama.sdk.feature_installment.data.local.InstallmentCardTransactionEntity
 import id.co.integrapratama.sdk.feature_sale.data.local.CardPrevTransactionEntity
 import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionDao
@@ -30,4 +31,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun capkMasterDao(): CapkMasterDao
 
     abstract fun cardTransactionDao(): CardTransactionDao
+
+    abstract fun installmentCardTransactionDao(): InstallmentCardTransactionDao
 }

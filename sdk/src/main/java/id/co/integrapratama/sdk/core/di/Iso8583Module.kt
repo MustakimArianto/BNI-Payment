@@ -15,7 +15,7 @@ object Iso8583Module {
     @Provides
     @Singleton
     fun provideIsoSocketClient(): IsoSocketClient =
-        IsoSocketClient(host = "192.168.6.93", port = 5000)
+        IsoSocketClient(host = "192.168.6.116", port = 5000)
 
     @Provides
     @Singleton

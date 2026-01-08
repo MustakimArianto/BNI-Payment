@@ -720,6 +720,40 @@ class InstallmentViewModel @Inject constructor(
     }
 
     fun printReceipt() {
+        viewModelScope.launch {
+            installmentRepository.printReceiptBasedLastTraceNo().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                statusMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
 
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                errorMessage = "",
+                                statusMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

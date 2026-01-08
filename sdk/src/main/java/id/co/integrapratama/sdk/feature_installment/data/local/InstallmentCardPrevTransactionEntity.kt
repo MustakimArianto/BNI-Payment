@@ -7,7 +7,7 @@ import id.co.integrapratama.sdk.feature_sale.domain.TransactionModel
 @Entity
 data class InstallmentCardPrevTransactionEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long? = 0,
+    val id: Long? = null,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,

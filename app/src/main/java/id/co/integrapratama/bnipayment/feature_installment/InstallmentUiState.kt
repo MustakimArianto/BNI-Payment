@@ -39,6 +39,7 @@ data class InstallmentUiState(
     val statusMessage: String = "",
     val presentCardAgainMessage: String = "",
     val errorMessage: String = "",
+    val dialogLoadingMessage: String = "",
 
     // Installment Period and Plan List, and Installment Period and Plan selection state
     val installmentPlanListResource: Resource<List<InstallmentPlanModel>>? = null,

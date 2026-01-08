@@ -32,9 +32,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import okhttp3.internal.toImmutableList
-import javax.inject.Inject
 
-class ReadCardRepositoryImpl @Inject constructor(
+class ReadCardRepositoryImpl(
     private val appDatabase: AppDatabase,
     private val emvUtility: EMVUtility,
     private val pinpadUtility: PinpadUtility,
