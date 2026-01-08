@@ -284,7 +284,6 @@ class SaleViewModel @Inject constructor(
                         val cardClassification =
                             binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
 
-                        println("fckin classification: $cardClassification")
                         postSaleTransaction(
                             cardClassification,
                             cardReadOutput = uiState.value.cardReadOutput
