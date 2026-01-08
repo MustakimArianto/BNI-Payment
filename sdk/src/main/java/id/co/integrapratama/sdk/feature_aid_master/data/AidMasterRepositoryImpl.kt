@@ -61,7 +61,7 @@ class AidMasterRepositoryImpl(
                     is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
                     is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
                     is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
+                    else -> emit(Resource.Error("Terjadi kesalahan"))
                 }
             }
         }

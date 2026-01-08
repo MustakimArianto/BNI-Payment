@@ -2,7 +2,7 @@ package id.co.integrapratama.sdk.feature_sale.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import id.co.integrapratama.sdk.feature_sale.domain.TransactionModel
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 
 @Entity(
     tableName = "card_prev_transaction"
@@ -64,8 +64,8 @@ data class CardPrevTransactionEntity(
     val jsonReceipt: String,
     val templateJsonReceipt: String
 ) {
-    fun toTransactionModel(): TransactionModel {
-        return TransactionModel(
+    fun toTransactionModel(): TransactionRecord {
+        return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -87,14 +87,12 @@ data class CardPrevTransactionEntity(
             cardAppName = cardAppName,
             customerName = customerName,
             currencyCode = currencyCode,
-            tVRData = tVRData,
-            tSIData = tSIData,
             txnCatCode = txnCatCode,
             txnCert = txnCert,
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rrNo = rRNO,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -103,7 +101,7 @@ data class CardPrevTransactionEntity(
             posEntryMode = posEntryMode,
             tipAmount = tipAmount,
             cashAMT = cashAMT,
-            feeAmt = feeAmount,
+            feeAmount = feeAmount,
             refTxnTypeId = refTxnTypeId,
             tenure = tenure,
             bankTID = bankTID,

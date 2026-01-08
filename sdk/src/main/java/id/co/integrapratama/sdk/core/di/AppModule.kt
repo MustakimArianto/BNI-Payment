@@ -1,6 +1,5 @@
 package id.co.integrapratama.sdk.core.di
 
-import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -13,6 +12,7 @@ import id.co.integrapratama.sdk.core.HostUrlManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
+import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.data.remote.LogSdkInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

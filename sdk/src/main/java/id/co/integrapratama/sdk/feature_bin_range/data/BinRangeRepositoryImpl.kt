@@ -25,7 +25,11 @@ class BinRangeRepositoryImpl @Inject constructor(
                 val cardBinRangeData = db.cardListDao().findCardByCardNumber(getCardNo(cardNumber))
                 val binRangeType = checkBinRange(cardBinRangeData?.name)
 
-                emit(Resource.Success(binRangeType))
+                if (binRangeType == BinType.UNKNOWN) {
+                    emit(Resource.Error("Jenis kartu tidak terdaftar"))
+                } else {
+                    emit(Resource.Success(binRangeType))
+                }
             } catch (e: Exception) {
                 LogSdk.error(TAG, e.stackTraceToString())
                 if (e is SQLiteException) {
@@ -39,9 +43,38 @@ class BinRangeRepositoryImpl @Inject constructor(
 
     override fun classifyCard(binType: BinType): CardClassification {
         return when (binType) {
-            BinType.BNI_DEBIT, BinType.OTHER_DEBIT -> CardClassification.DEBIT
-            BinType.BNI_CREDIT, BinType.OTHER_CREDIT -> CardClassification.CREDIT
-            else -> CardClassification.DEBIT
+            BinType.DEBIT_SILVER,
+            BinType.DEBIT_GOLD,
+            BinType.DEBIT_GOLD_2,
+            BinType.DEBIT_PLATINUM,
+            BinType.DEBIT_PLATINUM_2,
+            BinType.DEBIT_EMERALD,
+            BinType.DEBIT_CITILINK,
+            BinType.DEBIT_KARTU_PEGAWAI,
+            BinType.DEBIT_LAFAYETTE,
+            BinType.DEBIT_SME,
+            BinType.DEBIT_TAPLUS_MUDA,
+            BinType.DEBIT_SYARIAH_GOLD,
+            BinType.DEBIT_SYARIAH_PLATINUM,
+            BinType.DEBIT_SYARIAH_SILVER,
+            BinType.PRIVATE_LABEL_SYARIAH,
+            BinType.PRIVATE_LABEL_DEBIT,
+            BinType.PL_VIRTUAL_ACCOUNT,
+            BinType.PL_NPG,
+            BinType.PL_KARTU_TANI,
+            BinType.PL_KARTU_INDONESIA,
+            BinType.PL_KARTU_BANTUAN,
+            BinType.PL_VA_BNDRA_PEL,
+            BinType.MAESTRO_BNI,
+                -> {
+                CardClassification.DEBIT
+            }
+
+            BinType.CREDIT_GOLD, BinType.CREDIT_OTHER -> {
+                CardClassification.CREDIT
+            }
+
+            else -> CardClassification.UNKNOWN
         }
     }
 
@@ -49,7 +82,7 @@ class BinRangeRepositoryImpl @Inject constructor(
         if (name.isNullOrBlank()) return BinType.UNKNOWN
 
         return BinType.entries.firstOrNull {
-            it.description.equals(name.trim(), ignoreCase = true)
+            it.description.lowercase().equals(name.lowercase().trim(), ignoreCase = true)
         } ?: BinType.UNKNOWN
     }
 

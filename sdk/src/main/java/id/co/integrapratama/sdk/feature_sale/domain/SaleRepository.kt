@@ -11,4 +11,6 @@ interface SaleRepository {
         request: CardReadOutput,
         transactionDateTime: String
     ): Flow<Resource<ByteArray>>
+
+    suspend fun insertCardTransactionToDatabase(transactionRecord: TransactionRecord): Flow<Resource<Unit>>
 }

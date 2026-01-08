@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 
@@ -15,6 +16,7 @@ data class SaleUiState(
     val pin: String = "",
     val pinBlock: String = "",
     val transactionDateTime: String = "",
+    val binType: BinType = BinType.UNKNOWN,
 
     // Process flags
     val isLoading: Boolean = false,

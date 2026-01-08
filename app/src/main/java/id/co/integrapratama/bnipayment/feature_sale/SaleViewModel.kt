@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.bnipayment.common.maskCardNumber
 import id.co.integrapratama.iso8583sdk.IsoMessage
+import id.co.integrapratama.sdk.core.StanManager
+import id.co.integrapratama.sdk.core.TerminalBatchManager
+import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.DateUtils
@@ -14,6 +17,7 @@ import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
 import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
@@ -37,7 +41,10 @@ class SaleViewModel @Inject constructor(
     private val deviceTypeManager: DeviceTypeManager,
     private val saleRepository: SaleRepository,
     private val readCardRepository: ReadCardRepository,
-    private val binRangeRepository: BinRangeRepository
+    private val binRangeRepository: BinRangeRepository,
+    private val traceNumberManager: TraceNumberManager,
+    private val stanManager: StanManager,
+    private val batchManager: TerminalBatchManager,
 ) : ViewModel() {
     companion object {
         private const val TAG = "SaleViewModel"
@@ -142,6 +149,9 @@ class SaleViewModel @Inject constructor(
 
     private fun readCard() {
         viewModelScope.launch {
+            stanManager.increaseStan()
+            traceNumberManager.increment()
+
             val cardOption = CardOption(
                 supportContactless = false,
                 supportSwipe = false,
@@ -266,13 +276,15 @@ class SaleViewModel @Inject constructor(
                     is Resource.Success -> {
                         _uiState.update {
                             it.copy(
-                                isLoading = false
+                                isLoading = false,
+                                binType = resource.data ?: BinType.UNKNOWN
                             )
                         }
 
                         val cardClassification =
                             binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
 
+                        println("fckin classification: $cardClassification")
                         postSaleTransaction(
                             cardClassification,
                             cardReadOutput = uiState.value.cardReadOutput
@@ -551,6 +563,8 @@ class SaleViewModel @Inject constructor(
                                 isTransactionFinished = true,
                             )
                         }
+
+                        saveTransactionToDatabase()
                     }
 
                     is Resource.Error -> {
@@ -559,6 +573,89 @@ class SaleViewModel @Inject constructor(
                                 isLoading = false,
                                 isTransactionFinished = true,
                                 transactionResultMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun saveTransactionToDatabase() {
+        viewModelScope.launch {
+            saleRepository.insertCardTransactionToDatabase(
+                TransactionRecord(
+                    invoice = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    invoiceDate = DateUtils.getCurrentTransactionDateTime(),
+                    issuerID = "2",
+                    issuerName = "SALE",
+                    saleType = "SALE",
+                    batchNo = batchManager.getCurrentBatch().toString().padStart(6, '0'),
+                    authCode = "",
+                    amount = uiState.value.amount.toLong() * 100L,
+                    payID = "",
+                    pan = uiState.value.cardNumber,
+                    mID = "12345678",
+                    tID = "123456789012345",
+                    printFormats = "",
+                    refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    txnTypeId = "",
+                    programName = "",
+                    cardExpiry = "",
+                    cardAID = "",
+                    cardAppName = "",
+                    customerName = "",
+                    currencyCode = "",
+                    txnCatCode = "",
+                    txnCert = "",
+                    stan = stanManager.getCurrentStan().toString().padStart(6, '0'),
+                    maskedCardNo = uiState.value.maskedCardNumber,
+                    insertModeCode = "",
+                    rrNo = "",
+                    txnStatus = "",
+                    cardType = uiState.value.binType.description,
+                    cardTypeCode = "",
+                    acquiringBank = "",
+                    secureData = "",
+                    posEntryMode = "",
+                    tipAmount = 0L,
+                    cashAMT = 0L,
+                    feeAmount = 0L,
+                    refTxnTypeId = "",
+                    tenure = "",
+                    bankTID = "",
+                    bankMID = "",
+                    cashierID = "",
+                    terminalCapability = "",
+                    jsonReq = "",
+                    jsonResp = "",
+                    eMIAmount = 0L,
+                )
+            ).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = it.loadingMessage
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = ""
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
                     }
