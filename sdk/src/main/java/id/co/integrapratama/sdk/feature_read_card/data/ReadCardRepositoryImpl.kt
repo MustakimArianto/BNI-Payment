@@ -7,6 +7,7 @@ import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.AidUtil
 import id.co.integrapratama.sdk.feature_capk_master.data.local.toCapkParam
+import id.co.integrapratama.sdk.feature_read_card.domain.OfflinePinPadEvent
 import id.co.integrapratama.sdk.feature_read_card.domain.PinPadEvent
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardModel
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
@@ -15,6 +16,7 @@ import id.co.payment2go.terminalsdkhelper.common.emv.AidKernelConfig
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVResponse
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVUtility
+import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.common.pinpad.PinpadUtility
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
@@ -30,9 +32,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import okhttp3.internal.toImmutableList
-import javax.inject.Inject
 
-class ReadCardRepositoryImpl @Inject constructor(
+class ReadCardRepositoryImpl(
     private val appDatabase: AppDatabase,
     private val emvUtility: EMVUtility,
     private val pinpadUtility: PinpadUtility,
@@ -90,6 +91,26 @@ class ReadCardRepositoryImpl @Inject constructor(
                                         insertModeCode = action.getCardReadOutput().insertModeCode
                                     ),
                                     onInsertOnlinePinAction = action
+                                )
+                            )
+                        )
+                    }
+
+                    override fun onInsertOfflinePin(
+                        cardNumber: String,
+                        action: OnInsertOfflinePinAction
+                    ) {
+                        LogSdk.info(TAG, "onInsertOfflinePin: $cardNumber")
+                        trySend(
+                            Resource.Loading(
+                                "",
+                                ReadCardModel(
+                                    isShowOfflinePinpad = true,
+                                    cardReadOutput = CardReadOutput(
+                                        cardNo = cardNumber,
+                                        insertModeCode = action.getCardReadOutput().insertModeCode
+                                    ),
+                                    onInsertOfflinePinAction = action
                                 )
                             )
                         )
@@ -239,6 +260,23 @@ class ReadCardRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun physicalOfflinePinpad(
+        cardNumber: String, onInsertOfflinePinAction: OnInsertOfflinePinAction?
+    ): Flow<OfflinePinPadEvent> {
+        return callbackFlow {
+            pinpadUtility.showOfflinePinPad(
+                disorder = false, cardNumber = cardNumber, onPinpadResult = { pinpadResult ->
+                    trySend(
+                        OfflinePinPadEvent(
+                            result = pinpadResult, action = onInsertOfflinePinAction
+                        )
+                    )
+                })
+
+            awaitClose { }
+        }
+    }
+
     override suspend fun screenPinpad(
         cardNumber: String,
         containerInfo: CustomPinpadUiBounds,
@@ -287,7 +325,63 @@ class ReadCardRepositoryImpl @Inject constructor(
                         )
                     })
             } else {
-                close(Exception("Custom pinpad not supported"))
+                close(Exception("Custom offline pinpad not supported"))
+            }
+
+            awaitClose { }
+        }
+    }
+
+    override suspend fun screenOfflinePinpad(
+        cardNumber: String,
+        containerInfo: CustomPinpadUiBounds,
+        pinpadMap: List<CustomPinpadUiBounds>,
+        onInsertOfflinePinAction: OnInsertOfflinePinAction?
+    ): Flow<OfflinePinPadEvent> {
+        return callbackFlow {
+            if (pinpadUtility is SupportCustomPinpad) {
+                val containerInfo = containerInfo
+                val pinpadMap = pinpadMap
+                pinpadUtility.showCustomOfflinePinPad(
+                    disorder = false,
+                    cardNumber = cardNumber,
+                    customPinpadParameter = CustomPinpadParameter(
+                        width = containerInfo.width,
+                        height = containerInfo.height,
+                        x = containerInfo.x.toInt(),
+                        y = containerInfo.y.toInt(),
+                        pinButtonLayouts = pinpadMap.map {
+                            CustomPinPadButtonLayout(
+                                width = it.width,
+                                height = it.height,
+                                x = it.x.toInt(),
+                                y = it.y.toInt(),
+                                keyCode = it.value as? CustomPinPadKeyCode
+                                    ?: CustomPinPadKeyCode.KEY_ENTER
+                            )
+                        }
+                    ),
+                    onPinpadResult = { pinpadResult ->
+                        trySend(
+                            OfflinePinPadEvent(
+                                result = pinpadResult,
+                                action = onInsertOfflinePinAction,
+                                pinpadState = null
+                            )
+                        )
+                    },
+                    onUpdatePinPadState = { pinpadState ->
+                        trySend(
+                            OfflinePinPadEvent(
+                                result = null,
+                                action = onInsertOfflinePinAction,
+                                pinpadState = pinpadState
+                            )
+                        )
+                    }
+                )
+            } else {
+                close(Exception("Custom offline pinpad not supported"))
             }
 
             awaitClose { }
@@ -298,6 +392,12 @@ class ReadCardRepositoryImpl @Inject constructor(
         pin: String, isNonePin: Boolean
     ) {
         emvUtility.confirmPinInput(pin, isNonePin)
+    }
+
+    override suspend fun confirmOfflineInputPin(
+        pin: String, isNonePin: Boolean
+    ) {
+        emvUtility.confirmOfflinePinInput(pin, isNonePin)
     }
 
     override suspend fun verifyEMVHost(

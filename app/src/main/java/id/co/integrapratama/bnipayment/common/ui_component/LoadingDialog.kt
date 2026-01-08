@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun LoadingDialog(title: String = "Processing", message: String) {
+fun LoadingDialog(title: String = "Memproses", message: String) {
     val spacing = 16.dp
 
     AlertDialog(onDismissRequest = {}) {

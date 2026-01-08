@@ -32,7 +32,8 @@ fun HomeMenuScreen(
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
-    onNavigateToSettlement: () -> Unit
+    onNavigateToSettlement: () -> Unit,
+    onNavigateToInstallment: () -> Unit
 ) {
     val menuItems = remember {
         getHomeMenuItems(
@@ -40,7 +41,8 @@ fun HomeMenuScreen(
             onNavigateToSale = onNavigateToSale,
             onNavigateToContactlessSale = onNavigateToContactlessSale,
             onNavigateToVoid = onNavigateToVoid,
-            onNavigateToSettlement = onNavigateToSettlement
+            onNavigateToSettlement = onNavigateToSettlement,
+            onNavigateToInstallment = onNavigateToInstallment
         )
     }
 

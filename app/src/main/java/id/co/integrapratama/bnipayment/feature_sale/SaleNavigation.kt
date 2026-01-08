@@ -101,6 +101,12 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                 }
             }
 
+            if (uiState.isShowOfflinePinpad) {
+                BackHandler {
+
+                }
+            }
+
             LaunchedEffect(uiState.isTransactionFinished) {
                 if (uiState.isCardConfirmed) {
                     navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
@@ -130,6 +136,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                     viewModel.onEvent(SaleUiEvent.OnConfirmCard)
                 },
                 showPinpad = uiState.isShowPinpad,
+                showOfflinePinpad = uiState.isShowOfflinePinpad,
                 onButtonMapReady = { containerInfo, pinpadMap ->
                     viewModel.onEvent(
                         SaleUiEvent.MappingPinpad(
@@ -138,7 +145,16 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                         )
                     )
                 },
-                onNavigationBack = { navController.popBackStack() })
+                onOfflinePinButtonMapReady = { containerInfo, pinpadMap ->
+                    viewModel.onEvent(
+                        SaleUiEvent.MappingOfflinePinpad(
+                            containerInfo = containerInfo,
+                            pinpadMap = pinpadMap
+                        )
+                    )
+                },
+                onNavigationBack = { navController.popBackStack() }
+            )
         }
 
         composable<SaleRoute.TransactionStatus> {
