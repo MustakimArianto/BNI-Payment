@@ -51,6 +51,7 @@ class ReadCardRepositoryImpl(
     ): Flow<Resource<ReadCardModel>> {
         return callbackFlow {
             emvUtility.stopEMVSearch(true)
+            stanManager.increaseStan()
 
             emvUtility.searchCardFirst(
                 cardOption = cardOption,

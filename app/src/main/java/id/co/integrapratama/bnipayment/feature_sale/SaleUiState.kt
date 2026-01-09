@@ -5,6 +5,7 @@ import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
+import java.util.Date
 
 data class SaleUiState(
     // Transaction data
@@ -17,7 +18,7 @@ data class SaleUiState(
     var cardReadOutput: CardReadOutput? = null,
     var pin: String = "",
     var pinBlock: String = "",
-    var transactionDateTime: String = "",
+    var transactionDateTime: Date = Date(),
     var binType: BinType = BinType.UNKNOWN,
 
     // Process flags

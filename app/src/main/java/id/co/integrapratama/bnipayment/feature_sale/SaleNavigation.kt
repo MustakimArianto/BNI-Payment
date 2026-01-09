@@ -175,6 +175,10 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
+            }
+
             SaleTransactionStatus(
                 transactionResultMessage = uiState.transactionResultMessage,
                 onGoToHome = { navController.navigateToHome() },

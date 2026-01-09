@@ -340,7 +340,6 @@ class InstallmentViewModel @Inject constructor(
                             val response = IsoMessage().unpack(
                                 data = resource.data ?: byteArrayOf(),
                                 specs = IsoConfig.genericSpec,
-                                headerLength = 2
                             )
 
                             val responseCode = response.getField(39)

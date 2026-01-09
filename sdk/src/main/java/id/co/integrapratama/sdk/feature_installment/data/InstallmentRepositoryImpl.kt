@@ -11,14 +11,14 @@ import id.co.integrapratama.sdk.core.utils.CardUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.core.utils.padAmount
-import id.co.integrapratama.sdk.feature_installment.common.InstallmentPrintTemplateFactory
+import id.co.integrapratama.sdk.core.utils.toResourceError
+import id.co.integrapratama.sdk.feature_installment.core.InstallmentPrintTemplateFactory
 import id.co.integrapratama.sdk.feature_installment.data.local.InstallmentCardTransactionEntity
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentRepository
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
-import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderValueComponent
 import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtility
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
@@ -28,9 +28,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import java.util.Date
 
 class InstallmentRepositoryImpl(
@@ -80,13 +77,8 @@ class InstallmentRepositoryImpl(
                     )
                 )
             } catch (e: Exception) {
-                e.printStackTrace()
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
-                }
+                LogSdk.error(TAG, "getInstallmentPeriodList: ${e.message}")
+                emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)
     }
@@ -114,118 +106,10 @@ class InstallmentRepositoryImpl(
                     )
                 )
             } catch (e: Exception) {
-                e.printStackTrace()
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
-                }
+                LogSdk.error(TAG, "getInstallmentPlanList: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)
-    }
-
-    private fun test() {
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchName",
-            value = "BRI 1"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchAddress",
-            value = "JL. JENDRAL SUDIRMAN"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchCity",
-            value = "JAKARTA"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "TerminalId",
-            value = "1234567890"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "MerchantId",
-            value = "1234567890"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CardType",
-            value = "BRI MASTERCARD"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Exp",
-            value = "3/23"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CartNumberWithType",
-            value = "6013*******3881 (SWIPE)"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleLabel",
-            value = "SALE"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleDate",
-            value = "5 FEB 2020"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleTime",
-            value = "13:31:09"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleBatch",
-            value = "000002"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleTrace",
-            value = "000008"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleRef",
-            value = "000047111620000"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleAppr",
-            value = "711162"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "SaleAmount",
-            value = "Rp. 20500"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "PinVerificationSuccessLabel",
-            value = "*** PIN VERIFICATION SUCCESS ***"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "TotalAmountAgreementLabel",
-            value = "I AGREE TO PAY ABOVE TOTAL AMOUNT"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "AccordingToCardLabel",
-            value = "ACCORDING TO CARD ISSUER AGREEMENT"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CopyLabel",
-            value = "*** CUSTOMER COPY ***"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Version",
-            value = "V2019.1.0.0.8"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "MachineSerialNumber",
-            value = "14169CT22114673"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Line",
-            value = ""
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "HeaderImage",
-            value = "integra-pratama.png"
-        )
-        PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "QrisContent",
-            value = "00020101021126680016ID.CO.TELKOM.WWW011893600898029183533402150001952918353340303UMI51440014ID.CO.QRIS.WWW0215ID10232753331940303UMI5204549953033605502015802ID5913Samuel Mareno6013KOTA SEMARANG61055026562220511893318458550703A106304A92B"
-        )
     }
 
     override suspend fun postInstallmentTransaction(
@@ -374,8 +258,8 @@ class InstallmentRepositoryImpl(
                                     templateJsonReceipt = installmentPrintBasedOnTemplateParameter.printTemplateJsonString
                                 )
                             )
+
                             traceNumberManager.increment()
-                            stanManager.increaseStan()
                             emit(Resource.Success(response.data ?: byteArrayOf()))
                         }
 
@@ -385,13 +269,8 @@ class InstallmentRepositoryImpl(
                     }
                 }
             } catch (e: Exception) {
-                LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
-                }
+                LogSdk.error(TAG, "postInstallmentTransaction: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
             }
         }
     }
@@ -426,13 +305,8 @@ class InstallmentRepositoryImpl(
                 ).collect()
                 emit(Resource.Success(Unit))
             } catch (e: Exception) {
-                LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
-                }
+                LogSdk.error(TAG, "printReceiptBasedTraceNo: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
             }
         }
     }

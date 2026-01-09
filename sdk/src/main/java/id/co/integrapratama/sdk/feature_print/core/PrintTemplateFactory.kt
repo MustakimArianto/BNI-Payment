@@ -1,4 +1,4 @@
-package id.co.integrapratama.sdk.feature_print.common
+package id.co.integrapratama.sdk.feature_print.core
 
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.core.util.Resource

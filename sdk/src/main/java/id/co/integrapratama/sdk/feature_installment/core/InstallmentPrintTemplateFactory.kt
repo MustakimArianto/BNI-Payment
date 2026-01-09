@@ -1,7 +1,7 @@
-package id.co.integrapratama.sdk.feature_installment.common
+package id.co.integrapratama.sdk.feature_installment.core
 
 import id.co.integrapratama.sdk.core.utils.CardUtil
-import id.co.integrapratama.sdk.feature_print.common.PrintTemplateFactory
+import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderGroupTemplateComponent
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderTemplateComponent

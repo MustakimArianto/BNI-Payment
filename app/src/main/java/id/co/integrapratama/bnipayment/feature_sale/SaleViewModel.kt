@@ -21,6 +21,7 @@ import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
 import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
 import id.co.payment2go.terminalsdkhelper.common.pinpad.OnPinPadResult
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameter.PrintBasedOnTemplateParameter
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
@@ -166,9 +168,6 @@ class SaleViewModel @Inject constructor(
 
     private fun readCard() {
         viewModelScope.launch {
-            stanManager.increaseStan()
-            traceNumberManager.increment()
-
             readCardRepository.readCard(
                 amount = uiState.value.amount.toLong(),
                 cardOption = uiState.value.cardOption,
@@ -333,7 +332,7 @@ class SaleViewModel @Inject constructor(
     ) {
         _uiState.update {
             it.copy(
-                transactionDateTime = DateUtils.getCurrentTransactionDateTime()
+                transactionDateTime = Date()
             )
         }
 
@@ -783,8 +782,8 @@ class SaleViewModel @Inject constructor(
                     bankMID = "",
                     cashierID = "",
                     terminalCapability = "",
-                    jsonReq = "",
-                    jsonResp = "",
+                    jsonReq = getPrintTemplate().jsonString,
+                    jsonResp = getPrintTemplate().printTemplateJsonString,
                     eMIAmount = 0L,
                 )
             ).collect { resource ->
@@ -820,6 +819,13 @@ class SaleViewModel @Inject constructor(
         }
     }
 
+    private fun getPrintTemplate(): PrintBasedOnTemplateParameter {
+        return saleRepository.preparePrintingData(
+            uiState.value.cardReadOutput ?: CardReadOutput(),
+            uiState.value.transactionDateTime
+        )
+    }
+
     fun setErrorMessage(message: String) {
         _uiState.update {
             it.copy(errorMessage = message)
@@ -839,6 +845,39 @@ class SaleViewModel @Inject constructor(
     }
 
     fun printReceipt() {
+        viewModelScope.launch {
+            saleRepository.printReceiptBasedLastTraceNo().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
 
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                errorMessage = "",
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
