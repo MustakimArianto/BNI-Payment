@@ -81,6 +81,16 @@ class SaleViewModel @Inject constructor(
                     )
                 }
             }
+
+            is SaleUiEvent.MappingOfflinePinpad -> {
+                val deviceTypeValue = deviceTypeManager.getDeviceTypeValue()
+
+                if (deviceTypeValue.isPhysicalKeypadSupported) {
+                    physicalOfflinePinpad()
+                } else {
+                    screenOfflinePinpad(event.containerInfo, event.pinpadMap)
+                }
+            }
         }
     }
 
@@ -221,6 +231,16 @@ class SaleViewModel @Inject constructor(
                                                 deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
                                             onInsertOnlinePinAction =
                                                 resourceReadCard.data!!.onInsertOnlinePinAction,
+                                        )
+                                    }
+                                } else if (resourceReadCard.data!!.isShowOfflinePinpad) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isShowOfflinePinpad = true,
+                                            isPhysicalKeyboard =
+                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                            onInsertOfflinePinAction =
+                                                resourceReadCard.data!!.onInsertOfflinePinAction,
                                         )
                                     }
                                 }
@@ -481,6 +501,64 @@ class SaleViewModel @Inject constructor(
         }
     }
 
+    fun physicalOfflinePinpad() {
+        viewModelScope.launch {
+            readCardRepository.physicalOfflinePinpad(
+                cardNumber = uiState.value.cardNumber,
+                onInsertOfflinePinAction = null
+            ).collect { pinpadEvent ->
+                val result = pinpadEvent.result
+                val action = pinpadEvent.action
+
+                when (result) {
+                    is OnPinPadResult.OnInput -> {
+                        val maskedText = "*".repeat(result.p1)
+                        _uiState.update {
+                            it.copy(
+                                pin = maskedText
+                            )
+                        }
+                    }
+
+                    is OnPinPadResult.OnError -> {
+                        _uiState.update {
+                            it.copy(isShowOfflinePinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.FAIL
+                        )
+                    }
+
+                    is OnPinPadResult.OnConfirm -> {
+                        _uiState.update {
+                            it.copy(
+                                isShowOfflinePinpad = false,
+                                loadingMessage = "Konfirmasi kartu..."
+                            )
+                        }
+                        val pinBlock = String(result.data ?: byteArrayOf())
+                        confirmInputOfflinePin(
+                            pinBlock,
+                            result.isNonPin
+                        )
+                    }
+
+                    is OnPinPadResult.OnCancel -> {
+                        _uiState.update {
+                            it.copy(isShowOfflinePinpad = false)
+                        }
+
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.CANCEL
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
     private fun screenPinpad(
         containerInfo: CustomPinpadUiBounds,
         pinpadMap: List<CustomPinpadUiBounds>
@@ -541,7 +619,73 @@ class SaleViewModel @Inject constructor(
         }
     }
 
+    private fun screenOfflinePinpad(
+        containerInfo: CustomPinpadUiBounds,
+        pinpadMap: List<CustomPinpadUiBounds>
+    ) {
+        viewModelScope.launch {
+            readCardRepository.screenOfflinePinpad(
+                cardNumber = uiState.value.cardNumber,
+                containerInfo = containerInfo,
+                pinpadMap = pinpadMap,
+                onInsertOfflinePinAction = uiState.value.onInsertOfflinePinAction
+            ).collect { pinpadEvent ->
+                val result = pinpadEvent.result
+                val action = pinpadEvent.action
+
+                when (result) {
+                    OnPinPadResult.OnCancel -> {
+                        _uiState.update {
+                            it.copy(isShowOfflinePinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.CANCEL
+                        )
+                    }
+
+                    is OnPinPadResult.OnConfirm -> {
+                        _uiState.update {
+                            it.copy(
+                                isShowOfflinePinpad = false,
+                                isLoading = true,
+                                loadingMessage = "Konfirmasi kartu"
+                            )
+                        }
+                        val pinBlock = String(result.data ?: byteArrayOf())
+                        confirmInputOfflinePin(pinBlock, result.isNonPin)
+                    }
+
+                    is OnPinPadResult.OnError -> {
+                        _uiState.update {
+                            it.copy(isShowOfflinePinpad = false)
+                        }
+                        action?.decideCVMStatus(
+                            DecideCVMStatusResult.FAIL
+                        )
+                    }
+
+                    is OnPinPadResult.OnInput -> {
+                        val maskedText = "*".repeat(result.p1)
+                        _uiState.update {
+                            it.copy(
+                                pin = maskedText
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
     fun confirmInputPin(pinBlock: String, nonPin: Boolean) {
+        viewModelScope.launch {
+            readCardRepository.confirmInputPin(pinBlock, nonPin)
+        }
+    }
+
+    fun confirmInputOfflinePin(pinBlock: String, nonPin: Boolean) {
         viewModelScope.launch {
             readCardRepository.confirmInputPin(pinBlock, nonPin)
         }

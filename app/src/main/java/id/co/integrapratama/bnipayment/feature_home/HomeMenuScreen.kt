@@ -24,7 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.co.integrapratama.bnipayment.navigation.AppRoute
 
 @Composable
 fun HomeMenuScreen(
@@ -32,7 +31,8 @@ fun HomeMenuScreen(
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
-    onNavigateToSettlement: () -> Unit
+    onNavigateToSettlement: () -> Unit,
+    onNavigateToInstallment: () -> Unit
 ) {
     val menuItems = remember {
         getHomeMenuItems(
@@ -40,11 +40,14 @@ fun HomeMenuScreen(
             onNavigateToSale = onNavigateToSale,
             onNavigateToContactlessSale = onNavigateToContactlessSale,
             onNavigateToVoid = onNavigateToVoid,
-            onNavigateToSettlement = onNavigateToSettlement
+            onNavigateToSettlement = onNavigateToSettlement,
+            onNavigateToInstallment = onNavigateToInstallment
         )
     }
 
-    Column(Modifier.padding(16.dp).navigationBarsPadding()) {
+    Column(Modifier
+        .padding(16.dp)
+        .navigationBarsPadding()) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxWidth(),

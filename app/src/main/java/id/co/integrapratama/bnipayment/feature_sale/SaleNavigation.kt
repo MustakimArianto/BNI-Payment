@@ -16,7 +16,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.saleNavigation(navController: NavController) {
+fun NavGraphBuilder.saleNavGraph(navController: NavController) {
     navigation<AppRoute.Sale>(
         startDestination = SaleRoute.InputAmount
     ) {
@@ -115,6 +115,12 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                 }
             }
 
+            if (uiState.isShowOfflinePinpad) {
+                BackHandler {
+
+                }
+            }
+
             LaunchedEffect(uiState.isTransactionFinished) {
                 if (uiState.isTransactionFinished) {
                     navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
@@ -144,6 +150,7 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                     viewModel.onEvent(SaleUiEvent.OnConfirmCard)
                 },
                 showPinpad = uiState.isShowPinpad,
+                showOfflinePinpad = uiState.isShowOfflinePinpad,
                 onButtonMapReady = { containerInfo, pinpadMap ->
                     viewModel.onEvent(
                         SaleUiEvent.MappingPinpad(
@@ -152,7 +159,16 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                         )
                     )
                 },
-                onNavigationBack = { navController.popBackStack() })
+                onOfflinePinButtonMapReady = { containerInfo, pinpadMap ->
+                    viewModel.onEvent(
+                        SaleUiEvent.MappingOfflinePinpad(
+                            containerInfo = containerInfo,
+                            pinpadMap = pinpadMap
+                        )
+                    )
+                },
+                onNavigationBack = { navController.popBackStack() }
+            )
         }
 
         composable<SaleRoute.TransactionStatus> {

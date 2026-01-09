@@ -19,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import id.co.integrapratama.bnipayment.feature_account.AccountScreen
-import id.co.integrapratama.bnipayment.feature_admin.AdminScreen
 import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
 import id.co.integrapratama.bnipayment.feature_home.HomeMenuScreen
 import id.co.integrapratama.bnipayment.feature_information.InformationScreen
@@ -33,7 +32,8 @@ internal fun MainMenuScreen(
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
-    onNavigateToSettlement: () -> Unit
+    onNavigateToSettlement: () -> Unit,
+    onNavigateToInstallment: () -> Unit
 ) {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
@@ -66,7 +66,8 @@ internal fun MainMenuScreen(
                         onNavigateToSale = onNavigateToSale,
                         onNavigateToContactlessSale = onNavigateToContactlessSale,
                         onNavigateToVoid = onNavigateToVoid,
-                        onNavigateToSettlement = onNavigateToSettlement
+                        onNavigateToSettlement = onNavigateToSettlement,
+                        onNavigateToInstallment = onNavigateToInstallment
                     )
                 }
 

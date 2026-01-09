@@ -1,6 +1,7 @@
 package id.co.integrapratama.sdk.core
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import java.util.Calendar
 import kotlin.random.Random
 
@@ -20,16 +21,16 @@ class StanManager(
             resetStan()
             saveLastResetDay(currentDay)
         }
-        return sharedPrefs.getLong(STAN_KEY, 0L)
+        return sharedPrefs.getLong(STAN_KEY, 1L)
     }
 
     fun increaseStan() {
-        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + 1)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + 1)
     }
 
     fun increaseStanUpRandom() {
         val randomNumber = Random.nextLong(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomNumber)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomNumber)
     }
 
     fun setStanManual(value: Long) {
@@ -42,14 +43,15 @@ class StanManager(
 
     fun getGenerateRandomStan():Long{
         val randomInteger = Random.nextInt(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomInteger.toLong())
-        return sharedPrefs.getLong(STAN_KEY, 0L)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomInteger.toLong())
+        return sharedPrefs.getLong(STAN_KEY, 1L)
     }
+
     private fun saveStan(value: Long) {
-        sharedPrefs.edit().putLong(STAN_KEY, value).apply()
+        sharedPrefs.edit { putLong(STAN_KEY, value) }
     }
 
     private fun saveLastResetDay(value: Int) {
-        sharedPrefs.edit().putInt(LAST_RESET_DAY_KEY, value).apply()
+        sharedPrefs.edit { putInt(LAST_RESET_DAY_KEY, value) }
     }
 }

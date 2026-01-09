@@ -16,7 +16,9 @@ fun NavGraphBuilder.homeNavGraph(navController: NavController) {
                 onNavigateToSale = { navController.navigate(AppRoute.Sale(isContactless = false)) },
                 onNavigateToContactlessSale = { navController.navigate(AppRoute.Sale(isContactless = true)) },
                 onNavigateToVoid = { navController.navigate(AppRoute.Void) },
-                onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) })
+                onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) },
+                onNavigateToInstallment = { navController.navigate(AppRoute.Installment) },
+            )
         }
     }
 }

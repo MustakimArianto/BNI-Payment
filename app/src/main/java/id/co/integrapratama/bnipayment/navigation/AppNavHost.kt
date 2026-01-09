@@ -7,9 +7,10 @@ import id.co.integrapratama.bnipayment.feature_account.accountNavGraph
 import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
 import id.co.integrapratama.bnipayment.feature_home.homeNavGraph
 import id.co.integrapratama.bnipayment.feature_information.informationNavGraph
+import id.co.integrapratama.bnipayment.feature_installment.installmentNavGraph
 import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
-import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
+import id.co.integrapratama.bnipayment.feature_sale.saleNavGraph
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -23,6 +24,7 @@ fun AppNavHost(navController: NavHostController) {
         adminNavGraph(navController)
         accountNavGraph(navController)
         miniATMNavGraph(navController)
-        saleNavigation(navController)
+        saleNavGraph(navController)
+        installmentNavGraph(navController)
     }
 }

@@ -12,8 +12,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object Iso8583Module {
-
-
     @Provides
     @Singleton
     fun provideIsoSocketClient(

@@ -36,10 +36,12 @@ fun SaleConfirmTransactionScreen(
     cardNumber: String,
     isPhysicalKeyboard: Boolean,
     showPinpad: Boolean = false,
+    showOfflinePinpad: Boolean = false,
     onCancel: () -> Unit,
     onNext: () -> Unit,
     onNavigationBack: () -> Unit,
     onButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
+    onOfflinePinButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -107,6 +109,12 @@ fun SaleConfirmTransactionScreen(
             pin = pin,
             isPhysicalKeyboard = isPhysicalKeyboard,
             onUpdatePinpadMapping = onButtonMapReady
+        )
+    } else if (showOfflinePinpad) {
+        CustomPinpad(
+            pin = pin,
+            isPhysicalKeyboard = isPhysicalKeyboard,
+            onUpdatePinpadMapping = onOfflinePinButtonMapReady
         )
     }
 }

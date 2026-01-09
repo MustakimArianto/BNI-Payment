@@ -2,6 +2,7 @@ package id.co.integrapratama.bnipayment.feature_sale
 
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
+import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 
@@ -20,13 +21,15 @@ data class SaleUiState(
     var binType: BinType = BinType.UNKNOWN,
 
     // Process flags
-    var isLoading: Boolean = false,
-    var isReadingCard: Boolean = false,
-    var isProcessing: Boolean = false,
-    var isCardConfirmed: Boolean = false,
-    var isShowPinpad: Boolean = false,
-    var onInsertOnlinePinAction: OnInsertOnlinePinAction? = null,
-    var isPhysicalKeyboard: Boolean = false,
+    val isLoading: Boolean = false,
+    val isReadingCard: Boolean = false,
+    val isProcessing: Boolean = false,
+    val isCardConfirmed: Boolean = false,
+    val isShowPinpad: Boolean = false,
+    val isShowOfflinePinpad: Boolean = false,
+    val onInsertOnlinePinAction: OnInsertOnlinePinAction? = null,
+    val onInsertOfflinePinAction: OnInsertOfflinePinAction? = null,
+    val isPhysicalKeyboard: Boolean = false,
 
     // Completion states
     var isFinishedReadCard: Boolean = false,
