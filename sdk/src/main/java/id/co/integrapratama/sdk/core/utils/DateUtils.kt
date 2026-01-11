@@ -17,6 +17,10 @@ object DateUtils {
         return fullDateTimeFormat.format(date)
     }
 
+    fun getTransactionDateTime(date: Date): String {
+        return dateTimeFormat.format(date)
+    }
+
     fun getCurrentTransactionDateTime(): String {
         return fullDateTimeFormat.format(Date())
     }

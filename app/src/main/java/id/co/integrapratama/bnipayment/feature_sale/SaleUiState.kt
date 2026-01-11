@@ -41,6 +41,7 @@ data class SaleUiState(
     var presentCardAgainMessage: String = "",
     var errorMessage: String = "",
     var transactionResultMessage: String = "",
+    var reversalResultMessage: String = ""
 ) {
     // Computed property that always reflects current value
     val title: String

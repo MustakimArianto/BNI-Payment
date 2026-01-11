@@ -11,7 +11,7 @@ class HostUrlManager(
     }
 
     fun getCurrentHostUrl(): String {
-        return sharedPreferences.getString(HOST_URL_KEY, "192.168.6.93") ?: ""
+        return sharedPreferences.getString(HOST_URL_KEY, "10.86.223.143") ?: ""
     }
 
     fun saveHostUrl(hostUrl: String) {

@@ -25,4 +25,6 @@ interface SaleRepository {
     suspend fun printReceiptBasedTraceNo(
         traceNo: String
     ): Flow<Resource<Unit>>
+
+    suspend fun postSaleReversal(): Flow<Resource<ByteArray>>
 }

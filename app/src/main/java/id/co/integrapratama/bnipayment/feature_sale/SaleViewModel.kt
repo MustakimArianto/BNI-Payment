@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.bnipayment.common.maskCardNumber
 import id.co.integrapratama.iso8583sdk.IsoMessage
+import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
@@ -46,6 +47,7 @@ class SaleViewModel @Inject constructor(
     private val traceNumberManager: TraceNumberManager,
     private val stanManager: StanManager,
     private val batchManager: TerminalBatchManager,
+    private val reversalManager: ReversalManager
 ) : ViewModel() {
     companion object {
         private const val TAG = "SaleViewModel"
@@ -55,6 +57,10 @@ class SaleViewModel @Inject constructor(
 
     private val _event = MutableSharedFlow<String>()
     val event = _event.asSharedFlow()
+
+    init {
+        checkReversalData()
+    }
 
     fun onEvent(event: SaleUiEvent) {
         when (event) {
@@ -362,6 +368,8 @@ class SaleViewModel @Inject constructor(
                             val responseCode = response.getField(39)
 
                             if (responseCode == "00") {
+                                reversalManager.clearSaleReversal()
+
                                 val emvData = response.getField(55)
                                 val authCode = response.getField(38)
 
@@ -832,15 +840,47 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    fun clearErrorMessage() {
-        _uiState.update {
-            it.copy(errorMessage = "")
-        }
-    }
+    fun checkReversalData() {
+        viewModelScope.launch {
+            saleRepository.postSaleReversal().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
 
-    fun clearUiState() {
-        _uiState.update {
-            SaleUiState()
+                    is Resource.Success -> {
+                        val response = IsoMessage().unpack(
+                            resource.data ?: byteArrayOf(),
+                            specs = IsoConfig.genericSpec
+                        )
+                        val responseCode = response.getField(39)
+
+                        if (responseCode == "00") {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    reversalResultMessage = "Reversal berhasil"
+                                )
+                            }
+                        }
+
+                        reversalManager.clearSaleReversal()
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -878,6 +918,18 @@ class SaleViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    fun clearErrorMessage() {
+        _uiState.update {
+            it.copy(errorMessage = "")
+        }
+    }
+
+    fun clearUiState() {
+        _uiState.update {
+            SaleUiState()
         }
     }
 }

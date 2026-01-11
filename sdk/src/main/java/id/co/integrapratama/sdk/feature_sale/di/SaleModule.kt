@@ -4,6 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import id.co.integrapratama.sdk.core.ReversalManager
+import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
@@ -24,11 +26,15 @@ object SaleModule {
         printRepository: PrintRepository,
         traceNumberManager: TraceNumberManager,
         batchManager: TerminalBatchManager,
+        reversalManager: ReversalManager,
+        stanManager: StanManager
     ): SaleRepository = SaleRepositoryImpl(
         isoRepository,
         appDatabase,
         printRepository,
         traceNumberManager,
         batchManager,
+        reversalManager,
+        stanManager
     )
 }

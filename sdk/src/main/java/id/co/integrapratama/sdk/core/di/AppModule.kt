@@ -9,6 +9,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import id.co.integrapratama.sdk.core.HostUrlManager
+import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
@@ -90,5 +91,11 @@ object AppModule {
     @Singleton
     fun provideTraceNumberManager(sharedPreferences: SharedPreferences): TraceNumberManager {
         return TraceNumberManager(sharedPreferences)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReversalManager(sharedPreferences: SharedPreferences): ReversalManager {
+        return ReversalManager(sharedPreferences)
     }
 }
