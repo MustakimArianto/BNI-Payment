@@ -1,9 +1,9 @@
 package id.co.integrapratama.sdk.core
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import java.util.Calendar
 import kotlin.random.Random
-import androidx.core.content.edit
 
 class StanManager(
     private val sharedPrefs: SharedPreferences

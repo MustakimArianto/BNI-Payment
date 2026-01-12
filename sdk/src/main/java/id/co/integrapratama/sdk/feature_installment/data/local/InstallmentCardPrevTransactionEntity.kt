@@ -2,7 +2,7 @@ package id.co.integrapratama.sdk.feature_installment.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import id.co.integrapratama.sdk.feature_sale.domain.TransactionModel
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 
 @Entity
 data class InstallmentCardPrevTransactionEntity(
@@ -62,8 +62,8 @@ data class InstallmentCardPrevTransactionEntity(
     val jsonReceipt: String,
     val templateJsonReceipt: String
 ) {
-    fun toTransactionModel(): TransactionModel {
-        return TransactionModel(
+    fun toTransactionModel(): TransactionRecord {
+        return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -92,7 +92,7 @@ data class InstallmentCardPrevTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rrNo = rRNO,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -101,13 +101,16 @@ data class InstallmentCardPrevTransactionEntity(
             posEntryMode = posEntryMode,
             tipAmount = tipAmount,
             cashAMT = cashAMT,
-            feeAmt = feeAmount,
+            feeAmount = feeAmount,
             refTxnTypeId = refTxnTypeId,
             tenure = tenure,
             bankTID = bankTID,
             bankMID = bankMID,
+            eMIAmount = eMIAmount,
             panSeq = panSeq,
             iccData = iccData,
+            responseCode = responseCode,
+            mti = mti,
             jsonReceipt = jsonReceipt,
             templateJsonReceipt = templateJsonReceipt
         )

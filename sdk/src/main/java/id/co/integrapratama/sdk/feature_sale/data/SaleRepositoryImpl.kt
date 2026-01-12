@@ -1,59 +1,183 @@
 package id.co.integrapratama.sdk.feature_sale.data
 
+import android.util.Log
+import com.google.gson.JsonParser
 import id.co.integrapratama.logsdk.LogSdk
+import id.co.integrapratama.sdk.core.ReversalManager
+import id.co.integrapratama.sdk.core.StanManager
+import id.co.integrapratama.sdk.core.TerminalBatchManager
+import id.co.integrapratama.sdk.core.TraceNumberManager
+import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
-import id.co.integrapratama.sdk.core.iso8583.IsoConfig
+import id.co.integrapratama.sdk.core.utils.CardUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.core.utils.MTI
+import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.core.utils.padAmount
+import id.co.integrapratama.sdk.core.utils.toResourceError
+import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
+import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
+import id.co.integrapratama.sdk.feature_sale.core.SalePrintTemplateFactory
+import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalCreditRequestDto
+import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalDebitRequestDto
+import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameter.PrintBasedOnTemplateParameter
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
+import id.co.payment2go.terminalsdkhelper.core.util.Util
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import java.util.Date
+import javax.inject.Inject
 
-class SaleRepositoryImpl(
+class SaleRepositoryImpl @Inject constructor(
     private val isoRepository: Iso8583Repository,
+    private val appDatabase: AppDatabase,
+    private val printRepository: PrintRepository,
+    private val traceNumberManager: TraceNumberManager,
+    private val terminalBatchManager: TerminalBatchManager,
+    private val reversalManager: ReversalManager,
+    private val stanManager: StanManager
 ) : SaleRepository {
     companion object {
         private const val TAG = "SaleRepositoryImpl"
-        private const val FINANCIAL_REQUEST_MTI = "0200"
-        private const val PAYMENT_FROM_SAVING_PROCODE = "501000"
-        private const val PAYMENT_FROM_CHECKING_PROCODE = "502000"
+        private const val SALE_DEBIT_PROCODE = "000000"
+        private const val SALE_CREDIT_PROCODE = "020000"
     }
 
     override suspend fun postSaleTransaction(
-        isFromSaving: Boolean,
+        cardClassification: CardClassification,
         request: CardReadOutput,
-        transactionDateTime: String
+        transactionDateTime: Date
     ): Flow<Resource<ByteArray>> {
         return flow {
+            val cardNo = request.cardNo
+            val processingCode =
+                if (cardClassification == CardClassification.DEBIT) SALE_DEBIT_PROCODE else SALE_CREDIT_PROCODE
+            val amount = request.txnAmount.padAmount()
+            val transactionDateTime = DateUtils.getTransactionDateTime(transactionDateTime)
+            val stan = request.STAN.padStart(6, '0')
+            val time = DateUtils.getTransactionTime(transactionDateTime)
+            val date = DateUtils.getTransactionDate(transactionDateTime)
+            val expiry = request.cardExpiry.replace("/", "")
+            val posEntryMode = request.posEntryMode + "1"
+            val panSeq = request.PANSEQ + "1"
+            val nii = "041"
+            val posConditionCode = "00"
+            val track2 = request.track2Data.dropLast(1)
+            val rrn = "000051000004"
+            val approvalCode = "030059"
+            val responseCode = "00"
+            val tid = "12345678"
+            val mid = "123456789012345"
+            val pinBlock = request.pinBlock
+            val iccData = request.emvData
+            val fld57 = "1".repeat(300)
+            val transactionDetails = "2".repeat(300)
+            val fld62 = "0006123456789012"
+            val messageAuthCode = "0006123456789012"
+
             try {
-                emit(Resource.Loading("Harap tunggu"))
-                val requestData = mapOf(
-                    3 to if (isFromSaving) PAYMENT_FROM_SAVING_PROCODE else PAYMENT_FROM_CHECKING_PROCODE,
-                    4 to request.txnAmount.padAmount(),
-                    7 to transactionDateTime,
-                    11 to request.STAN.padStart(6, '0'),
-                    12 to DateUtils.getTransactionTime(transactionDateTime), // Time
-                    13 to DateUtils.getTransactionDate(transactionDateTime), // Date
-                    18 to "0125", // Merchant Type
-                    22 to request.posEntryMode + "1",
-                    24 to "041", // NII
-                    32 to "1234567890123456789012", // Acquiring Institution ID
-                    35 to request.track2Data,
-                    41 to "12345678", // TID
-                    42 to "123456789012345", // MID
-                    48 to "01551111000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111namenamenamenamenamenamenamenamenamenamenamenamenamenamename11110099999999777777777777777777777777777777777777777777777777777777777777888888888888888888883333333333333333333344444444444444444444666666666666666666", // CSM Data
-                    52 to request.pinBlock,
-                    55 to request.emvData
+                emit(Resource.Loading("Mengirim data transaksi"))
+                traceNumberManager.saveLastTraceNo(traceNumberManager.getCurrentTraceNo())
+                traceNumberManager.increment()
+
+                reversalManager.saveSaleReversal(
+                    if (cardClassification == CardClassification.DEBIT) {
+                        ReversalDebitRequestDto(
+                            pan = cardNo,
+                            processingCode = processingCode,
+                            amount = amount,
+                            transactionDateTime = transactionDateTime,
+                            stan = stan,
+                            time = time,
+                            date = date,
+                            expiry = expiry,
+                            posEntryMode = posEntryMode,
+                            nii = nii,
+                            tid = tid,
+                            mid = mid,
+                        ).toString()
+                    } else {
+                        ReversalCreditRequestDto(
+                            pan = cardNo,
+                            processingCode = processingCode,
+                            amount = amount,
+                            stan = stan,
+                            time = time,
+                            date = date,
+                            expiry = expiry,
+                            posEntryMode = posEntryMode,
+                            panSeq = panSeq,
+                            nii = nii,
+                            posConditionCode = posConditionCode,
+                            approvalCode = approvalCode,
+                            responseCode = responseCode,
+                            tid = tid,
+                            mid = mid,
+                            iccData = iccData,
+                            fld57 = fld57,
+                            transactionDetails = transactionDetails,
+                            fld62 = fld62,
+                            messageAuthCode = messageAuthCode
+                        ).toString()
+                    }
                 )
+
+                val requestData = if (cardClassification == CardClassification.DEBIT) {
+                    mutableMapOf<Int, String>().apply {
+                        put(2, cardNo)
+                        put(3, processingCode)
+                        put(4, amount)
+                        put(11, stan)
+                        put(14, expiry)
+                        put(22, posEntryMode)
+                        put(24, nii)
+                        put(25, posConditionCode)
+                        put(35, track2)
+                        put(37, rrn)
+                        put(38, approvalCode)
+                        put(41, tid)
+                        put(42, mid)
+                        put(52, pinBlock)
+                        if (iccData.isNotEmpty()) {
+                            put(55, iccData)
+                        }
+                        put(62, fld62)
+                    }
+                } else {
+                    mutableMapOf<Int, String>().apply {
+                        put(3, processingCode)
+                        put(4, amount)
+                        put(11, stan)
+                        put(12, time)
+                        put(13, date)
+                        put(22, posEntryMode)
+                        put(23, panSeq)
+                        put(24, nii)
+                        put(25, posConditionCode)
+                        put(35, track2)
+                        put(37, rrn)
+                        put(38, approvalCode)
+                        put(39, responseCode)
+                        put(41, tid)
+                        if (iccData.isNotEmpty()) {
+                            put(55, iccData)
+                        }
+                        put(57, fld57)
+                        put(61, transactionDetails)
+                        put(62, fld62)
+                        put(64, messageAuthCode)
+                    }
+                }
+
                 val packedData = isoRepository.createRequest(
-                    FINANCIAL_REQUEST_MTI,
+                    MTI.FINANCIAL.code,
                     requestData,
-                    IsoConfig.saleRequest
                 )
 
                 if (packedData.isEmpty()) {
@@ -64,7 +188,7 @@ class SaleRepositoryImpl(
                 isoRepository.sendAndReceive(packedData).collect { response ->
                     when (response) {
                         is Resource.Loading -> {
-                            emit(Resource.Loading("Mengirim request sale...", null))
+                            emit(Resource.Loading("Mengirim request sale..."))
                         }
 
                         is Resource.Success -> {
@@ -77,13 +201,273 @@ class SaleRepositoryImpl(
                     }
                 }
             } catch (e: Exception) {
-                LogSdk.error(TAG, e.stackTraceToString())
-                when (e) {
-                    is UnknownHostException -> emit(Resource.Error("Tidak ada koneksi Internet"))
-                    is ConnectException -> emit(Resource.Error("Tidak dapat terhubung ke server"))
-                    is SocketTimeoutException -> emit(Resource.Error("Koneksi Timeout"))
-                    else -> emit(Resource.Error(e.message ?: "Unknown error occurred"))
+                LogSdk.error(TAG, "postSaleTransaction: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override fun preparePrintingData(
+        request: CardReadOutput, transactionDateTime: Date
+    ): PrintBasedOnTemplateParameter {
+        val amountText =
+            StringUtil.formatRupiahCurrency((request.txnAmount.toLong() / 100).toString())
+        val authCode = "711162"
+        val refNo = "000047111620000"
+
+        val currentTraceNoText = Util.addZerosToNumber(
+            traceNumberManager.getCurrentLastTraceNo(),
+            desiredDigits = 6
+        )
+        val currentBatchNoText = Util.addZerosToNumber(
+            terminalBatchManager.getCurrentBatch(),
+            desiredDigits = 6
+        )
+
+        val printFactory = SalePrintTemplateFactory(
+            branchName = "DUMMY TRX",
+            branchAddress = "JL. JENDRAL SUDIRMAN",
+            branchCity = "JAKARTA",
+            terminalId = "1234567890",
+            merchantId = "1234567890",
+            cardType = request.cardAppName,
+            exp = request.cardExpiry,
+            cardNumber = request.cardNo,
+            cardMethod = CardUtil.getCardMethodFromPosEntryMode(request.posEntryMode),
+            date = DateUtils.getReceiptTransactionDate(transactionDateTime),
+            time = DateUtils.getReceiptTransactionTime(transactionDateTime),
+            batch = currentBatchNoText,
+            trace = currentTraceNoText,
+            ref = refNo,
+            appr = authCode,
+            amount = amountText,
+            version = "V2019.1.0.0.8",
+        )
+
+        val printTemplate = printFactory.getPrintBasedOnTemplateParameter { }
+
+        return printTemplate
+    }
+
+    override suspend fun insertCardTransactionToDatabase(transactionRecord: TransactionRecord): Flow<Resource<Unit>> {
+        return flow {
+            emit(Resource.Loading("Menyimpan data transaksi"))
+            try {
+                with(transactionRecord) {
+                    val cardTransactionEntity = CardTransactionEntity(
+                        invoice = invoice,
+                        invoiceDate = invoiceDate,
+                        issuerID = issuerID,
+                        issuerName = issuerName,
+                        saleType = saleType,
+                        batchNo = batchNo,
+                        authCode = authCode,
+                        amount = amount,
+                        payID = payID,
+                        pan = pan,
+                        mID = mID,
+                        tID = tID,
+                        printFormats = printFormats,
+                        refNo = refNo,
+                        txnTypeId = txnTypeId,
+                        programName = programName,
+                        cardExpiry = cardExpiry,
+                        cardAID = cardAID,
+                        cardAppName = cardAppName,
+                        customerName = customerName,
+                        currencyCode = currencyCode,
+                        tVRData = tVRData,
+                        tSIData = tSIData,
+                        txnCatCode = txnCatCode,
+                        txnCert = txnCert,
+                        stan = stan,
+                        maskedCardNo = maskedCardNo,
+                        insertModeCode = insertModeCode,
+                        rrNo = rrNo,
+                        txnStatus = txnStatus,
+                        cardType = cardType,
+                        cardTypeCode = cardTypeCode,
+                        acquiringBank = acquiringBank,
+                        secureData = secureData,
+                        posEntryMode = posEntryMode,
+                        tipAmount = tipAmount,
+                        cashAMT = cashAMT,
+                        feeAmount = feeAmount,
+                        refTxnTypeId = refTxnTypeId,
+                        tenure = tenure,
+                        bankTID = bankTID,
+                        bankMID = bankMID,
+                        cashierID = cashierID,
+                        terminalCapability = terminalCapability,
+                        jsonReq = jsonReq,
+                        jsonResp = jsonResp,
+                        eMIAmount = eMIAmount,
+                        redeemAmount = redeemAmount,
+                        pinBlock = pinBlock,
+                        isTxnActive = isTxnActive,
+                        isTxnVoid = isTxnVoid,
+                        isVoidApplicable = isVoidApplicable,
+                        isLoyaltyVoid = isLoyaltyVoid,
+                        loyaltyData = loyaltyData,
+                        panSeq = panSeq,
+                        iccData = iccData,
+                        responseCode = responseCode,
+                        mti = mti,
+                        jsonReceipt = jsonReceipt,
+                        templateJsonReceipt = templateJsonReceipt
+                    )
+
+                    appDatabase.cardTransactionDao().insert(cardTransactionEntity)
+                    emit(Resource.Success(Unit))
                 }
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "insertCardTransactionToDatabase: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override suspend fun printReceiptBasedLastTraceNo(): Flow<Resource<Unit>> {
+        return printReceiptBasedTraceNo(
+            Util.addZerosToNumber(
+                traceNumberManager.getCurrentTraceNo(), desiredDigits = 6
+            )
+        )
+    }
+
+    override suspend fun printReceiptBasedTraceNo(traceNo: String): Flow<Resource<Unit>> {
+        return flow {
+            try {
+                emit(Resource.Loading("Mencari data"))
+
+                Log.d(TAG, "printReceiptBasedTraceNo current: $traceNo")
+                appDatabase.cardTransactionDao().getAllTrxData().forEach {
+                    Log.d(
+                        TAG,
+                        "printReceiptBasedTraceNo alldata: ${it.amount} - ${it.saleType} - ${it.invoice}"
+                    )
+                }
+                val cardTransactionEntity =
+                    appDatabase.cardTransactionDao().getTrxDataByTraceNo(traceNo)
+
+                if (cardTransactionEntity == null) {
+                    emit(Resource.Error("Data tidak ditemukan"))
+                    return@flow
+                }
+                emit(Resource.Loading("Mencetak struk"))
+                printRepository.printWithBuilder(
+                    builder = PrintBasedOnTemplateParameterBuilder().fromJson(
+                        valueComponentJsonString = cardTransactionEntity.jsonReq,
+                        templateComponentJsonString = cardTransactionEntity.jsonResp
+                    )
+                ).collect()
+                emit(Resource.Success(Unit))
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "printReceiptBasedTraceNo: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override suspend fun postSaleReversal(): Flow<Resource<ByteArray>> {
+        return flow {
+            try {
+                val reversalData = reversalManager.getSaleReversal()
+
+                if (reversalData == null) {
+                    emit(Resource.Error("Data reversal tidak ditemukan"))
+                    return@flow
+                }
+
+                stanManager.increaseStan()
+                traceNumberManager.increment()
+
+                emit(Resource.Loading("Mengecek data reversal"))
+                val processingCode = JsonParser.parseString(reversalData)
+                    .asJsonObject
+                    .get("processingCode")?.asString ?: ""
+
+                val cardClassification = if (processingCode == SALE_DEBIT_PROCODE) {
+                    CardClassification.DEBIT
+                } else {
+                    CardClassification.CREDIT
+                }
+
+                val request = if (cardClassification == CardClassification.DEBIT) {
+                    mutableMapOf<Int, String>().apply {
+                        val dto = ReversalDebitRequestDto.fromString(reversalData)
+                        with(dto) {
+                            put(2, pan)
+                            put(3, processingCode)
+                            put(4, amount)
+                            put(7, transactionDateTime)
+                            put(11, stan)
+                            put(12, time)
+                            put(13, date)
+                            put(14, expiry)
+                            put(22, posEntryMode)
+                            put(24, nii)
+                            put(41, tid)
+                            put(42, mid)
+                        }
+                    }
+                } else {
+                    mutableMapOf<Int, String>().apply {
+                        val dto = ReversalCreditRequestDto.fromString(reversalData)
+
+                        with(dto) {
+                            put(2, pan)
+                            put(3, processingCode)
+                            put(4, amount)
+                            put(11, stan)
+                            put(12, time)
+                            put(13, date)
+                            put(14, expiry)
+                            put(22, posEntryMode)
+                            put(23, panSeq)
+                            put(24, nii)
+                            put(25, posConditionCode)
+                            put(38, approvalCode)
+                            put(39, responseCode)
+                            put(41, tid)
+                            put(42, mid)
+                            put(55, iccData)
+                            put(57, fld57)
+                            put(61, transactionDetails)
+                            put(62, fld62)
+                            put(64, messageAuthCode)
+                        }
+                    }
+                }
+
+                val packedData = isoRepository.createRequest(
+                    MTI.REVERSAL.code, request
+                )
+
+                if (packedData.isEmpty()) {
+                    emit(Resource.Error("Error saat membuat request reversal"))
+                    return@flow
+                }
+
+                isoRepository.sendAndReceive(packedData).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> {
+                            emit(Resource.Loading("Mengirim data reversal..."))
+                        }
+
+                        is Resource.Success -> {
+
+                            emit(Resource.Success(resource.data ?: byteArrayOf()))
+                        }
+
+                        is Resource.Error -> {
+                            emit(Resource.Error(resource.message ?: "Terjadi kesalahan"))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "postSaleReversal: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
             }
         }
     }

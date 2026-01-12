@@ -38,6 +38,7 @@ class InstallmentViewModel @Inject constructor(
     companion object {
         private const val TAG = "InstallmentViewModel"
     }
+
     private val _uiState = MutableStateFlow(InstallmentUiState())
     val uiState: StateFlow<InstallmentUiState> = _uiState.asStateFlow()
 
@@ -81,6 +82,7 @@ class InstallmentViewModel @Inject constructor(
                     )
                 }
             }
+
             is InstallmentUiEvent.OnInstallmentPeriodSelectionChange -> {
                 _uiState.update {
                     it.copy(
@@ -170,120 +172,124 @@ class InstallmentViewModel @Inject constructor(
             )
 
             readCardRepository.readCard(
+                amount = uiState.value.amount.toLong(),
                 cardOption = cardOption,
             ).collect { resourceReadCard ->
-                    when (resourceReadCard) {
-                        is Resource.Loading -> {
-                            val loadingMessage: String = resourceReadCard.message.toString()
-                            Log.d("loadingMessage", loadingMessage)
-                            val lowerCaseLoadingMessage: String = loadingMessage.lowercase(Locale.getDefault())
-                            fun parsingPresentingCardAgainMessage(): String {
-                                var step = 1
-                                val result = StringBuilder()
-                                for (c in lowerCaseLoadingMessage) {
-                                    if (step == 1) {
-                                        if (c == ':') {
-                                            step = 2
-                                        }
-                                    } else if (step == 2) {
-                                        if (c != ' ') {
-                                            step = 3
-                                            result.append(c)
-                                        }
-                                    } else {
+                when (resourceReadCard) {
+                    is Resource.Loading -> {
+                        val loadingMessage: String = resourceReadCard.message.toString()
+                        Log.d("loadingMessage", loadingMessage)
+                        val lowerCaseLoadingMessage: String =
+                            loadingMessage.lowercase(Locale.getDefault())
+
+                        fun parsingPresentingCardAgainMessage(): String {
+                            var step = 1
+                            val result = StringBuilder()
+                            for (c in lowerCaseLoadingMessage) {
+                                if (step == 1) {
+                                    if (c == ':') {
+                                        step = 2
+                                    }
+                                } else if (step == 2) {
+                                    if (c != ' ') {
+                                        step = 3
                                         result.append(c)
                                     }
+                                } else {
+                                    result.append(c)
                                 }
-                                return result.toString().replaceFirstChar { it.uppercaseChar() }
                             }
+                            return result.toString().replaceFirstChar { it.uppercaseChar() }
+                        }
 
-                            val parsingPresentingCardAgainMessageResult = parsingPresentingCardAgainMessage()
-                            val cardReadOutput: CardReadOutput? = resourceReadCard.data?.cardReadOutput
+                        val parsingPresentingCardAgainMessageResult =
+                            parsingPresentingCardAgainMessage()
+                        val cardReadOutput: CardReadOutput? = resourceReadCard.data?.cardReadOutput
 
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                isReadingCard = true,
+                                statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                            )
+                        }
+
+
+                        if (cardReadOutput?.cardNo?.isNotEmpty() == true) {
                             _uiState.update {
                                 it.copy(
-                                    isLoading = true,
-                                    isReadingCard = true,
+                                    cardNumber = cardReadOutput.cardNo,
+                                    maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
+                                    isFinishedReadCard = true,
                                     statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                 )
                             }
+                        }
 
 
-                            if (cardReadOutput?.cardNo?.isNotEmpty() == true) {
+                        if (resourceReadCard.data != null) {
+                            if (resourceReadCard.data!!.isShowPinpad) {
                                 _uiState.update {
                                     it.copy(
-                                        cardNumber = cardReadOutput.cardNo,
-                                        maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
-                                        isFinishedReadCard = true,
-                                        statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                        isShowPinpad = true,
+                                        isPhysicalKeyboard =
+                                            deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                        onInsertOnlinePinAction =
+                                            resourceReadCard.data!!.onInsertOnlinePinAction,
+                                    )
+                                }
+                            } else if (resourceReadCard.data!!.isShowOfflinePinpad) {
+                                _uiState.update {
+                                    it.copy(
+                                        isShowOfflinePinpad = true,
+                                        isPhysicalKeyboard =
+                                            deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                        onInsertOfflinePinAction =
+                                            resourceReadCard.data!!.onInsertOfflinePinAction,
                                     )
                                 }
                             }
 
-
-                            if (resourceReadCard.data != null) {
-                                if (resourceReadCard.data!!.isShowPinpad) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isShowPinpad = true,
-                                            isPhysicalKeyboard =
-                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
-                                            onInsertOnlinePinAction =
-                                                resourceReadCard.data!!.onInsertOnlinePinAction,
-                                        )
-                                    }
-                                } else if (resourceReadCard.data!!.isShowOfflinePinpad) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isShowOfflinePinpad = true,
-                                            isPhysicalKeyboard =
-                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
-                                            onInsertOfflinePinAction =
-                                                resourceReadCard.data!!.onInsertOfflinePinAction,
-                                        )
-                                    }
+                            if (parsingPresentingCardAgainMessageResult.isNotBlank()) {
+                                _uiState.update {
+                                    it.copy(
+                                        presentCardAgainMessage = parsingPresentingCardAgainMessageResult
+                                    )
                                 }
-
-                                if (parsingPresentingCardAgainMessageResult.isNotBlank()) {
-                                    _uiState.update {
-                                        it.copy(
-                                            presentCardAgainMessage = parsingPresentingCardAgainMessageResult
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        is Resource.Success -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    isReadingCard = false,
-                                    cardReadOutput = resourceReadCard.data?.cardReadOutput,
-                                    cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
-                                        ?: "",
-                                )
-                            }
-
-                            viewModelScope.launch {
-                                postInstallmentTransaction(
-                                    isFromSaving = true,
-                                    cardReadOutput = uiState.value.cardReadOutput
-                                        ?: CardReadOutput()
-                                )
-                            }
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    errorMessage = resourceReadCard.message ?: "Terjadi kesalahan",
-                                )
                             }
                         }
                     }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isReadingCard = false,
+                                cardReadOutput = resourceReadCard.data?.cardReadOutput,
+                                cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
+                                    ?: "",
+                            )
+                        }
+
+                        viewModelScope.launch {
+                            postInstallmentTransaction(
+                                isFromSaving = true,
+                                cardReadOutput = uiState.value.cardReadOutput
+                                    ?: CardReadOutput()
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resourceReadCard.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
                 }
+            }
         }
     }
 
@@ -333,8 +339,7 @@ class InstallmentViewModel @Inject constructor(
                         is Resource.Success -> {
                             val response = IsoMessage().unpack(
                                 data = resource.data ?: byteArrayOf(),
-                                specs = IsoConfig.saleRequest,
-                                headerLength = 2
+                                specs = IsoConfig.genericSpec,
                             )
 
                             val responseCode = response.getField(39)
@@ -368,7 +373,7 @@ class InstallmentViewModel @Inject constructor(
                             }
                         }
                     }
-            }
+                }
         }
     }
 

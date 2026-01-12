@@ -19,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import id.co.integrapratama.bnipayment.feature_account.AccountScreen
-import id.co.integrapratama.bnipayment.feature_admin.AdminScreen
 import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
 import id.co.integrapratama.bnipayment.feature_home.HomeMenuScreen
 import id.co.integrapratama.bnipayment.feature_information.InformationScreen

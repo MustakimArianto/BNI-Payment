@@ -1,6 +1,5 @@
 package id.co.integrapratama.sdk.core.di
 
-import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,9 +9,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import id.co.integrapratama.sdk.core.HostUrlManager
+import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
+import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.data.remote.LogSdkInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -90,5 +91,11 @@ object AppModule {
     @Singleton
     fun provideTraceNumberManager(sharedPreferences: SharedPreferences): TraceNumberManager {
         return TraceNumberManager(sharedPreferences)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReversalManager(sharedPreferences: SharedPreferences): ReversalManager {
+        return ReversalManager(sharedPreferences)
     }
 }

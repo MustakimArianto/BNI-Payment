@@ -4,6 +4,7 @@ import android.util.Log
 import id.co.integrapratama.iso8583sdk.IsoMessage
 import id.co.integrapratama.iso8583sdk.IsoSpecConfiguration
 import id.co.integrapratama.logsdk.LogSdk
+import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,12 +15,16 @@ import javax.inject.Inject
 class Iso8583Repository @Inject constructor(
     private val client: IsoSocketClient,
 ) {
+    companion object {
+        const val TAG = "Iso8583Repository"
+    }
+
     fun sendAndReceive(
         message: ByteArray,
     ): Flow<Resource<ByteArray>> = flow {
-        emit(Resource.Loading("Mengirim data ke ke host", null))
-
         try {
+            emit(Resource.Loading("Mengirim data ke host"))
+
             writeIsoLog(message, true)
             val response = withContext(Dispatchers.IO) { client.sendAndReceive(message) }
 
@@ -31,11 +36,12 @@ class Iso8583Repository @Inject constructor(
                 emit(Resource.Error("No response received from server"))
             }
         } catch (e: Exception) {
-            emit(Resource.Error("Socket error : ${e.message ?: "Unknown error"}"))
+            LogSdk.error(TAG, e.stackTraceToString())
+            emit(e.toResourceError())
         }
     }
 
-    fun createRequest(mti: String, data: Map<Int, String>, spec: IsoSpecConfiguration): ByteArray {
+    fun createRequest(mti: String, data: Map<Int, String>, spec: IsoSpecConfiguration = IsoConfig.genericSpec): ByteArray {
         val isoMessage = IsoMessage(spec).apply {
             setMTI(mti)
             data.forEach { (idx, value) ->
@@ -53,25 +59,33 @@ class Iso8583Repository @Inject constructor(
     }
 
     fun writeIsoLog(message: ByteArray, isRequest: Boolean) {
-        if (message.isEmpty()) {
+        try {
+            if (message.isEmpty()) {
+                LogSdk.isoString(
+                    if (isRequest) "Request" else "Response",
+                    if (isRequest) "Request is empty" else "Response is empty"
+                )
+                return
+            }
+
+            val isoMessage = IsoMessage().unpack(message, IsoConfig.genericSpec)
+            val mti = isoMessage.getMti()
+            val messageString = StringBuilder()
+
+            messageString.append("MTI: $mti\n")
+            for (i in 2..isoMessage.getMaxField()) {
+                if (isoMessage.hasField(i)) {
+                    messageString.append("F${i}: ${isoMessage.getField(i)}\n")
+                }
+            }
+
+            LogSdk.isoString(if (isRequest) "Request" else "Response", "$messageString")
+        } catch (e: Exception) {
+            LogSdk.error(TAG, "Error writing ISO log: ${e.message}")
             LogSdk.isoString(
                 if (isRequest) "Request" else "Response",
-                if (isRequest) "Request is empty" else "Response is empty"
+                "Error parsing message: ${e.message}\nRaw bytes: ${message.joinToString(" ") { "%02X".format(it) }}"
             )
-            return
         }
-
-        val isoMessage = IsoMessage().unpack(message, IsoConfig.genericSpec)
-        val mti = isoMessage.getMti()
-        val messageString = StringBuilder()
-
-        messageString.append("MTI: $mti\n")
-        for (i in 2..isoMessage.getMaxField()) {
-            if (isoMessage.hasField(i)) {
-                messageString.append("F${i}: ${isoMessage.getField(i)}\n")
-            }
-        }
-
-        LogSdk.isoString(if (isRequest) "Request" else "Response", "$messageString")
     }
 }

@@ -4,10 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -17,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.common.ui.InputAmountTextField
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.ResourceImplementer
 import id.co.integrapratama.bnipayment.common.ui_component.SelectionButton
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
@@ -41,9 +39,11 @@ fun InstallmentInputAmountScreen(
     selectedInstallmentPeriod: InstallmentPeriodModel?,
     onSelectInstallmentPeriod: (InstallmentPeriodModel) -> Unit,
 ) {
-    Column(Modifier
-        .padding(16.dp)
-        .navigationBarsPadding()) {
+    Column(
+        Modifier
+            .padding(16.dp)
+            .navigationBarsPadding()
+    ) {
         TopBar(title = "Installment", onBackClick = onNavigationBack)
         VerticalSpacer(SpacerSize.X_LARGE)
 

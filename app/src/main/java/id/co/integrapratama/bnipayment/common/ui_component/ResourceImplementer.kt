@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 
 @Composable
-fun<T> ResourceImplementer(
+fun <T> ResourceImplementer(
     resource: Resource<T>?,
     onLoading: @Composable ((String) -> Unit)? = null,
     onSuccess: @Composable ((T?) -> Unit),
@@ -23,9 +23,11 @@ fun<T> ResourceImplementer(
             }
             onLoading.invoke(resource.message ?: "")
         }
+
         is Resource.Success -> {
             onSuccess.invoke(resource.data)
         }
+
         is Resource.Error -> {
             val errorMessage = resource.message ?: defaultUnknownErrorText
             if (onError == null) {

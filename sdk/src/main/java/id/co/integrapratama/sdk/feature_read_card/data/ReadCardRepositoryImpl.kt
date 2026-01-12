@@ -14,6 +14,8 @@ import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.payment2go.terminalsdkhelper.common.SupportCustomPinpad
 import id.co.payment2go.terminalsdkhelper.common.emv.AidKernelConfig
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
+import id.co.payment2go.terminalsdkhelper.common.emv.ContactlessCardParameter
+import id.co.payment2go.terminalsdkhelper.common.emv.ContactlessCardSearchPurpose
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVResponse
 import id.co.payment2go.terminalsdkhelper.common.emv.EMVUtility
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
@@ -44,10 +46,12 @@ class ReadCardRepositoryImpl(
     }
 
     override suspend fun readCard(
+        amount: Long,
         cardOption: CardOption,
     ): Flow<Resource<ReadCardModel>> {
         return callbackFlow {
             emvUtility.stopEMVSearch(true)
+            stanManager.increaseStan()
 
             emvUtility.searchCardFirst(
                 cardOption = cardOption,
@@ -126,7 +130,12 @@ class ReadCardRepositoryImpl(
                         LogSdk.info(TAG, "onError: $message")
                         trySend(Resource.Error(message))
                     }
-                }
+                },
+                contactlessCardParameter = ContactlessCardParameter(
+                    contactlessCardSearchPurpose = ContactlessCardSearchPurpose.Transaction(
+                        amount = amount
+                    )
+                )
             )
 
             awaitClose {
@@ -412,7 +421,7 @@ class ReadCardRepositoryImpl(
                     }
 
                     override fun error(code: Int, message: String) {
-                        trySend(Resource.Error(message))
+                        trySend(Resource.Error("Kartu ditolak"))
                     }
                 })
 

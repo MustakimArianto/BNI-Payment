@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
 fun InstallmentTransactionStatus(

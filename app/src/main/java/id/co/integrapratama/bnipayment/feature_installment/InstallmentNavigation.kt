@@ -31,7 +31,13 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
 
             InstallmentInputAmountScreen(
                 amount = uiState.amount,
-                onAmountChanged = { amount -> viewModel.onEvent(InstallmentUiEvent.OnAmountChange(amount)) },
+                onAmountChanged = { amount ->
+                    viewModel.onEvent(
+                        InstallmentUiEvent.OnAmountChange(
+                            amount
+                        )
+                    )
+                },
                 onNextClick = {
                     if (uiState.amount.isNotEmpty()) {
                         navController.navigateFromCurrent(InstallmentRoute.InsertCard)

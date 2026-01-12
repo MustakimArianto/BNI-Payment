@@ -19,8 +19,8 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
 
         MainMenuScreen(
             onNavigateToMiniATM = { navController.navigate(AppRoute.MiniATM) },
-            onNavigateToSale = { navController.navigate(AppRoute.Sale) },
-            onNavigateToContactlessSale = { navController.navigate(AppRoute.ContactlessSale) },
+            onNavigateToSale = { navController.navigate(AppRoute.Sale(isContactless = false)) },
+            onNavigateToContactlessSale = { navController.navigate(AppRoute.Sale(isContactless = true)) },
             onNavigateToVoid = { navController.navigate(AppRoute.Void) },
             onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) },
             onNavigateToInstallment = { navController.navigate(AppRoute.Installment) },

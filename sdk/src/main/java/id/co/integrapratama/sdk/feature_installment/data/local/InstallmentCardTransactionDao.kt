@@ -51,7 +51,10 @@ interface InstallmentCardTransactionDao {
     suspend fun getLastTxnData(): InstallmentCardTransactionEntity?
 
     @Query("SELECT * FROM InstallmentCardTransactionEntity WHERE invoice =:invoice AND txnTypeId = :txnTypeId ORDER BY id DESC")
-    suspend fun getVoidByTraceNumber(invoice: String, txnTypeId: String = TransactionType.VOID.name): InstallmentCardTransactionEntity?
+    suspend fun getVoidByTraceNumber(
+        invoice: String,
+        txnTypeId: String = TransactionType.VOID.name
+    ): InstallmentCardTransactionEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: InstallmentCardTransactionEntity): Long

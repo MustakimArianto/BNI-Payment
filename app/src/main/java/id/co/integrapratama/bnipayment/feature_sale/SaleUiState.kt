@@ -1,21 +1,25 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
+import java.util.Date
 
 data class SaleUiState(
     // Transaction data
-    val title: String = "Sale",
-    val amount: String = "",
-    val cardNumber: String = "",
-    val maskedCardNumber: String = "",
-    val cardType: Int? = null,
-    val cvmMethod: Int? = null,
-    val cardReadOutput: CardReadOutput? = null,
-    val pin: String = "",
-    val pinBlock: String = "",
-    val transactionDateTime: String = "",
+    var isContactless: Boolean = false,
+    var amount: String = "",
+    var cardNumber: String = "",
+    var maskedCardNumber: String = "",
+    var cardType: Int? = null,
+    var cvmMethod: Int? = null,
+    var cardReadOutput: CardReadOutput? = null,
+    var pin: String = "",
+    var pinBlock: String = "",
+    var transactionDateTime: Date = Date(),
+    var binType: BinType = BinType.UNKNOWN,
 
     // Process flags
     val isLoading: Boolean = false,
@@ -29,11 +33,23 @@ data class SaleUiState(
     val isPhysicalKeyboard: Boolean = false,
 
     // Completion states
-    val isFinishedReadCard: Boolean = false,
-    val isTransactionFinished: Boolean = false,
+    var isFinishedReadCard: Boolean = false,
+    var isTransactionFinished: Boolean = false,
 
     // UI feedback
-    val statusMessage: String = "",
-    val presentCardAgainMessage: String = "",
-    val errorMessage: String = "",
-)
+    var loadingMessage: String = "",
+    var presentCardAgainMessage: String = "",
+    var errorMessage: String = "",
+    var transactionResultMessage: String = "",
+    var reversalResultMessage: String = ""
+) {
+    // Computed property that always reflects current value
+    val title: String
+        get() = "Sale ${if (isContactless) "Contactless" else ""}"
+    val cardOption: CardOption
+        get() = CardOption(
+            supportContactless = isContactless,
+            supportDip = !isContactless,
+            supportSwipe = false
+        )
+}

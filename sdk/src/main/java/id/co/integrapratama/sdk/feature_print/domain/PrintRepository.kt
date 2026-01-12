@@ -1,6 +1,6 @@
 package id.co.integrapratama.sdk.feature_print.domain
 
-import id.co.integrapratama.sdk.feature_print.common.PrintTemplateFactory
+import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
 import id.co.payment2go.terminalsdkhelper.common.printer.ImageDataParameter
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.core.util.Resource

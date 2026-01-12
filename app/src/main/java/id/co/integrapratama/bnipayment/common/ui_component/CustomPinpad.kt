@@ -41,16 +41,6 @@ import androidx.compose.ui.window.DialogProperties
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadKeyCode
-import kotlin.collections.chunked
-import kotlin.collections.forEach
-import kotlin.collections.last
-import kotlin.collections.map
-import kotlin.collections.set
-import kotlin.collections.shuffled
-import kotlin.collections.take
-import kotlin.collections.toMutableList
-import kotlin.text.isEmpty
-import kotlin.text.isNotBlank
 
 @Composable
 fun PinPadButton(
@@ -264,16 +254,16 @@ fun CustomPinpad(
             Log.d(
                 "PinPad",
                 "📦 Container: " +
-                    "x=${containerRect!!.left}, y=${containerRect!!.top}, " +
-                    "w=${containerRect!!.width}, h=${containerRect!!.height}"
+                        "x=${containerRect!!.left}, y=${containerRect!!.top}, " +
+                        "w=${containerRect!!.width}, h=${containerRect!!.height}"
             )
 
             buttonRects.forEach { (label, rect) ->
                 Log.d(
                     "PinPad",
                     "🔘 $label -> " +
-                        "x=${rect.left}, y=${rect.top}, " +
-                        "w=${rect.width}, h=${rect.height}"
+                            "x=${rect.left}, y=${rect.top}, " +
+                            "w=${rect.width}, h=${rect.height}"
                 )
             }
 

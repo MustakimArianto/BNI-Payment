@@ -24,7 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.co.integrapratama.bnipayment.navigation.AppRoute
 
 @Composable
 fun HomeMenuScreen(
@@ -46,7 +45,9 @@ fun HomeMenuScreen(
         )
     }
 
-    Column(Modifier.padding(16.dp).navigationBarsPadding()) {
+    Column(Modifier
+        .padding(16.dp)
+        .navigationBarsPadding()) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxWidth(),

@@ -6,15 +6,23 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.bnipayment.common.maskCardNumber
 import id.co.integrapratama.iso8583sdk.IsoMessage
+import id.co.integrapratama.sdk.core.ReversalManager
+import id.co.integrapratama.sdk.core.StanManager
+import id.co.integrapratama.sdk.core.TerminalBatchManager
+import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_sale.domain.SaleRepository
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
 import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
-import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.pinpad.OnPinPadResult
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameter.PrintBasedOnTemplateParameter
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
@@ -26,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
@@ -34,6 +43,11 @@ class SaleViewModel @Inject constructor(
     private val deviceTypeManager: DeviceTypeManager,
     private val saleRepository: SaleRepository,
     private val readCardRepository: ReadCardRepository,
+    private val binRangeRepository: BinRangeRepository,
+    private val traceNumberManager: TraceNumberManager,
+    private val stanManager: StanManager,
+    private val batchManager: TerminalBatchManager,
+    private val reversalManager: ReversalManager
 ) : ViewModel() {
     companion object {
         private const val TAG = "SaleViewModel"
@@ -43,6 +57,10 @@ class SaleViewModel @Inject constructor(
 
     private val _event = MutableSharedFlow<String>()
     val event = _event.asSharedFlow()
+
+    init {
+        checkReversalData()
+    }
 
     fun onEvent(event: SaleUiEvent) {
         when (event) {
@@ -61,6 +79,14 @@ class SaleViewModel @Inject constructor(
                     physicalPinpad()
                 } else {
                     screenPinpad(event.containerInfo, event.pinpadMap)
+                }
+            }
+
+            is SaleUiEvent.SetContactless -> {
+                _uiState.update {
+                    it.copy(
+                        isContactless = event.isContactless
+                    )
                 }
             }
 
@@ -88,7 +114,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resourceAids.message ?: "Harap tunggu"
+                                loadingMessage = resourceAids.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -118,7 +144,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resourceCapks.message ?: "Harap tunggu"
+                                loadingMessage = resourceCapks.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -127,7 +153,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                statusMessage = ""
+                                loadingMessage = ""
                             )
                         }
                         readCard()
@@ -148,14 +174,9 @@ class SaleViewModel @Inject constructor(
 
     private fun readCard() {
         viewModelScope.launch {
-            val cardOption = CardOption(
-                supportContactless = true,
-                supportSwipe = false,
-                supportDip = true
-            )
-
             readCardRepository.readCard(
-                cardOption = cardOption,
+                amount = uiState.value.amount.toLong(),
+                cardOption = uiState.value.cardOption,
             ).collect { resourceReadCard ->
                     when (resourceReadCard) {
                         is Resource.Loading -> {
@@ -189,7 +210,7 @@ class SaleViewModel @Inject constructor(
                                 it.copy(
                                     isLoading = true,
                                     isReadingCard = true,
-                                    statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                    loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                 )
                             }
 
@@ -200,7 +221,7 @@ class SaleViewModel @Inject constructor(
                                         cardNumber = cardReadOutput.cardNo,
                                         maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
                                         isFinishedReadCard = true,
-                                        statusMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                        loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                     )
                                 }
                             }
@@ -250,13 +271,7 @@ class SaleViewModel @Inject constructor(
                                 )
                             }
 
-                            viewModelScope.launch {
-                                postSaleTransaction(
-                                    isFromSaving = true,
-                                    cardReadOutput = uiState.value.cardReadOutput
-                                        ?: CardReadOutput()
-                                )
-                            }
+                            checkBinRange(resourceReadCard.data?.cardReadOutput?.cardNo ?: "")
                         }
 
                         is Resource.Error -> {
@@ -272,16 +287,64 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    fun postSaleTransaction(isFromSaving: Boolean, cardReadOutput: CardReadOutput) {
+    fun checkBinRange(cardNumber: String) {
+        viewModelScope.launch {
+            binRangeRepository.getBinType(cardNumber).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                binType = resource.data ?: BinType.UNKNOWN
+                            )
+                        }
+
+                        val cardClassification =
+                            binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
+
+                        postSaleTransaction(
+                            cardClassification,
+                            cardReadOutput = uiState.value.cardReadOutput
+                                ?: CardReadOutput()
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    fun postSaleTransaction(
+        cardClassification: CardClassification,
+        cardReadOutput: CardReadOutput
+    ) {
         _uiState.update {
             it.copy(
-                transactionDateTime = DateUtils.getCurrentTransactionDateTime()
+                transactionDateTime = Date()
             )
         }
 
         viewModelScope.launch {
             saleRepository.postSaleTransaction(
-                isFromSaving,
+                cardClassification,
                 cardReadOutput,
                 uiState.value.transactionDateTime
             )
@@ -291,7 +354,7 @@ class SaleViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     isLoading = true,
-                                    statusMessage = resource.message ?: "Harap tunggu"
+                                    loadingMessage = resource.message ?: "Harap tunggu"
                                 )
                             }
                         }
@@ -299,22 +362,35 @@ class SaleViewModel @Inject constructor(
                         is Resource.Success -> {
                             val response = IsoMessage().unpack(
                                 data = resource.data ?: byteArrayOf(),
-                                specs = IsoConfig.saleRequest,
-                                headerLength = 2
+                                specs = IsoConfig.genericSpec,
                             )
 
                             val responseCode = response.getField(39)
 
                             if (responseCode == "00") {
+                                reversalManager.clearSaleReversal()
+
                                 val emvData = response.getField(55)
                                 val authCode = response.getField(38)
 
-                                verifyEmvHost(
-                                    emvHost = emvData,
-                                    authCode = authCode,
-                                    arc = responseCode,
-                                    authorizeFlag = "00"
-                                )
+                                if (uiState.value.isContactless) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isLoading = false,
+                                            loadingMessage = "",
+                                            isTransactionFinished = true,
+                                        )
+                                    }
+
+                                    saveTransactionToDatabase()
+                                } else {
+                                    verifyEmvHost(
+                                        emvHost = emvData,
+                                        authCode = authCode,
+                                        arc = responseCode,
+                                        authorizeFlag = "00"
+                                    )
+                                }
                             } else {
                                 _uiState.update {
                                     it.copy(
@@ -346,7 +422,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resource.message ?: "Harap tunggu"
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -355,7 +431,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                statusMessage = "",
+                                loadingMessage = "",
                                 isCardConfirmed = true
                             )
                         }
@@ -406,7 +482,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isShowPinpad = false,
-                                statusMessage = "Confirm Card..."
+                                loadingMessage = "Confirm Card..."
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -464,7 +540,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isShowOfflinePinpad = false,
-                                statusMessage = "Confirm Card..."
+                                loadingMessage = "Konfirmasi kartu..."
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -519,7 +595,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isShowPinpad = false,
                                 isLoading = true,
-                                statusMessage = "Konfirmasi kartu"
+                                loadingMessage = "Konfirmasi kartu"
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -579,7 +655,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isShowOfflinePinpad = false,
                                 isLoading = true,
-                                statusMessage = "Konfirmasi kartu"
+                                loadingMessage = "Konfirmasi kartu"
                             )
                         }
                         val pinBlock = String(result.data ?: byteArrayOf())
@@ -637,7 +713,186 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = true,
-                                statusMessage = resource.message ?: "Harap tunggu"
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = "",
+                                isTransactionFinished = true,
+                            )
+                        }
+
+                        saveTransactionToDatabase()
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isTransactionFinished = true,
+                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun saveTransactionToDatabase() {
+        viewModelScope.launch {
+            saleRepository.insertCardTransactionToDatabase(
+                TransactionRecord(
+                    invoice = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    invoiceDate = DateUtils.getCurrentTransactionDateTime(),
+                    issuerID = "2",
+                    issuerName = "SALE",
+                    saleType = "SALE",
+                    batchNo = batchManager.getCurrentBatch().toString().padStart(6, '0'),
+                    authCode = "",
+                    amount = uiState.value.amount.toLong() * 100L,
+                    payID = "",
+                    pan = uiState.value.cardNumber,
+                    mID = "12345678",
+                    tID = "123456789012345",
+                    printFormats = "",
+                    refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    txnTypeId = "",
+                    programName = "",
+                    cardExpiry = "",
+                    cardAID = "",
+                    cardAppName = "",
+                    customerName = "",
+                    currencyCode = "",
+                    txnCatCode = "",
+                    txnCert = "",
+                    stan = stanManager.getCurrentStan().toString().padStart(6, '0'),
+                    maskedCardNo = uiState.value.maskedCardNumber,
+                    insertModeCode = "",
+                    rrNo = "",
+                    txnStatus = "",
+                    cardType = uiState.value.binType.description,
+                    cardTypeCode = "",
+                    acquiringBank = "",
+                    secureData = "",
+                    posEntryMode = "",
+                    tipAmount = 0L,
+                    cashAMT = 0L,
+                    feeAmount = 0L,
+                    refTxnTypeId = "",
+                    tenure = "",
+                    bankTID = "",
+                    bankMID = "",
+                    cashierID = "",
+                    terminalCapability = "",
+                    jsonReq = getPrintTemplate().jsonString,
+                    jsonResp = getPrintTemplate().printTemplateJsonString,
+                    eMIAmount = 0L,
+                )
+            ).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = it.loadingMessage
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = ""
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getPrintTemplate(): PrintBasedOnTemplateParameter {
+        return saleRepository.preparePrintingData(
+            uiState.value.cardReadOutput ?: CardReadOutput(),
+            uiState.value.transactionDateTime
+        )
+    }
+
+    fun setErrorMessage(message: String) {
+        _uiState.update {
+            it.copy(errorMessage = message)
+        }
+    }
+
+    fun checkReversalData() {
+        viewModelScope.launch {
+            saleRepository.postSaleReversal().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        val response = IsoMessage().unpack(
+                            resource.data ?: byteArrayOf(),
+                            specs = IsoConfig.genericSpec
+                        )
+                        val responseCode = response.getField(39)
+
+                        if (responseCode == "00") {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    reversalResultMessage = "Reversal berhasil"
+                                )
+                            }
+                        }
+
+                        reversalManager.clearSaleReversal()
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun printReceipt() {
+        viewModelScope.launch {
+            saleRepository.printReceiptBasedLastTraceNo().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -648,7 +903,7 @@ class SaleViewModel @Inject constructor(
                                 isLoading = false,
                                 isTransactionFinished = true,
                                 errorMessage = "",
-                                statusMessage = resource.message ?: "Harap tunggu"
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -657,19 +912,12 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                isTransactionFinished = true,
                                 errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
                     }
                 }
             }
-        }
-    }
-
-    fun setErrorMessage(message: String) {
-        _uiState.update {
-            it.copy(errorMessage = message)
         }
     }
 
@@ -683,9 +931,5 @@ class SaleViewModel @Inject constructor(
         _uiState.update {
             SaleUiState()
         }
-    }
-
-    fun printReceipt() {
-
     }
 }

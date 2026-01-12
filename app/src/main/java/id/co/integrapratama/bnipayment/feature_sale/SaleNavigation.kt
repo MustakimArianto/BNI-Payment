@@ -8,6 +8,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.toRoute
 import id.co.integrapratama.bnipayment.common.ext.navigateFromCurrent
 import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
@@ -19,16 +20,23 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
     navigation<AppRoute.Sale>(
         startDestination = SaleRoute.InputAmount
     ) {
-
         composable<SaleRoute.InputAmount> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(Unit) {
                 viewModel.clearUiState()
+
+                val parentSaleRoute = navController
+                    .getBackStackEntry<AppRoute.Sale>()
+                    .toRoute<AppRoute.Sale>()
+
+                val isContactless = parentSaleRoute.isContactless
+                viewModel.onEvent(SaleUiEvent.SetContactless(isContactless))
             }
 
             InputAmountScreen(
+                title = uiState.title,
                 amount = uiState.amount,
                 onAmountChanged = { amount -> viewModel.onEvent(SaleUiEvent.OnAmountChange(amount)) },
                 onNextClick = {
@@ -74,8 +82,14 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                 onNavigationBack = { navController.popBackStack() }
             )
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            LaunchedEffect(uiState.isTransactionFinished) {
+                if (uiState.isTransactionFinished) {
+                    navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
+                }
+            }
+
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
@@ -108,17 +122,16 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             }
 
             LaunchedEffect(uiState.isTransactionFinished) {
-                if (uiState.isCardConfirmed) {
+                if (uiState.isTransactionFinished) {
                     navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
                 }
             }
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
-
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
@@ -162,9 +175,12 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
+            }
+
             SaleTransactionStatus(
-                errorMessage = uiState.errorMessage,
-                isTransactionFinished = uiState.isTransactionFinished,
+                transactionResultMessage = uiState.transactionResultMessage,
                 onGoToHome = { navController.navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )

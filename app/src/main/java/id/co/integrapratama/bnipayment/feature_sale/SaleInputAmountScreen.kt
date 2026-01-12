@@ -17,6 +17,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 
 @Composable
 fun InputAmountScreen(
+    title: String,
     amount: String = "",
     onAmountChanged: (String) -> Unit,
     onNextClick: () -> Unit,
@@ -25,7 +26,7 @@ fun InputAmountScreen(
     Column(Modifier
         .padding(16.dp)
         .navigationBarsPadding()) {
-        TopBar(title = "Sale", onBackClick = onNavigationBack)
+        TopBar(title = title, onBackClick = onNavigationBack)
         VerticalSpacer(SpacerSize.X_LARGE)
 
         InputAmountTextField(

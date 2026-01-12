@@ -51,7 +51,7 @@ data class InstallmentTransactionModel(
     val jsonResp: String = "",
     val prepaidCardNo: String = "",
     val panSeq: String = "",
-    val iccData: String  = "",
+    val iccData: String = "",
     val responseCode: String = "",
     val mti: String = "",
     val jsonReceipt: String = "",

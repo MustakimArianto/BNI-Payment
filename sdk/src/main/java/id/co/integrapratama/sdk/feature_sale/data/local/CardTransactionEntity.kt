@@ -2,12 +2,14 @@ package id.co.integrapratama.sdk.feature_sale.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import id.co.integrapratama.sdk.feature_sale.domain.TransactionModel
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 
-@Entity
+@Entity(
+    tableName = "card_transaction"
+)
 data class CardTransactionEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Long? = 0,
+    val id: Long? = null,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,
@@ -36,7 +38,7 @@ data class CardTransactionEntity(
     val stan: String? = "",
     val maskedCardNo: String? = "",
     val insertModeCode: String? = "",
-    val rRNO: String,
+    val rrNo: String,
     val txnStatus: String,
     val cardType: String = "",
     val cardTypeCode: String = "",
@@ -100,7 +102,7 @@ data class CardTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rRNO = rrNo,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -124,8 +126,8 @@ data class CardTransactionEntity(
         )
     }
 
-    fun toTransactionModel(): TransactionModel {
-        return TransactionModel(
+    fun toTransactionModel(): TransactionRecord {
+        return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -154,7 +156,7 @@ data class CardTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rrNo = rrNo,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -163,7 +165,7 @@ data class CardTransactionEntity(
             posEntryMode = posEntryMode,
             tipAmount = tipAmount,
             cashAMT = cashAMT,
-            feeAmt = feeAmount,
+            feeAmount = feeAmount,
             refTxnTypeId = refTxnTypeId,
             tenure = tenure,
             bankTID = bankTID,

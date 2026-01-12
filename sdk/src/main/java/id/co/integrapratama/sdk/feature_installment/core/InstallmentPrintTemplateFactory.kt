@@ -1,7 +1,7 @@
-package id.co.integrapratama.sdk.feature_installment.common
+package id.co.integrapratama.sdk.feature_installment.core
 
 import id.co.integrapratama.sdk.core.utils.CardUtil
-import id.co.integrapratama.sdk.feature_print.common.PrintTemplateFactory
+import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderGroupTemplateComponent
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderTemplateComponent
@@ -26,116 +26,140 @@ class InstallmentPrintTemplateFactory(
     private val amount: String,
     private val version: String,
     private val serialNumber: String
-): PrintTemplateFactory() {
+) : PrintTemplateFactory() {
     override fun getPrintBasedOnTemplateParameterBuilder(): PrintBasedOnTemplateParameterBuilder {
-        val branchNamePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchName",
-            value = branchName
-        )
-        val branchAddressPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchAddress",
-            value = branchAddress
-        )
-        val branchCityPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "BranchCity",
-            value = branchCity
-        )
-        val terminalIdPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "TerminalId",
-            value = terminalId
-        )
-        val merchantIdPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "MerchantId",
-            value = merchantId
-        )
-        val cardTypePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CardType",
-            value = cardType
-        )
-        val expPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Exp",
-            value = exp
-        )
-        val cardNumberWithTypePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CardNumberWithType",
-            value = fun (): String {
-                val resultList = mutableListOf<String>()
-                if (cardNumber.isNotBlank()) {
-                    val cardNumber = CardUtil.panMasking(cardNumber, cardNumber)
-                    if (cardNumber.isNullOrBlank().not()) {
-                        resultList.add(cardNumber)
+        val branchNamePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "BranchName",
+                value = branchName
+            )
+        val branchAddressPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "BranchAddress",
+                value = branchAddress
+            )
+        val branchCityPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "BranchCity",
+                value = branchCity
+            )
+        val terminalIdPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "TerminalId",
+                value = terminalId
+            )
+        val merchantIdPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "MerchantId",
+                value = merchantId
+            )
+        val cardTypePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "CardType",
+                value = cardType
+            )
+        val expPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Exp",
+                value = exp
+            )
+        val cardNumberWithTypePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "CardNumberWithType",
+                value = fun(): String {
+                    val resultList = mutableListOf<String>()
+                    if (cardNumber.isNotBlank()) {
+                        val cardNumber = CardUtil.panMasking(cardNumber, cardNumber)
+                        if (cardNumber.isNullOrBlank().not()) {
+                            resultList.add(cardNumber)
+                        }
                     }
-                }
-                if (cardMethod.isNotBlank()) {
-                    resultList.add("(${cardMethod})")
-                }
-                return resultList.joinToString(" ")
-            }()
-        )
-        val labelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Label",
-            value = "INSTALLMENT"
-        )
-        val datePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Date",
-            value = date
-        )
-        val timePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Time",
-            value = time
-        )
-        val batchPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Batch",
-            value = batch
-        )
-        val tracePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Trace",
-            value = trace
-        )
-        val refPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Ref",
-            value = ref
-        )
-        val apprPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Appr",
-            value = appr
-        )
-        val amountPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Amount",
-            value = amount
-        )
-        val pinVerificationSuccessLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "PinVerificationSuccessLabel",
-            value = "*** PIN VERIFICATION SUCCESS ***"
-        )
-        val totalAmountAgreementLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "TotalAmountAgreementLabel",
-            value = "I AGREE TO PAY ABOVE TOTAL AMOUNT"
-        )
-        val accordingToCardLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "AccordingToCardLabel",
-            value = "ACCORDING TO CARD ISSUER AGREEMENT"
-        )
-        val copyLabelPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CopyLabel",
-            value = "*** CUSTOMER COPY ***"
-        )
-        val versionPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Version",
-            value = version
-        )
-        val machineSerialNumberPrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "MachineSerialNumber",
-            value = serialNumber
-        )
-        val linePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Line",
-            value = ""
-        )
-        val headerImagePrintBasedOnTemplateParameterBuilderValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "HeaderImage",
-            value = "bni.png"
-        )
+                    if (cardMethod.isNotBlank()) {
+                        resultList.add("(${cardMethod})")
+                    }
+                    return resultList.joinToString(" ")
+                }()
+            )
+        val labelPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Label",
+                value = "INSTALLMENT"
+            )
+        val datePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Date",
+                value = date
+            )
+        val timePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Time",
+                value = time
+            )
+        val batchPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Batch",
+                value = batch
+            )
+        val tracePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Trace",
+                value = trace
+            )
+        val refPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Ref",
+                value = ref
+            )
+        val apprPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Appr",
+                value = appr
+            )
+        val amountPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Amount",
+                value = amount
+            )
+        val pinVerificationSuccessLabelPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "PinVerificationSuccessLabel",
+                value = "*** PIN VERIFICATION SUCCESS ***"
+            )
+        val totalAmountAgreementLabelPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "TotalAmountAgreementLabel",
+                value = "I AGREE TO PAY ABOVE TOTAL AMOUNT"
+            )
+        val accordingToCardLabelPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "AccordingToCardLabel",
+                value = "ACCORDING TO CARD ISSUER AGREEMENT"
+            )
+        val copyLabelPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "CopyLabel",
+                value = "*** CUSTOMER COPY ***"
+            )
+        val versionPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Version",
+                value = version
+            )
+        val machineSerialNumberPrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "MachineSerialNumber",
+                value = serialNumber
+            )
+        val linePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "Line",
+                value = ""
+            )
+        val headerImagePrintBasedOnTemplateParameterBuilderValueComponent =
+            PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "HeaderImage",
+                value = "bni.png"
+            )
         val builder = PrintBasedOnTemplateParameterBuilder()
             .addAllValueComponent(
                 listOf(

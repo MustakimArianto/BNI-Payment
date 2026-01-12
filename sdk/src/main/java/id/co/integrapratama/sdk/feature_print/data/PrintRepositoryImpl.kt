@@ -1,7 +1,7 @@
 package id.co.integrapratama.sdk.feature_print.data
 
 import android.content.Context
-import id.co.integrapratama.sdk.feature_print.common.PrintTemplateFactory
+import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
 import id.co.payment2go.terminalsdkhelper.common.printer.ImageDataParameter
 import id.co.payment2go.terminalsdkhelper.common.printer.PrinterUtility

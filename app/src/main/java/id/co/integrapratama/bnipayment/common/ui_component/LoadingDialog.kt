@@ -35,7 +35,7 @@ fun LoadingDialog(title: String = "Memproses", message: String) {
             Spacer(Modifier.height(spacing))
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(spacing))
-            Text(text = "Please Wait", fontSize = 14.sp)
+            Text(text = "Harap tunggu", fontSize = 14.sp)
             Spacer(modifier = Modifier.height(4.dp))
             if (message.isNotEmpty()) {
                 Text(text = message, color = Color(0xFF9E9E9E))

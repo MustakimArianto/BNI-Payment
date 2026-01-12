@@ -3,7 +3,7 @@ package id.co.integrapratama.sdk.core.utils
 import id.co.payment2go.terminalsdkhelper.common.Constant
 
 object CardUtil {
-    fun panMasking(original: String, pan: String): String? {
+    fun panMasking(original: String, pan: String): String {
         if (original.isNotEmpty()) {
             val s = pan.trim()
             val len = s.length

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.sdk.feature_aid_master.domain.AidMasterRepository
 import id.co.integrapratama.sdk.feature_capk_master.domain.CapkMasterRepository
+import id.co.integrapratama.sdk.feature_card_list.domain.CardListRepository
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,13 +17,51 @@ import javax.inject.Inject
 @HiltViewModel
 class AdminViewModel @Inject constructor(
     private val aidMasterRepository: AidMasterRepository,
-    private val capkMasterRepository: CapkMasterRepository
+    private val capkMasterRepository: CapkMasterRepository,
+    private val cardListRepository: CardListRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AdminUiState())
     val uiState = _uiState.asStateFlow()
 
     fun performLogon() {
-        getAidMaster()
+        getCardList()
+    }
+
+    fun getCardList() {
+        viewModelScope.launch {
+            cardListRepository.getCardList().collectLatest { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true, loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                resultMessage = "Berhasil mendownload daftar kartu"
+                            )
+                        }
+
+                        getAidMaster()
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isError = true,
+                                resultMessage = resource.message ?: "Terjadi kesalahan"
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fun getAidMaster() {
@@ -32,7 +71,7 @@ class AdminViewModel @Inject constructor(
                     is Resource.Loading -> {
                         _uiState.update {
                             it.copy(
-                                isLoading = true, loadingMessage = "Mengambil data Aid Master"
+                                isLoading = true, loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -41,7 +80,7 @@ class AdminViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                resultMessage = "Berhasil mengambil data Aid Master"
+                                resultMessage = "Berhasil mendownload data AID"
                             )
                         }
 
@@ -69,7 +108,7 @@ class AdminViewModel @Inject constructor(
                     is Resource.Loading -> {
                         _uiState.update {
                             it.copy(
-                                isLoading = true, loadingMessage = "Mengambil data Capk Master"
+                                isLoading = true, loadingMessage = resource.message ?: "Harap tunggu"
                             )
                         }
                     }
@@ -78,7 +117,7 @@ class AdminViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                resultMessage = "Berhasil mengambil data Capk Master"
+                                resultMessage = "Berhasil mendownload data CAPK"
                             )
                         }
                     }
