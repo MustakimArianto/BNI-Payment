@@ -68,34 +68,4 @@ object AppModule {
     fun provideSharedPrefs(app: Application): SharedPreferences {
         return app.getSharedPreferences("${app.packageName}_sharedPrefs", Context.MODE_PRIVATE)
     }
-
-    @Provides
-    @Singleton
-    fun providesHostUrlManager(sharedPreferences: SharedPreferences): HostUrlManager {
-        return HostUrlManager(sharedPreferences)
-    }
-
-    @Provides
-    @Singleton
-    fun provideStanManager(sharedPreferences: SharedPreferences): StanManager {
-        return StanManager(sharedPreferences)
-    }
-
-    @Provides
-    @Singleton
-    fun provideTerminalManager(sharedPreferences: SharedPreferences): TerminalBatchManager {
-        return TerminalBatchManager(sharedPreferences)
-    }
-
-    @Provides
-    @Singleton
-    fun provideTraceNumberManager(sharedPreferences: SharedPreferences): TraceNumberManager {
-        return TraceNumberManager(sharedPreferences)
-    }
-
-    @Provides
-    @Singleton
-    fun provideReversalManager(sharedPreferences: SharedPreferences): ReversalManager {
-        return ReversalManager(sharedPreferences)
-    }
 }

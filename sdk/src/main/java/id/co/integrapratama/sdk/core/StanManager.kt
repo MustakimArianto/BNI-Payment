@@ -6,7 +6,7 @@ import java.util.Calendar
 import kotlin.random.Random
 
 class StanManager(
-    private val sharedPrefs: SharedPreferences
+    private val sharedPreferences: SharedPreferences
 ) {
 
     companion object {
@@ -16,21 +16,21 @@ class StanManager(
 
     fun getCurrentStan(): Long {
         val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        val lastResetDay = sharedPrefs.getInt(LAST_RESET_DAY_KEY, -1)
+        val lastResetDay = sharedPreferences.getInt(LAST_RESET_DAY_KEY, -1)
         if (currentDay != lastResetDay) {
             resetStan()
             saveLastResetDay(currentDay)
         }
-        return sharedPrefs.getLong(STAN_KEY, 1L)
+        return sharedPreferences.getLong(STAN_KEY, 1L)
     }
 
     fun increaseStan() {
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + 1)
+        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + 1)
     }
 
     fun increaseStanUpRandom() {
         val randomNumber = Random.nextLong(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomNumber)
+        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + randomNumber)
     }
 
     fun setStanManual(value: Long) {
@@ -43,15 +43,15 @@ class StanManager(
 
     fun getGenerateRandomStan():Long{
         val randomInteger = Random.nextInt(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomInteger.toLong())
-        return sharedPrefs.getLong(STAN_KEY, 1L)
+        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + randomInteger.toLong())
+        return sharedPreferences.getLong(STAN_KEY, 1L)
     }
 
     private fun saveStan(value: Long) {
-        sharedPrefs.edit { putLong(STAN_KEY, value) }
+        sharedPreferences.edit { putLong(STAN_KEY, value) }
     }
 
     private fun saveLastResetDay(value: Int) {
-        sharedPrefs.edit { putInt(LAST_RESET_DAY_KEY, value) }
+        sharedPreferences.edit { putInt(LAST_RESET_DAY_KEY, value) }
     }
 }
