@@ -23,18 +23,12 @@ object InstallmentModule {
     fun provideInstallmentRepository(
         isoRepository: Iso8583Repository,
         printRepository: PrintRepository,
-        appDatabase: AppDatabase,
-        traceNumberManager: TraceNumberManager,
-        terminalBatchManager: TerminalBatchManager,
-        deviceManagerUtility: DeviceManagerUtility,
-        stanManager: StanManager
+        db: AppDatabase,
+        traceNumberManager: TraceNumberManager
     ): InstallmentRepository = InstallmentRepositoryImpl(
         isoRepository = isoRepository,
         printRepository = printRepository,
-        appDatabase = appDatabase,
+        db = db,
         traceNumberManager = traceNumberManager,
-        terminalBatchManager = terminalBatchManager,
-        deviceManagerUtility = deviceManagerUtility,
-        stanManager = stanManager
     )
 }

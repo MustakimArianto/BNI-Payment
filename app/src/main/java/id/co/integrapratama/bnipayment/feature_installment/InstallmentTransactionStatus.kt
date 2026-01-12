@@ -26,13 +26,13 @@ import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
 fun InstallmentTransactionStatus(
-    errorMessage: String,
     isLoading: Boolean,
-    statusMessage: String,
+    loadingMessage: String,
+    transactionResultMessage: String,
     onGoToHome: () -> Unit,
     onPrintReceipt: () -> Unit
 ) {
-    if (errorMessage.isEmpty()) {
+    if (transactionResultMessage.isEmpty()) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -96,7 +96,7 @@ fun InstallmentTransactionStatus(
                 VerticalSpacer(SpacerSize.MEDIUM)
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = errorMessage,
+                    text = transactionResultMessage,
                     textAlign = TextAlign.Center,
                     fontSize = 14.sp
                 )
@@ -112,7 +112,7 @@ fun InstallmentTransactionStatus(
                 })
         }
     }
-    if (isLoading && statusMessage.isNotEmpty()) {
-        LoadingDialog(message = statusMessage)
+    if (isLoading && loadingMessage.isNotEmpty()) {
+        LoadingDialog(message = loadingMessage)
     }
 }

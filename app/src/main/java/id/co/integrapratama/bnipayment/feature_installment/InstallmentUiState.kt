@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_installment
 
+import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
@@ -19,6 +20,7 @@ data class InstallmentUiState(
     val pin: String = "",
     val pinBlock: String = "",
     val transactionDateTime: String = "",
+    val binType: BinType = BinType.UNKNOWN,
 
     // Process flags
     val isLoading: Boolean = false,
@@ -36,10 +38,11 @@ data class InstallmentUiState(
     val isTransactionFinished: Boolean = false,
 
     // UI feedback
-    val statusMessage: String = "",
+    val loadingMessage: String = "",
     val presentCardAgainMessage: String = "",
     val errorMessage: String = "",
     val dialogLoadingMessage: String = "",
+    val transactionResultMessage: String = "",
 
     // Installment Period and Plan List, and Installment Period and Plan selection state
     val installmentPlanListResource: Resource<List<InstallmentPlanModel>>? = null,

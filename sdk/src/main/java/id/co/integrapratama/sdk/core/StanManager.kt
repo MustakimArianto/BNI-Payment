@@ -21,16 +21,16 @@ class StanManager(
             resetStan()
             saveLastResetDay(currentDay)
         }
-        return sharedPrefs.getLong(STAN_KEY, 1L)
+        return sharedPrefs.getLong(STAN_KEY, 0L)
     }
 
     fun increaseStan() {
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + 1)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + 1)
     }
 
     fun increaseStanUpRandom() {
         val randomNumber = Random.nextLong(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomNumber)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomNumber)
     }
 
     fun setStanManual(value: Long) {
@@ -38,13 +38,13 @@ class StanManager(
     }
 
     private fun resetStan() {
-        saveStan(1L)
+        saveStan(0L)
     }
 
-    fun getGenerateRandomStan():Long{
+    fun getGenerateRandomStan(): Long{
         val randomInteger = Random.nextInt(1, 1000)
-        saveStan(sharedPrefs.getLong(STAN_KEY, 1L) + randomInteger.toLong())
-        return sharedPrefs.getLong(STAN_KEY, 1L)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomInteger.toLong())
+        return sharedPrefs.getLong(STAN_KEY, 0L)
     }
 
     private fun saveStan(value: Long) {

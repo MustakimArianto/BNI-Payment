@@ -172,6 +172,14 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
         }
 
         composable<SaleRoute.TransactionStatus> {
+            fun navigateToHome() {
+                navController.navigateToHome()
+            }
+
+            BackHandler {
+                navigateToHome()
+            }
+
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -181,7 +189,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
 
             SaleTransactionStatus(
                 transactionResultMessage = uiState.transactionResultMessage,
-                onGoToHome = { navController.navigateToHome() },
+                onGoToHome = { navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )
         }

@@ -126,7 +126,7 @@ data class CardTransactionEntity(
         )
     }
 
-    fun toTransactionModel(): TransactionRecord {
+    fun toTransactionRecord(): TransactionRecord {
         return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
