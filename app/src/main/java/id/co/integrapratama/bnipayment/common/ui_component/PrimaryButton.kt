@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import id.co.integrapratama.bnipayment.ui.theme.PrimaryButtonColor
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryColor
 
 @Composable
 fun PrimaryButton(
@@ -20,7 +20,7 @@ fun PrimaryButton(
     onClick: () -> Unit,
     text: String,
     isBold: Boolean = true,
-    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(8.dp),
+    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(22.dp),
     isEnabled: Boolean = true
 ) {
     Button(
@@ -30,7 +30,7 @@ fun PrimaryButton(
         shape = roundedCornerShape,
         enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
-            containerColor = PrimaryButtonColor,
+            containerColor = PrimaryColor,
             contentColor = Color.White,
         ),
         onClick = onClick

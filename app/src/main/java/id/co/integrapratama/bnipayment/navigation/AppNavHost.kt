@@ -11,14 +11,16 @@ import id.co.integrapratama.bnipayment.feature_installment.installmentNavGraph
 import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
 import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
+import id.co.integrapratama.bnipayment.feature_onboarding.onboardingNavigation
 import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = AppRoute.Main
+        startDestination = AppRoute.Onboarding
     ) {
+        onboardingNavigation(navController)
         mainNavGraph(navController)
         homeNavGraph(navController)
         informationNavGraph(navController)

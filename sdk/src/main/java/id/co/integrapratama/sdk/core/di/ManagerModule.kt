@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import id.co.integrapratama.sdk.core.AppManager
 import id.co.integrapratama.sdk.core.HostUrlManager
 import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
@@ -16,6 +17,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ManagerModule {
+
+    @Provides
+    @Singleton
+    fun provideAppManager(sharedPreferences: SharedPreferences): AppManager {
+        return AppManager(sharedPreferences)
+    }
     @Provides
     @Singleton
     fun providesHostUrlManager(sharedPreferences: SharedPreferences): HostUrlManager {
