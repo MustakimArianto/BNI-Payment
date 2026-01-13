@@ -10,7 +10,7 @@ sealed interface SaleRoute {
     data object InsertCard : SaleRoute
 
     @Serializable
-    data object ConfirmTransaction : SaleRoute
+    data object ConfirmCard : SaleRoute
 
     @Serializable
     data object TransactionStatus : SaleRoute

@@ -9,8 +9,9 @@ import id.co.integrapratama.bnipayment.feature_home.homeNavGraph
 import id.co.integrapratama.bnipayment.feature_information.informationNavGraph
 import id.co.integrapratama.bnipayment.feature_installment.installmentNavGraph
 import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
+import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
-import id.co.integrapratama.bnipayment.feature_sale.saleNavGraph
+import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -23,8 +24,11 @@ fun AppNavHost(navController: NavHostController) {
         informationNavGraph(navController)
         adminNavGraph(navController)
         accountNavGraph(navController)
-        miniATMNavGraph(navController)
-        saleNavGraph(navController)
+        saleNavigation(navController)
         installmentNavGraph(navController)
+
+        // Mini ATM
+        miniATMNavGraph(navController)
+        miniAtmBalanceInfoNavigation(navController)
     }
 }

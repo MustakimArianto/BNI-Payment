@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.BalanceInfoScreen
+import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.MiniATMBalanceInfoRoute
 import id.co.integrapratama.bnipayment.feature_mini_atm.purchase.PurchaseScreen
 import id.co.integrapratama.bnipayment.feature_mini_atm.transfer.TransferScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
@@ -15,16 +15,9 @@ fun NavGraphBuilder.miniATMNavGraph(navController: NavController) {
     ) {
         composable<MiniATMRoute.Menu> {
             MiniATMMenuScreen(
-                onNavigateToInfoSaldo = { navController.navigate(MiniATMRoute.BalanceInfo) },
+                onNavigateToBalanceInfo = { navController.navigate(MiniATMBalanceInfoRoute.Graph) },
                 onNavigateToTransfer = { navController.navigate(MiniATMRoute.Transfer) },
-                onNavigateToPembelian = { navController.navigate(MiniATMRoute.Purchase) },
-                onNavigateBack = { navController.navigateUp() }
-            )
-        }
-
-        composable<MiniATMRoute.BalanceInfo> {
-            BalanceInfoScreen(
-                onNavigateBack = { navController.navigateUp() }
+                onNavigateToPurchase = { navController.navigate(MiniATMRoute.Purchase) },
             )
         }
 

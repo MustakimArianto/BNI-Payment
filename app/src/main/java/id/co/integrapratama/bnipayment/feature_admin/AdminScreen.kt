@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import id.co.integrapratama.bnipayment.feature_home.MenuItemView
+import id.co.integrapratama.bnipayment.common.ui_component.MenuItemView
 
 @Composable
 fun AdminScreen(
