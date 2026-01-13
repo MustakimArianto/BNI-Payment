@@ -55,19 +55,19 @@ fun InstallmentInputAmountScreen(
 
         VerticalSpacer(SpacerSize.MEDIUM)
         ResourceImplementer(
-            resource = installmentPeriodListResource,
+            resource = installmentPlanListResource,
             onSuccess = {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    it!!.forEach { installmentPeriod ->
+                    it!!.forEach { installmentPlan ->
                         SelectionButton(
-                            text = installmentPeriod.name,
-                            selected = selectedInstallmentPeriod?.id == installmentPeriod.id,
+                            text = installmentPlan.name,
+                            selected = selectedInstallmentPlan?.id == installmentPlan.id,
                             onClick = {
-                                onSelectInstallmentPeriod(installmentPeriod)
+                                onSelectInstallmentPlan(installmentPlan)
                             }
                         )
                     }
@@ -84,19 +84,19 @@ fun InstallmentInputAmountScreen(
 
         VerticalSpacer(SpacerSize.MEDIUM)
         ResourceImplementer(
-            resource = installmentPlanListResource,
+            resource = installmentPeriodListResource,
             onSuccess = {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    it!!.forEach { installmentPlan ->
+                    it!!.forEach { installmentPeriod ->
                         SelectionButton(
-                            text = installmentPlan.name,
-                            selected = selectedInstallmentPlan?.id == installmentPlan.id,
+                            text = installmentPeriod.name,
+                            selected = selectedInstallmentPeriod?.id == installmentPeriod.id,
                             onClick = {
-                                onSelectInstallmentPlan(installmentPlan)
+                                onSelectInstallmentPeriod(installmentPeriod)
                             }
                         )
                     }

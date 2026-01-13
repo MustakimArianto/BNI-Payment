@@ -2,7 +2,7 @@ package id.co.integrapratama.sdk.feature_installment.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import id.co.integrapratama.sdk.feature_installment.domain.InstallmentTransactionModel
+import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 
 @Entity
 data class InstallmentCardTransactionEntity(
@@ -18,6 +18,7 @@ data class InstallmentCardTransactionEntity(
     val amount: Long = 0,
     val payID: String,
     val pan: String = "",
+    val track2Data: String = "",
     val mID: String,
     val tID: String,
     val printFormats: String,
@@ -36,7 +37,7 @@ data class InstallmentCardTransactionEntity(
     val stan: String? = "",
     val maskedCardNo: String? = "",
     val insertModeCode: String? = "",
-    val rRNO: String,
+    val rrNo: String,
     val txnStatus: String,
     val cardType: String = "",
     val cardTypeCode: String = "",
@@ -82,6 +83,7 @@ data class InstallmentCardTransactionEntity(
             amount = amount,
             payID = payID,
             pan = pan,
+            track2Data = track2Data,
             mID = mID,
             tID = tID,
             printFormats = printFormats,
@@ -100,7 +102,7 @@ data class InstallmentCardTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rRNO = rrNo,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -124,8 +126,8 @@ data class InstallmentCardTransactionEntity(
         )
     }
 
-    fun toTransactionModel(): InstallmentTransactionModel {
-        return InstallmentTransactionModel(
+    fun toTransactionRecord(): TransactionRecord {
+        return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -136,6 +138,7 @@ data class InstallmentCardTransactionEntity(
             amount = amount,
             payID = payID,
             pan = pan,
+            track2Data = track2Data,
             mID = mID,
             tID = tID,
             printFormats = printFormats,
@@ -154,7 +157,7 @@ data class InstallmentCardTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rRNO = rRNO,
+            rrNo = rrNo,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,
@@ -163,7 +166,7 @@ data class InstallmentCardTransactionEntity(
             posEntryMode = posEntryMode,
             tipAmount = tipAmount,
             cashAMT = cashAMT,
-            feeAmt = feeAmount,
+            feeAmount = feeAmount,
             refTxnTypeId = refTxnTypeId,
             tenure = tenure,
             bankTID = bankTID,

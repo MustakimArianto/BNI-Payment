@@ -383,13 +383,16 @@ class SaleViewModel @Inject constructor(
                                         )
                                     }
 
-                                    saveTransactionToDatabase()
+                                    saveTransactionToDatabase(
+                                        cardReadOutput = cardReadOutput
+                                    )
                                 } else {
                                     verifyEmvHost(
                                         emvHost = emvData,
                                         authCode = authCode,
                                         arc = responseCode,
-                                        authorizeFlag = "00"
+                                        authorizeFlag = "00",
+                                        cardReadOutput = cardReadOutput
                                     )
                                 }
                             } else {
@@ -703,7 +706,8 @@ class SaleViewModel @Inject constructor(
         emvHost: String?,
         authCode: String?,
         arc: String?,
-        authorizeFlag: String?
+        authorizeFlag: String?,
+        cardReadOutput: CardReadOutput
     ) {
         viewModelScope.launch {
             readCardRepository.verifyEMVHost(
@@ -728,7 +732,9 @@ class SaleViewModel @Inject constructor(
                             )
                         }
 
-                        saveTransactionToDatabase()
+                        saveTransactionToDatabase(
+                            cardReadOutput = cardReadOutput
+                        )
                     }
 
                     is Resource.Error -> {
@@ -740,7 +746,9 @@ class SaleViewModel @Inject constructor(
                             )
                         }
 
-                        saveTransactionToDatabase()
+                        saveTransactionToDatabase(
+                            cardReadOutput = cardReadOutput
+                        )
 //                        _uiState.update {
 //                            it.copy(
 //                                isLoading = false,
@@ -763,7 +771,7 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    private fun saveTransactionToDatabase() {
+    private fun saveTransactionToDatabase(cardReadOutput: CardReadOutput) {
         viewModelScope.launch {
             saleRepository.insertCardTransactionToDatabase(
                 TransactionRecord(
@@ -773,10 +781,11 @@ class SaleViewModel @Inject constructor(
                     issuerName = "SALE",
                     saleType = "SALE",
                     batchNo = batchManager.getCurrentBatch().toString().padStart(6, '0'),
-                    authCode = "",
+                    authCode = "711162",
                     amount = uiState.value.amount.toLong() * 100L,
                     payID = "",
                     pan = uiState.value.cardNumber,
+                    track2Data = cardReadOutput.track2Data,
                     mID = "1234567890",
                     tID = "1234567890",
                     printFormats = "",

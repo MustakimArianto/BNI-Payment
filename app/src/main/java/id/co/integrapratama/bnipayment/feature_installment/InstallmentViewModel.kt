@@ -21,6 +21,7 @@ import id.co.integrapratama.sdk.feature_installment.core.InstallmentPrintTemplat
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentRepository
 import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
+import id.co.payment2go.terminalsdkhelper.common.Constant
 import id.co.payment2go.terminalsdkhelper.common.DecideCVMStatusResult
 import id.co.payment2go.terminalsdkhelper.common.device_type_value.isPhysicalKeypadSupported
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
@@ -406,13 +407,19 @@ class InstallmentViewModel @Inject constructor(
                             val emvData = response.getField(55)
                             val authCode = response.getField(38)
 
-                            verifyEmvHost(
-                                emvHost = emvData,
-                                authCode = authCode,
-                                arc = responseCode,
-                                authorizeFlag = "00",
-                                cardReadOutput = cardReadOutput
-                            )
+                            if (cardReadOutput.posEntryMode == Constant.POS_ENTRY_MODE_CONTACTLESS) {
+                                saveTransactionToDatabase(
+                                    cardReadOutput = cardReadOutput
+                                )
+                            } else {
+                                verifyEmvHost(
+                                    emvHost = emvData,
+                                    authCode = authCode,
+                                    arc = responseCode,
+                                    authorizeFlag = "00",
+                                    cardReadOutput = cardReadOutput
+                                )
+                            }
                         } else {
                             _uiState.update {
                                 it.copy(
@@ -785,8 +792,8 @@ class InstallmentViewModel @Inject constructor(
             val amountText = StringUtil.formatRupiahCurrency(
                 ((cardReadOutput.txnAmount.toLongOrNull() ?: 0) / 100L).toString()
             )
-            val authCode = "711162"
-            val refNo = "000047111620000"
+            val authCode = StringUtil.getRandom6DigitsNumber()
+            val refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
             val installmentPrintTemplateFactory = InstallmentPrintTemplateFactory(
                 branchName = "DUMMY TRX",
                 branchAddress = "JL. JENDRAL SUDIRMAN",
@@ -820,6 +827,7 @@ class InstallmentViewModel @Inject constructor(
                     amount = (cardReadOutput.txnAmount.toLongOrNull() ?: 0),
                     payID = "",
                     pan = cardReadOutput.cardNo,
+                    track2Data = cardReadOutput.track2Data,
                     mID = "1234567890",
                     tID = "1234567890",
                     printFormats = "",
