@@ -741,13 +741,22 @@ class SaleViewModel @Inject constructor(
                         }
 
                         saveTransactionToDatabase()
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isTransactionFinished = true,
-                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
-                            )
-                        }
+//                        _uiState.update {
+//                            it.copy(
+//                                isLoading = false,
+//                                loadingMessage = "",
+//                                isTransactionFinished = true,
+//                            )
+//                        }
+//
+//                        saveTransactionToDatabase()
+//                        _uiState.update {
+//                            it.copy(
+//                                isLoading = false,
+//                                isTransactionFinished = true,
+//                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
+//                            )
+//                        }
                     }
                 }
             }
@@ -784,8 +793,8 @@ class SaleViewModel @Inject constructor(
                     stan = stanManager.getCurrentStan().toString().padStart(6, '0'),
                     maskedCardNo = uiState.value.maskedCardNumber,
                     insertModeCode = "",
-                    rrNo = "",
-                    txnStatus = "",
+                    rrNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    txnStatus = "Success",
                     cardType = uiState.value.binType.description,
                     cardTypeCode = "",
                     acquiringBank = "",
@@ -800,8 +809,8 @@ class SaleViewModel @Inject constructor(
                     bankMID = "",
                     cashierID = "",
                     terminalCapability = "",
-                    jsonReq = getPrintTemplate().jsonString,
-                    jsonResp = getPrintTemplate().printTemplateJsonString,
+                    jsonReceipt = getPrintTemplate().jsonString,
+                    templateJsonReceipt = getPrintTemplate().printTemplateJsonString,
                     eMIAmount = 0L,
                 )
             ).collect { resource ->

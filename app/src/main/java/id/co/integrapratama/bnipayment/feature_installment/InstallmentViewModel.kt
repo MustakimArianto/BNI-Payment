@@ -779,19 +779,12 @@ class InstallmentViewModel @Inject constructor(
     private fun saveTransactionToDatabase(cardReadOutput: CardReadOutput) {
         viewModelScope.launch {
             val currentDate = Date()
-            val currentTraceNoText = Util.addZerosToNumber(
-                traceNumberManager.getCurrentTraceNo(),
-                desiredDigits = 6
+            val currentTraceNoText = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
+            val currentBatchNoText = terminalBatchManager.getCurrentBatch().toString().padStart(6, '0')
+            val currentStanText = stanManager.getCurrentStan().toString().padStart(6, '0')
+            val amountText = StringUtil.formatRupiahCurrency(
+                ((cardReadOutput.txnAmount.toLongOrNull() ?: 0) / 100L).toString()
             )
-            val currentBatchNoText = Util.addZerosToNumber(
-                terminalBatchManager.getCurrentBatch(),
-                desiredDigits = 6
-            )
-            val currentStanText = Util.addZerosToNumber(
-                stanManager.getCurrentStan(),
-                desiredDigits = 6
-            )
-            val amountText = StringUtil.formatRupiahCurrency(cardReadOutput.txnAmount)
             val authCode = "711162"
             val refNo = "000047111620000"
             val installmentPrintTemplateFactory = InstallmentPrintTemplateFactory(
@@ -824,7 +817,7 @@ class InstallmentViewModel @Inject constructor(
                     saleType = "INSTALLMENT",
                     batchNo = currentTraceNoText,
                     authCode = authCode,
-                    amount = cardReadOutput.txnAmount.toLongOrNull() ?: 0,
+                    amount = (cardReadOutput.txnAmount.toLongOrNull() ?: 0),
                     payID = "",
                     pan = cardReadOutput.cardNo,
                     mID = "1234567890",
@@ -843,7 +836,7 @@ class InstallmentViewModel @Inject constructor(
                     txnCatCode = cardReadOutput.txnCategoryCode,
                     txnCert = cardReadOutput.transactionCertificate,
                     stan = currentStanText,
-                    maskedCardNo = StringUtil.formatRupiahCurrency(cardReadOutput.cardNo),
+                    maskedCardNo = CardUtil.panMasking(cardReadOutput.cardNo, cardReadOutput.cardNo),
                     insertModeCode = cardReadOutput.insertModeCode,
                     rrNo = refNo,
                     txnStatus = "Success",

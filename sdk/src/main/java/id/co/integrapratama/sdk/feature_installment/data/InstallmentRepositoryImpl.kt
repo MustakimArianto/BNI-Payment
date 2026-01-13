@@ -172,8 +172,7 @@ class InstallmentRepositoryImpl(
                 )
 
                 if (packedData.isEmpty()) {
-                    emit(Resource.Error("Error saat membuat request sale"))
-                    return@flow
+                    throw Exception("Error saat membuat request sale")
                 }
 
                 isoRepository.sendAndReceive(packedData).collect { response ->
@@ -277,12 +276,8 @@ class InstallmentRepositoryImpl(
     }
 
     override suspend fun printReceiptBasedLastTraceNo(): Flow<Resource<Unit>> {
-        Log.d("Last Trace No", traceNumberManager.getCurrentLastTraceNo().toString())
         return printReceiptBasedTraceNo(
-            Util.addZerosToNumber(
-                traceNumberManager.getCurrentLastTraceNo(),
-                desiredDigits = 6
-            )
+            traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0')
         )
     }
 
