@@ -15,7 +15,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.voidNavGraph(navController: NavController) {
+fun NavGraphBuilder.voidNavigation(navController: NavController) {
     navigation<AppRoute.Void>(
         startDestination = VoidRoute.InputTraceNo
     ) {

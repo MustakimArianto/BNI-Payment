@@ -15,7 +15,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
+fun NavGraphBuilder.installmentNavigation(navController: NavController) {
     navigation<AppRoute.Installment>(
         startDestination = InstallmentRoute.InputAmount
     ) {

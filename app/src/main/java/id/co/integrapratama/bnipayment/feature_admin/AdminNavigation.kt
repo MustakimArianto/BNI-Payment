@@ -11,8 +11,8 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.adminNavGraph(navController: NavController) {
-    navigation<AppRoute.Admin>(
+fun NavGraphBuilder.adminNavigation(navController: NavController) {
+    navigation<AppRoute.AdminSetting>(
         startDestination = AdminRoute.Menu
     ) {
         composable<AdminRoute.Menu> {

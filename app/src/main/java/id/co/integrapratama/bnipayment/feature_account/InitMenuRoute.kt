@@ -2,7 +2,7 @@ package id.co.integrapratama.bnipayment.feature_account
 
 import kotlinx.serialization.Serializable
 
-sealed interface AccountRoute {
+sealed interface InitMenuRoute {
     @Serializable
-    object Menu : AccountRoute
+    object Menu : InitMenuRoute
 }

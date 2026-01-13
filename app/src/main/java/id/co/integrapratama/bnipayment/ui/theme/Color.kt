@@ -18,5 +18,7 @@ val TextGray = Color.Gray
 val PrimaryButtonColor = Color(0xFFFF713C)
 
 val PrimaryColor = Color(0xFF006E85)
+val SecondaryColor = Color(0xFFFF7F08)
 val DividerColor = Color(0xFFD0DDDE)
+val InactiveColor = Color(0xFFB3C4C5)
 

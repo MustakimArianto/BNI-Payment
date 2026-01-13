@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.homeNavGraph(navController: NavController) {
+fun NavGraphBuilder.homeNavigation(navController: NavController) {
     navigation<AppRoute.Home>(
         startDestination = HomeRoute.Menu
     ) {

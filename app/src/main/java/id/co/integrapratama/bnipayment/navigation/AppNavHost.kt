@@ -3,17 +3,16 @@ package id.co.integrapratama.bnipayment.navigation
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import id.co.integrapratama.bnipayment.feature_account.accountNavGraph
-import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
-import id.co.integrapratama.bnipayment.feature_home.homeNavGraph
-import id.co.integrapratama.bnipayment.feature_information.informationNavGraph
-import id.co.integrapratama.bnipayment.feature_installment.installmentNavGraph
-import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
+import id.co.integrapratama.bnipayment.feature_account.accountNavigation
+import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
+import id.co.integrapratama.bnipayment.feature_home.homeNavigation
+import id.co.integrapratama.bnipayment.feature_installment.installmentNavigation
+import id.co.integrapratama.bnipayment.feature_menu.menuNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
-import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
+import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavigation
 import id.co.integrapratama.bnipayment.feature_onboarding.onboardingNavigation
 import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
-import id.co.integrapratama.bnipayment.feature_void.voidNavGraph
+import id.co.integrapratama.bnipayment.feature_void.voidNavigation
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -22,17 +21,16 @@ fun AppNavHost(navController: NavHostController) {
         startDestination = AppRoute.Onboarding
     ) {
         onboardingNavigation(navController)
-        mainNavGraph(navController)
-        homeNavGraph(navController)
-        informationNavGraph(navController)
-        adminNavGraph(navController)
-        accountNavGraph(navController)
+        menuNavigation(navController)
+        homeNavigation(navController)
+        adminNavigation(navController)
+        accountNavigation(navController)
         saleNavigation(navController)
-        voidNavGraph(navController)
-        installmentNavGraph(navController)
+        voidNavigation(navController)
+        installmentNavigation(navController)
 
         // Mini ATM
-        miniATMNavGraph(navController)
+        miniATMNavigation(navController)
         miniAtmBalanceInfoNavigation(navController)
     }
 }

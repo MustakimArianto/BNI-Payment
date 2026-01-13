@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AccountScreen() {
+fun InitMenuScreen() {
     Column(Modifier.padding(16.dp)) {
-        Text(text = "Account Screen")
+        Text(text = "Init Menu Screen")
     }
 }

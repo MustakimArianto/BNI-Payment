@@ -9,7 +9,7 @@ import id.co.integrapratama.bnipayment.feature_mini_atm.purchase.PurchaseScreen
 import id.co.integrapratama.bnipayment.feature_mini_atm.transfer.TransferScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.miniATMNavGraph(navController: NavController) {
+fun NavGraphBuilder.miniATMNavigation(navController: NavController) {
     navigation<AppRoute.MiniATM>(
         startDestination = MiniATMRoute.Menu
     ) {

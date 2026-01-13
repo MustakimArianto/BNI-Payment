@@ -1,4 +1,4 @@
-// MainMenuScreen.kt
+// MenuScreen.kt
 package id.co.integrapratama.bnipayment.feature_menu
 
 import androidx.compose.foundation.layout.Box
@@ -18,16 +18,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import id.co.integrapratama.bnipayment.feature_account.AccountScreen
-import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
+import id.co.integrapratama.bnipayment.feature_account.InitMenuScreen
+import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
 import id.co.integrapratama.bnipayment.feature_home.HomeMenuScreen
-import id.co.integrapratama.bnipayment.feature_information.InformationScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
-import id.co.integrapratama.bnipayment.ui.theme.NavBlue
-import id.co.integrapratama.bnipayment.ui.theme.YellowBase
+import id.co.integrapratama.bnipayment.ui.theme.InactiveColor
+import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
 @Composable
-internal fun MainMenuScreen(
+internal fun MenuScreen(
     onNavigateToMiniATM: () -> Unit,
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
@@ -42,8 +41,7 @@ internal fun MainMenuScreen(
     Scaffold(
         bottomBar = {
             MainBottomBar(
-                currentDestination = currentDestination?.route,
-                onNavigate = { route ->
+                currentDestination = currentDestination?.route, onNavigate = { route ->
                     bottomNavController.navigate(route) {
                         popUpTo(BottomNavItem.HOME.route) {
                             saveState = true
@@ -51,14 +49,11 @@ internal fun MainMenuScreen(
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
-            )
-        }
-    ) { paddingValues ->
+                })
+        }) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             NavHost(
-                navController = bottomNavController,
-                startDestination = BottomNavItem.HOME.route
+                navController = bottomNavController, startDestination = BottomNavItem.HOME.route
             ) {
                 composable<AppRoute.Home> {
                     HomeMenuScreen(
@@ -71,14 +66,10 @@ internal fun MainMenuScreen(
                     )
                 }
 
-                composable<AppRoute.Information> {
-                    InformationScreen()
-                }
+                adminNavigation(bottomNavController)
 
-                adminNavGraph(bottomNavController)
-
-                composable<AppRoute.Account> {
-                    AccountScreen()
+                composable<AppRoute.InitMenu> {
+                    InitMenuScreen()
                 }
             }
         }
@@ -87,12 +78,15 @@ internal fun MainMenuScreen(
 
 @Composable
 private fun MainBottomBar(
-    currentDestination: String?,
-    onNavigate: (AppRoute) -> Unit
+    currentDestination: String?, onNavigate: (AppRoute) -> Unit
 ) {
-    NavigationBar(containerColor = NavBlue) {
+    NavigationBar(containerColor = Color.White) {
         BottomNavItem.entries.forEach { item ->
-            val isSelected = currentDestination == item.route::class.qualifiedName
+            val isSelected = when (item) {
+                BottomNavItem.HOME -> currentDestination == AppRoute.Home::class.qualifiedName
+                BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
+                BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
+            }
 
             NavigationBarItem(
                 selected = isSelected,
@@ -100,16 +94,15 @@ private fun MainBottomBar(
                 label = { Text(text = item.title) },
                 icon = {
                     Icon(
-                        painter = painterResource(id = item.icon),
-                        contentDescription = item.title
+                        painter = painterResource(id = item.icon), contentDescription = item.title
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = YellowBase,
-                    selectedTextColor = Color.White,
+                    selectedIconColor = SecondaryColor,
+                    selectedTextColor = Color.Black,
                     indicatorColor = Color.Transparent,
-                    unselectedIconColor = Color.White,
-                    unselectedTextColor = Color.White
+                    unselectedIconColor = InactiveColor,
+                    unselectedTextColor = InactiveColor
                 )
             )
         }

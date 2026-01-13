@@ -13,6 +13,12 @@ sealed interface AppRoute {
     data object Home : AppRoute
 
     @Serializable
+    data object AdminSetting : AppRoute
+
+    @Serializable
+    data object InitMenu : AppRoute
+
+    @Serializable
     data object MiniATM : AppRoute
 
     @Serializable
@@ -26,13 +32,4 @@ sealed interface AppRoute {
 
     @Serializable
     data object Settlement : AppRoute
-
-    @Serializable
-    data object Information : AppRoute
-
-    @Serializable
-    data object Admin : AppRoute
-
-    @Serializable
-    data object Account : AppRoute
 }
