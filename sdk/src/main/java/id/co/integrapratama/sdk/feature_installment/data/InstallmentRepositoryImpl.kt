@@ -1,9 +1,6 @@
 package id.co.integrapratama.sdk.feature_installment.data
 
-import android.util.Log
 import id.co.integrapratama.logsdk.LogSdk
-import id.co.integrapratama.sdk.core.StanManager
-import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
@@ -17,22 +14,15 @@ import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodMode
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentRepository
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
-import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
-import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
 import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
-import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtility
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import id.co.payment2go.terminalsdkhelper.core.util.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import kotlin.String
 
 class InstallmentRepositoryImpl(
@@ -213,6 +203,7 @@ class InstallmentRepositoryImpl(
                         amount = amount,
                         payID = payID,
                         pan = pan,
+                        track2Data = track2Data,
                         mID = mID,
                         tID = tID,
                         printFormats = printFormats,
@@ -231,7 +222,7 @@ class InstallmentRepositoryImpl(
                         stan = stan,
                         maskedCardNo = maskedCardNo,
                         insertModeCode = insertModeCode,
-                        rRNO = rrNo,
+                        rrNo = rrNo,
                         txnStatus = txnStatus,
                         cardType = cardType,
                         cardTypeCode = cardTypeCode,

@@ -1,6 +1,6 @@
 package id.co.integrapratama.sdk.feature_void.data
 
-import android.util.Log
+import com.google.gson.JsonParser
 import id.co.integrapratama.logsdk.LogSdk
 import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
@@ -14,8 +14,9 @@ import id.co.integrapratama.sdk.core.utils.MTI
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
-import id.co.integrapratama.sdk.feature_installment.data.InstallmentRepositoryImpl
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
+import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalCreditRequestDto
+import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalDebitRequestDto
 import id.co.integrapratama.sdk.feature_void.domain.VoidRepository
 import id.co.integrapratama.sdk.feature_void.domain.VoidRequestModel
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
@@ -43,6 +44,7 @@ class VoidRepositoryImpl @Inject constructor(
     }
 
     override suspend fun postVoidTransaction(
+        cardClassification: CardClassification,
         voidRequestModel: VoidRequestModel
     ): Flow<Resource<ByteArray>> {
         return flow {
@@ -76,25 +78,93 @@ class VoidRepositoryImpl @Inject constructor(
                 traceNumberManager.saveLastTraceNo(traceNumberManager.getCurrentTraceNo())
                 traceNumberManager.increment()
 
-                val requestData = mutableMapOf<Int, String>().apply {
-                    put(2, cardNo)
-                    put(3, processingCode)
-                    put(4, amount)
-                    put(11, stan)
-                    put(14, expiry)
-                    put(22, posEntryMode)
-                    put(24, nii)
-                    put(25, posConditionCode)
-                    put(35, track2)
-                    put(37, rrn)
-                    put(38, approvalCode)
-                    put(41, tid)
-                    put(42, mid)
-                    put(52, pinBlock)
-                    if (iccData.isNotEmpty()) {
-                        put(55, iccData)
+                reversalManager.saveVoidReversal(
+                    if (cardClassification == CardClassification.DEBIT) {
+                        ReversalDebitRequestDto(
+                            pan = cardNo,
+                            processingCode = processingCode,
+                            amount = amount,
+                            transactionDateTime = DateUtils.dateTimeFormat.format(date),
+                            stan = stan,
+                            time = time,
+                            date = date,
+                            expiry = expiry,
+                            posEntryMode = posEntryMode,
+                            nii = nii,
+                            tid = tid,
+                            mid = mid,
+                        ).toString()
+                    } else {
+                        ReversalCreditRequestDto(
+                            pan = cardNo,
+                            processingCode = processingCode,
+                            amount = amount,
+                            stan = stan,
+                            time = time,
+                            date = date,
+                            expiry = expiry,
+                            posEntryMode = posEntryMode,
+                            panSeq = panSeq,
+                            nii = nii,
+                            posConditionCode = posConditionCode,
+                            approvalCode = approvalCode,
+                            responseCode = responseCode,
+                            tid = tid,
+                            mid = mid,
+                            iccData = iccData,
+                            fld57 = fld57,
+                            transactionDetails = transactionDetails,
+                            fld62 = fld62,
+                            messageAuthCode = messageAuthCode
+                        ).toString()
                     }
-                    put(62, fld62)
+                )
+
+                val requestData = if (cardClassification == CardClassification.DEBIT) {
+                    mutableMapOf<Int, String>().apply {
+                        put(2, cardNo)
+                        put(3, processingCode)
+                        put(4, amount)
+                        put(11, stan)
+                        put(14, expiry)
+                        put(22, posEntryMode)
+                        put(24, nii)
+                        put(25, posConditionCode)
+                        put(35, track2)
+                        put(37, rrn)
+                        put(38, approvalCode)
+                        put(41, tid)
+                        put(42, mid)
+                        put(52, pinBlock)
+                        if (iccData.isNotEmpty()) {
+                            put(55, iccData)
+                        }
+                        put(62, fld62)
+                    }
+                } else {
+                    mutableMapOf<Int, String>().apply {
+                        put(3, processingCode)
+                        put(4, amount)
+                        put(11, stan)
+                        put(12, time)
+                        put(13, date)
+                        put(22, posEntryMode)
+                        put(23, panSeq)
+                        put(24, nii)
+                        put(25, posConditionCode)
+                        put(35, track2)
+                        put(37, rrn)
+                        put(38, approvalCode)
+                        put(39, responseCode)
+                        put(41, tid)
+                        if (iccData.isNotEmpty()) {
+                            put(55, iccData)
+                        }
+                        put(57, fld57)
+                        put(61, transactionDetails)
+                        put(62, fld62)
+                        put(64, messageAuthCode)
+                    }
                 }
 
                 val packedData = isoRepository.createRequest(
@@ -290,6 +360,108 @@ class VoidRepositoryImpl @Inject constructor(
                 emit(Resource.Success(Unit))
             } catch (e: Exception) {
                 LogSdk.error(TAG, "printVoidBasedTraceNo: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override suspend fun postVoidReversal(): Flow<Resource<ByteArray>> {
+        return flow {
+            try {
+                val reversalData = reversalManager.getVoidReversal()
+
+                if (reversalData == null) {
+                    emit(Resource.Error("Data reversal tidak ditemukan"))
+                    return@flow
+                }
+
+                stanManager.increaseStan()
+                traceNumberManager.increment()
+
+                emit(Resource.Loading("Mengecek data reversal"))
+                val processingCode = JsonParser.parseString(reversalData)
+                    .asJsonObject
+                    .get("processingCode")?.asString ?: ""
+
+                val cardClassification = if (processingCode == SALE_DEBIT_PROCODE) {
+                    CardClassification.DEBIT
+                } else {
+                    CardClassification.CREDIT
+                }
+
+                val request = if (cardClassification == CardClassification.DEBIT) {
+                    mutableMapOf<Int, String>().apply {
+                        val dto = ReversalDebitRequestDto.fromString(reversalData)
+                        with(dto) {
+                            put(2, pan)
+                            put(3, processingCode)
+                            put(4, amount)
+                            put(7, transactionDateTime)
+                            put(11, stan)
+                            put(12, time)
+                            put(13, date)
+                            put(14, expiry)
+                            put(22, posEntryMode)
+                            put(24, nii)
+                            put(41, tid)
+                            put(42, mid)
+                        }
+                    }
+                } else {
+                    mutableMapOf<Int, String>().apply {
+                        val dto = ReversalCreditRequestDto.fromString(reversalData)
+
+                        with(dto) {
+                            put(2, pan)
+                            put(3, processingCode)
+                            put(4, amount)
+                            put(11, stan)
+                            put(12, time)
+                            put(13, date)
+                            put(14, expiry)
+                            put(22, posEntryMode)
+                            put(23, panSeq)
+                            put(24, nii)
+                            put(25, posConditionCode)
+                            put(38, approvalCode)
+                            put(39, responseCode)
+                            put(41, tid)
+                            put(42, mid)
+                            put(55, iccData)
+                            put(57, fld57)
+                            put(61, transactionDetails)
+                            put(62, fld62)
+                            put(64, messageAuthCode)
+                        }
+                    }
+                }
+
+                val packedData = isoRepository.createRequest(
+                    MTI.REVERSAL.code, request
+                )
+
+                if (packedData.isEmpty()) {
+                    emit(Resource.Error("Error saat membuat request reversal"))
+                    return@flow
+                }
+
+                isoRepository.sendAndReceive(packedData).collect { resource ->
+                    when (resource) {
+                        is Resource.Loading -> {
+                            emit(Resource.Loading("Mengirim data reversal..."))
+                        }
+
+                        is Resource.Success -> {
+                            emit(Resource.Success(resource.data ?: byteArrayOf()))
+                        }
+
+                        is Resource.Error -> {
+                            emit(Resource.Error(resource.message ?: "Terjadi kesalahan"))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "postVoidReversal: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }

@@ -27,7 +27,7 @@ class ReversalManager(
         return sharedPreferences.getString(VOID_REVERSAL_KEY, null)
     }
 
-    fun setVoidReversal(data: String) {
+    fun saveVoidReversal(data: String) {
         sharedPreferences.edit { putString(VOID_REVERSAL_KEY, data) }
     }
 
