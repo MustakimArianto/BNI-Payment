@@ -62,7 +62,7 @@ data class InstallmentCardPrevTransactionEntity(
     val jsonReceipt: String,
     val templateJsonReceipt: String
 ) {
-    fun toTransactionModel(): TransactionRecord {
+    fun toTransactionRecord(): TransactionRecord {
         return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,
@@ -92,7 +92,7 @@ data class InstallmentCardPrevTransactionEntity(
             stan = stan,
             maskedCardNo = maskedCardNo,
             insertModeCode = insertModeCode,
-            rrNo = rRNO,
+            rrNo = refNo,
             txnStatus = txnStatus,
             cardType = cardType,
             cardTypeCode = cardTypeCode,

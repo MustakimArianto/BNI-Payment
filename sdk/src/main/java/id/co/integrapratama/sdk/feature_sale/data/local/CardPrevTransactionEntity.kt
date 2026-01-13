@@ -64,7 +64,7 @@ data class CardPrevTransactionEntity(
     val jsonReceipt: String,
     val templateJsonReceipt: String
 ) {
-    fun toTransactionModel(): TransactionRecord {
+    fun toTransactionRecord(): TransactionRecord {
         return TransactionRecord(
             invoice = invoice,
             invoiceDate = invoiceDate,

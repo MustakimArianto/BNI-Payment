@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import java.util.Date
 import javax.inject.Inject
+import kotlin.text.padStart
 
 class SaleRepositoryImpl @Inject constructor(
     private val isoRepository: Iso8583Repository,
@@ -215,14 +216,8 @@ class SaleRepositoryImpl @Inject constructor(
         val authCode = "711162"
         val refNo = "000047111620000"
 
-        val currentTraceNoText = Util.addZerosToNumber(
-            traceNumberManager.getCurrentLastTraceNo(),
-            desiredDigits = 6
-        )
-        val currentBatchNoText = Util.addZerosToNumber(
-            terminalBatchManager.getCurrentBatch(),
-            desiredDigits = 6
-        )
+        val currentTraceNoText = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
+        val currentBatchNoText = terminalBatchManager.getCurrentBatch().toString().padStart(6, '0')
 
         val printFactory = SalePrintTemplateFactory(
             branchName = "DUMMY TRX",
@@ -329,9 +324,9 @@ class SaleRepositoryImpl @Inject constructor(
 
     override suspend fun printReceiptBasedLastTraceNo(): Flow<Resource<Unit>> {
         return printReceiptBasedTraceNo(
-            Util.addZerosToNumber(
-                traceNumberManager.getCurrentTraceNo(), desiredDigits = 6
-            )
+            traceNumberManager.getCurrentLastTraceNo()
+                .toString()
+                .padStart(6, '0')
         )
     }
 
@@ -357,8 +352,8 @@ class SaleRepositoryImpl @Inject constructor(
                 emit(Resource.Loading("Mencetak struk"))
                 printRepository.printWithBuilder(
                     builder = PrintBasedOnTemplateParameterBuilder().fromJson(
-                        valueComponentJsonString = cardTransactionEntity.jsonReq,
-                        templateComponentJsonString = cardTransactionEntity.jsonResp
+                        valueComponentJsonString = cardTransactionEntity.jsonReceipt,
+                        templateComponentJsonString = cardTransactionEntity.templateJsonReceipt
                     )
                 ).collect()
                 emit(Resource.Success(Unit))

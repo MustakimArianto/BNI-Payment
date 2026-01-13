@@ -1,4 +1,4 @@
-package id.co.integrapratama.bnipayment.feature_installment
+package id.co.integrapratama.bnipayment.feature_void
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -18,16 +18,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
-import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
-import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
+import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
 
 @Composable
-fun InstallmentTransactionStatus(
-    isLoading: Boolean,
-    loadingMessage: String,
+fun VoidTransactionStatus(
     transactionResultMessage: String,
     onGoToHome: () -> Unit,
     onPrintReceipt: () -> Unit
@@ -111,8 +108,5 @@ fun InstallmentTransactionStatus(
                     onGoToHome()
                 })
         }
-    }
-    if (isLoading && loadingMessage.isNotEmpty()) {
-        LoadingDialog(message = loadingMessage)
     }
 }

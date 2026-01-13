@@ -1,6 +1,7 @@
 package id.co.integrapratama.sdk.core.utils
 
 import android.database.sqlite.SQLiteException
+import id.co.integrapratama.sdk.core.exception.CustomMessageException
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import java.io.IOException
 import java.net.ConnectException
@@ -10,13 +11,18 @@ import java.net.UnknownHostException
 fun <T> Exception.toResourceError(
     customMessage: String? = null
 ): Resource.Error<T> {
+    val defaultErrorMessage = "Terjadi kesalahan"
     val message = customMessage ?: when (this) {
         is SQLiteException -> "Terjadi kesalahan saat mengakses database"
         is UnknownHostException -> "Tidak ada koneksi Internet"
         is ConnectException -> "Tidak dapat terhubung ke server"
         is SocketTimeoutException -> "Koneksi Timeout"
         is IOException -> "Terjadi kesalahan jaringan"
-        else -> "Terjadi kesalahan"
+        is CustomMessageException -> {
+            val customMessage = this.message
+            customMessage?.ifBlank { defaultErrorMessage } ?: defaultErrorMessage
+        }
+        else -> defaultErrorMessage
     }
     return Resource.Error(message)
 }
