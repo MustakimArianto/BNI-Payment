@@ -12,6 +12,8 @@ import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
 import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
 import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
+import id.co.integrapratama.bnipayment.feature_sale.saleNavGraph
+import id.co.integrapratama.bnipayment.feature_void.voidNavGraph
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
@@ -25,6 +27,7 @@ fun AppNavHost(navController: NavHostController) {
         adminNavGraph(navController)
         accountNavGraph(navController)
         saleNavigation(navController)
+        voidNavGraph(navController)
         installmentNavGraph(navController)
 
         // Mini ATM

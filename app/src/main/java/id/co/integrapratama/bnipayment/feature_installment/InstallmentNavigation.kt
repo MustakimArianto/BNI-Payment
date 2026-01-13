@@ -99,8 +99,8 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
                 onNavigationBack = { navController.popBackStack() }
             )
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
@@ -138,8 +138,8 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
                 }
             }
 
-            if (uiState.isLoading && uiState.statusMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.statusMessage)
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
@@ -188,9 +188,9 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             InstallmentTransactionStatus(
-                errorMessage = uiState.errorMessage,
+                loadingMessage = uiState.loadingMessage,
                 isLoading = uiState.isLoading,
-                statusMessage = uiState.statusMessage,
+                transactionResultMessage = uiState.transactionResultMessage,
                 onGoToHome = { navController.navigateToHome() },
                 onPrintReceipt = { viewModel.printReceipt() }
             )

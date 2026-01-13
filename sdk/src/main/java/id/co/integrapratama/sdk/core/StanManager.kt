@@ -6,7 +6,7 @@ import java.util.Calendar
 import kotlin.random.Random
 
 class StanManager(
-    private val sharedPreferences: SharedPreferences
+    private val sharedPrefs: SharedPreferences
 ) {
 
     companion object {
@@ -16,21 +16,21 @@ class StanManager(
 
     fun getCurrentStan(): Long {
         val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        val lastResetDay = sharedPreferences.getInt(LAST_RESET_DAY_KEY, -1)
+        val lastResetDay = sharedPrefs.getInt(LAST_RESET_DAY_KEY, -1)
         if (currentDay != lastResetDay) {
             resetStan()
             saveLastResetDay(currentDay)
         }
-        return sharedPreferences.getLong(STAN_KEY, 1L)
+        return sharedPrefs.getLong(STAN_KEY, 0L)
     }
 
     fun increaseStan() {
-        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + 1)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + 1)
     }
 
     fun increaseStanUpRandom() {
         val randomNumber = Random.nextLong(1, 1000)
-        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + randomNumber)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomNumber)
     }
 
     fun setStanManual(value: Long) {
@@ -38,20 +38,20 @@ class StanManager(
     }
 
     private fun resetStan() {
-        saveStan(1L)
+        saveStan(0L)
     }
 
-    fun getGenerateRandomStan():Long{
+    fun getGenerateRandomStan(): Long{
         val randomInteger = Random.nextInt(1, 1000)
-        saveStan(sharedPreferences.getLong(STAN_KEY, 1L) + randomInteger.toLong())
-        return sharedPreferences.getLong(STAN_KEY, 1L)
+        saveStan(sharedPrefs.getLong(STAN_KEY, 0L) + randomInteger.toLong())
+        return sharedPrefs.getLong(STAN_KEY, 0L)
     }
 
     private fun saveStan(value: Long) {
-        sharedPreferences.edit { putLong(STAN_KEY, value) }
+        sharedPrefs.edit { putLong(STAN_KEY, value) }
     }
 
     private fun saveLastResetDay(value: Int) {
-        sharedPreferences.edit { putInt(LAST_RESET_DAY_KEY, value) }
+        sharedPrefs.edit { putInt(LAST_RESET_DAY_KEY, value) }
     }
 }

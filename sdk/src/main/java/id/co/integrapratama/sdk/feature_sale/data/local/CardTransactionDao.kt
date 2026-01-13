@@ -65,6 +65,27 @@ interface CardTransactionDao {
     @Query("DELETE FROM card_prev_transaction")
     suspend fun deleteAllPreviousTransactions()
 
+    @Query("UPDATE card_transaction SET txnStatus = 'Void' WHERE invoice = :traceNo")
+    suspend fun updateTransactionStatusToVoid(traceNo: String)
+
+    @Query("UPDATE card_transaction SET jsonReceipt = :jsonReceipt, templateJsonReceipt = :templateJsonReceipt WHERE invoice = :traceNo")
+    suspend fun updateJsonReceiptAndTemplateJsonReceipt(
+        traceNo: String,
+        jsonReceipt: String,
+        templateJsonReceipt: String
+    )
+
+    @Query("UPDATE card_transaction SET jsonReceipt = :jsonReceipt WHERE invoice = :traceNo")
+    suspend fun updateJsonReceipt(
+        traceNo: String,
+        jsonReceipt: String,
+    )
+
+    @Query("UPDATE card_transaction SET templateJsonReceipt = :templateJsonReceipt WHERE invoice = :traceNo")
+    suspend fun updateTemplateJsonReceipt(
+        traceNo: String,
+        templateJsonReceipt: String
+    )
 
     @Transaction
     suspend fun moveAllTrxToPreviousBatch() {

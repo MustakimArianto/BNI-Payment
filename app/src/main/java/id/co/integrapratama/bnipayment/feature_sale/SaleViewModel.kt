@@ -174,116 +174,117 @@ class SaleViewModel @Inject constructor(
 
     private fun readCard() {
         viewModelScope.launch {
+            stanManager.increaseStan()
             readCardRepository.readCard(
                 amount = uiState.value.amount.toLong(),
                 cardOption = uiState.value.cardOption,
             ).collect { resourceReadCard ->
-                    when (resourceReadCard) {
-                        is Resource.Loading -> {
-                            val loadingMessage: String = resourceReadCard.message.toString()
-                            Log.d("loadingMessage", loadingMessage)
-                            val lowerCaseLoadingMessage: String = loadingMessage.lowercase(Locale.getDefault())
-                            fun parsingPresentingCardAgainMessage(): String {
-                                var step = 1
-                                val result = StringBuilder()
-                                for (c in lowerCaseLoadingMessage) {
-                                    if (step == 1) {
-                                        if (c == ':') {
-                                            step = 2
-                                        }
-                                    } else if (step == 2) {
-                                        if (c != ' ') {
-                                            step = 3
-                                            result.append(c)
-                                        }
-                                    } else {
+                when (resourceReadCard) {
+                    is Resource.Loading -> {
+                        val loadingMessage: String = resourceReadCard.message.toString()
+                        Log.d("loadingMessage", loadingMessage)
+                        val lowerCaseLoadingMessage: String = loadingMessage.lowercase(Locale.getDefault())
+                        fun parsingPresentingCardAgainMessage(): String {
+                            var step = 1
+                            val result = StringBuilder()
+                            for (c in lowerCaseLoadingMessage) {
+                                if (step == 1) {
+                                    if (c == ':') {
+                                        step = 2
+                                    }
+                                } else if (step == 2) {
+                                    if (c != ' ') {
+                                        step = 3
                                         result.append(c)
                                     }
+                                } else {
+                                    result.append(c)
                                 }
-                                return result.toString().replaceFirstChar { it.uppercaseChar() }
                             }
+                            return result.toString().replaceFirstChar { it.uppercaseChar() }
+                        }
 
-                            val parsingPresentingCardAgainMessageResult = parsingPresentingCardAgainMessage()
-                            val cardReadOutput: CardReadOutput? = resourceReadCard.data?.cardReadOutput
+                        val parsingPresentingCardAgainMessageResult = parsingPresentingCardAgainMessage()
+                        val cardReadOutput: CardReadOutput? = resourceReadCard.data?.cardReadOutput
 
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                isReadingCard = true,
+                                loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                            )
+                        }
+
+
+                        if (cardReadOutput?.cardNo?.isNotEmpty() == true) {
                             _uiState.update {
                                 it.copy(
-                                    isLoading = true,
-                                    isReadingCard = true,
+                                    cardNumber = cardReadOutput.cardNo,
+                                    maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
+                                    isFinishedReadCard = true,
                                     loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
                                 )
                             }
+                        }
 
 
-                            if (cardReadOutput?.cardNo?.isNotEmpty() == true) {
+                        if (resourceReadCard.data != null) {
+                            if (resourceReadCard.data!!.isShowPinpad) {
                                 _uiState.update {
                                     it.copy(
-                                        cardNumber = cardReadOutput.cardNo,
-                                        maskedCardNumber = maskCardNumber(cardReadOutput.cardNo),
-                                        isFinishedReadCard = true,
-                                        loadingMessage = if (parsingPresentingCardAgainMessageResult.isNotBlank()) "" else loadingMessage
+                                        isShowPinpad = true,
+                                        isPhysicalKeyboard =
+                                            deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                        onInsertOnlinePinAction =
+                                            resourceReadCard.data!!.onInsertOnlinePinAction,
+                                    )
+                                }
+                            } else if (resourceReadCard.data!!.isShowOfflinePinpad) {
+                                _uiState.update {
+                                    it.copy(
+                                        isShowOfflinePinpad = true,
+                                        isPhysicalKeyboard =
+                                            deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
+                                        onInsertOfflinePinAction =
+                                            resourceReadCard.data!!.onInsertOfflinePinAction,
                                     )
                                 }
                             }
 
-
-                            if (resourceReadCard.data != null) {
-                                if (resourceReadCard.data!!.isShowPinpad) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isShowPinpad = true,
-                                            isPhysicalKeyboard =
-                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
-                                            onInsertOnlinePinAction =
-                                                resourceReadCard.data!!.onInsertOnlinePinAction,
-                                        )
-                                    }
-                                } else if (resourceReadCard.data!!.isShowOfflinePinpad) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isShowOfflinePinpad = true,
-                                            isPhysicalKeyboard =
-                                                deviceTypeManager.getDeviceTypeValue().isPhysicalKeypadSupported,
-                                            onInsertOfflinePinAction =
-                                                resourceReadCard.data!!.onInsertOfflinePinAction,
-                                        )
-                                    }
+                            if (parsingPresentingCardAgainMessageResult.isNotBlank()) {
+                                _uiState.update {
+                                    it.copy(
+                                        presentCardAgainMessage = parsingPresentingCardAgainMessageResult
+                                    )
                                 }
-
-                                if (parsingPresentingCardAgainMessageResult.isNotBlank()) {
-                                    _uiState.update {
-                                        it.copy(
-                                            presentCardAgainMessage = parsingPresentingCardAgainMessageResult
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        is Resource.Success -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    isReadingCard = false,
-                                    cardReadOutput = resourceReadCard.data?.cardReadOutput,
-                                    cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
-                                        ?: "",
-                                )
-                            }
-
-                            checkBinRange(resourceReadCard.data?.cardReadOutput?.cardNo ?: "")
-                        }
-
-                        is Resource.Error -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    errorMessage = resourceReadCard.message ?: "Terjadi kesalahan",
-                                )
                             }
                         }
                     }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isReadingCard = false,
+                                cardReadOutput = resourceReadCard.data?.cardReadOutput,
+                                cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
+                                    ?: "",
+                            )
+                        }
+
+                        checkBinRange(resourceReadCard.data?.cardReadOutput?.cardNo ?: "")
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resourceReadCard.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
                 }
+            }
         }
     }
 
@@ -734,10 +735,28 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                loadingMessage = "",
                                 isTransactionFinished = true,
-                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
+
+                        saveTransactionToDatabase()
+//                        _uiState.update {
+//                            it.copy(
+//                                isLoading = false,
+//                                loadingMessage = "",
+//                                isTransactionFinished = true,
+//                            )
+//                        }
+//
+//                        saveTransactionToDatabase()
+//                        _uiState.update {
+//                            it.copy(
+//                                isLoading = false,
+//                                isTransactionFinished = true,
+//                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
+//                            )
+//                        }
                     }
                 }
             }
@@ -758,8 +777,8 @@ class SaleViewModel @Inject constructor(
                     amount = uiState.value.amount.toLong() * 100L,
                     payID = "",
                     pan = uiState.value.cardNumber,
-                    mID = "12345678",
-                    tID = "123456789012345",
+                    mID = "1234567890",
+                    tID = "1234567890",
                     printFormats = "",
                     refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
                     txnTypeId = "",
@@ -774,8 +793,8 @@ class SaleViewModel @Inject constructor(
                     stan = stanManager.getCurrentStan().toString().padStart(6, '0'),
                     maskedCardNo = uiState.value.maskedCardNumber,
                     insertModeCode = "",
-                    rrNo = "",
-                    txnStatus = "",
+                    rrNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    txnStatus = "Success",
                     cardType = uiState.value.binType.description,
                     cardTypeCode = "",
                     acquiringBank = "",
@@ -790,8 +809,8 @@ class SaleViewModel @Inject constructor(
                     bankMID = "",
                     cashierID = "",
                     terminalCapability = "",
-                    jsonReq = getPrintTemplate().jsonString,
-                    jsonResp = getPrintTemplate().printTemplateJsonString,
+                    jsonReceipt = getPrintTemplate().jsonString,
+                    templateJsonReceipt = getPrintTemplate().printTemplateJsonString,
                     eMIAmount = 0L,
                 )
             ).collect { resource ->
@@ -812,6 +831,7 @@ class SaleViewModel @Inject constructor(
                                 loadingMessage = ""
                             )
                         }
+                        traceNumberManager.increment()
                     }
 
                     is Resource.Error -> {

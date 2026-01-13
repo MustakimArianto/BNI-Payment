@@ -1,4 +1,4 @@
-package id.co.integrapratama.bnipayment.common.ui
+package id.co.integrapratama.bnipayment.common.ui_component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions

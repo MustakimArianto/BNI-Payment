@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import id.co.integrapratama.bnipayment.common.ui.InputAmountTextField
+import id.co.integrapratama.bnipayment.common.ui_component.InputAmountTextField
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.ResourceImplementer
 import id.co.integrapratama.bnipayment.common.ui_component.SelectionButton
