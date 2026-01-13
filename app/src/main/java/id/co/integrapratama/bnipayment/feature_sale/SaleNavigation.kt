@@ -16,7 +16,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.saleNavGraph(navController: NavController) {
+fun NavGraphBuilder.saleNavigation(navController: NavController) {
     navigation<AppRoute.Sale>(
         startDestination = SaleRoute.InputAmount
     ) {
@@ -72,13 +72,14 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             LaunchedEffect(uiState.isFinishedReadCard) {
                 if (uiState.isFinishedReadCard) {
                     navController.navigateFromCurrent(
-                        SaleRoute.ConfirmTransaction,
+                        SaleRoute.ConfirmCard,
                         isInclusive = true
                     )
                 }
             }
 
             InsertCardScreen(
+                title = uiState.title,
                 onNavigationBack = { navController.popBackStack() }
             )
 
@@ -105,7 +106,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
             }
         }
 
-        composable<SaleRoute.ConfirmTransaction> {
+        composable<SaleRoute.ConfirmCard> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -142,6 +143,7 @@ fun NavGraphBuilder.saleNavGraph(navController: NavController) {
                     onPrimaryButtonClicked = { navController.navigateToHome() })
             }
             SaleConfirmTransactionScreen(
+                title = uiState.title,
                 pin = uiState.pin,
                 isPhysicalKeyboard = uiState.isPhysicalKeyboard,
                 cardNumber = uiState.maskedCardNumber,

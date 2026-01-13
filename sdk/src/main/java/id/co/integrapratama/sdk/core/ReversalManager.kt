@@ -1,9 +1,10 @@
 package id.co.integrapratama.sdk.core
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 class ReversalManager(
-    private val sharedPrefs: SharedPreferences
+    private val sharedPreferences: SharedPreferences
 ) {
     companion object {
         private const val SALE_REVERSAL_KEY = "SALE_REVERSAL_KEY"
@@ -11,26 +12,26 @@ class ReversalManager(
     }
 
     fun getSaleReversal(): String? {
-        return sharedPrefs.getString(SALE_REVERSAL_KEY, null)
+        return sharedPreferences.getString(SALE_REVERSAL_KEY, null)
     }
 
     fun saveSaleReversal(data: String) {
-        sharedPrefs.edit().putString(SALE_REVERSAL_KEY, data).apply()
+        sharedPreferences.edit { putString(SALE_REVERSAL_KEY, data) }
     }
 
     fun clearSaleReversal() {
-        sharedPrefs.edit().remove(SALE_REVERSAL_KEY).apply()
+        sharedPreferences.edit { remove(SALE_REVERSAL_KEY) }
     }
 
     fun getVoidReversal(): String? {
-        return sharedPrefs.getString(VOID_REVERSAL_KEY, null)
+        return sharedPreferences.getString(VOID_REVERSAL_KEY, null)
     }
 
     fun setVoidReversal(data: String) {
-        sharedPrefs.edit().putString(VOID_REVERSAL_KEY, data).apply()
+        sharedPreferences.edit { putString(VOID_REVERSAL_KEY, data) }
     }
 
     fun clearVoidReversal(data: String) {
-        sharedPrefs.edit().remove(VOID_REVERSAL_KEY).apply()
+        sharedPreferences.edit { remove(VOID_REVERSAL_KEY) }
     }
 }

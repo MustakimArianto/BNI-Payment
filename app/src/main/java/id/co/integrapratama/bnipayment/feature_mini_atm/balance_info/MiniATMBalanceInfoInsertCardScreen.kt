@@ -1,4 +1,4 @@
-package id.co.integrapratama.bnipayment.feature_sale
+package id.co.integrapratama.bnipayment.feature_mini_atm.balance_info
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +19,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
-fun InsertCardScreen(
+fun MiniATMBalanceInfoInsertCardScreen(
     title: String,
     onNavigationBack: () -> Unit
 ) {

@@ -1,4 +1,4 @@
-package id.co.integrapratama.bnipayment.feature_sale
+package id.co.integrapratama.bnipayment.feature_mini_atm.balance_info
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,7 +31,7 @@ import id.co.integrapratama.bnipayment.ui.theme.TextGray
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 
 @Composable
-fun SaleConfirmTransactionScreen(
+fun MiniATMBalanceInfoConfirmCardScreen(
     title: String,
     pin: String = "",
     cardNumber: String,
