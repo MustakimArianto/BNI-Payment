@@ -1,7 +1,12 @@
 // MenuScreen.kt
 package id.co.integrapratama.bnipayment.feature_menu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -14,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -22,6 +28,7 @@ import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
 import id.co.integrapratama.bnipayment.feature_home.homeNavigation
 import id.co.integrapratama.bnipayment.feature_init_menu.InitMenuScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
+import id.co.integrapratama.bnipayment.ui.theme.DividerColor
 import id.co.integrapratama.bnipayment.ui.theme.InactiveColor
 import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
@@ -64,31 +71,51 @@ internal fun MenuScreen() {
 private fun MainBottomBar(
     currentDestination: String?, onNavigate: (AppRoute) -> Unit
 ) {
-    NavigationBar(containerColor = Color.White) {
-        BottomNavItem.entries.forEach { item ->
-            val isSelected = when (item) {
-                BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
-                BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
-                BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
-            }
+    Column {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            BottomNavItem.entries.forEach { item ->
+                val isSelected = when (item) {
+                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
+                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
+                    BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
+                }
 
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = { onNavigate(item.route) },
-                label = { Text(text = item.title) },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = item.icon), contentDescription = item.title
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = SecondaryColor,
-                    selectedTextColor = Color.Black,
-                    indicatorColor = Color.Transparent,
-                    unselectedIconColor = InactiveColor,
-                    unselectedTextColor = InactiveColor
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(3.dp)
+                        .background(if (isSelected) SecondaryColor else DividerColor)
                 )
-            )
+            }
+        }
+
+        NavigationBar(containerColor = Color.White) {
+            BottomNavItem.entries.forEach { item ->
+                val isSelected = when (item) {
+                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
+                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
+                    BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
+                }
+
+                NavigationBarItem(
+                    selected = isSelected,
+                    onClick = { onNavigate(item.route) },
+                    label = { Text(text = item.title) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = item.icon),
+                            contentDescription = item.title
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = SecondaryColor,
+                        selectedTextColor = Color.Black,
+                        indicatorColor = Color.Transparent,
+                        unselectedIconColor = InactiveColor,
+                        unselectedTextColor = InactiveColor
+                    )
+                )
+            }
         }
     }
 }
