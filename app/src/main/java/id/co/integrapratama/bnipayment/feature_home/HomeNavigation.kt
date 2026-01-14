@@ -4,12 +4,14 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import id.co.integrapratama.bnipayment.common.ui_component.SetStatusBarColor
 import id.co.integrapratama.bnipayment.feature_installment.installmentNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavigation
 import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
 import id.co.integrapratama.bnipayment.feature_void.voidNavigation
 import id.co.integrapratama.bnipayment.navigation.AppRoute
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryVariantColor
 
 fun NavGraphBuilder.homeNavigation(navController: NavController) {
     navigation<AppRoute.Home>(
@@ -18,6 +20,8 @@ fun NavGraphBuilder.homeNavigation(navController: NavController) {
         composable<HomeRoute.Menu> {
             val merchantName = "Cahaya Abadi Lestari"
             val merchantLocation = "Summarecon Mall Bekasi, Bekasi"
+
+            SetStatusBarColor(PrimaryVariantColor)
 
             HomeMenuScreen(
                 merchantName = merchantName,
