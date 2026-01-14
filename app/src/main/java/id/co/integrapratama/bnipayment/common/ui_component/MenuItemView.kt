@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
-import id.co.integrapratama.bnipayment.ui.theme.SubTextBlueColor
+import id.co.integrapratama.bnipayment.ui.theme.TextLightBlueColor
 
 @Composable
 fun MenuItemView(
@@ -46,7 +46,7 @@ fun MenuItemView(
             fontSize = 12.sp,
             maxLines = 2,
             textAlign = TextAlign.Center,
-            color = SubTextBlueColor
+            color = TextLightBlueColor
         )
     }
 }

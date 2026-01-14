@@ -27,7 +27,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.ui.theme.DisabledInputFieldColor
-import id.co.integrapratama.bnipayment.ui.theme.SubTextGrayColor
+import id.co.integrapratama.bnipayment.ui.theme.TextGrayColor
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 
 @Composable
@@ -76,7 +76,7 @@ fun MiniATMBalanceInfoConfirmCardScreen(
                 ) {
                     Text(
                         "Nomor Kartu",
-                        color = SubTextGrayColor,
+                        color = TextGrayColor,
                         fontWeight = FontWeight.Light,
                         fontSize = 14.sp
                     )

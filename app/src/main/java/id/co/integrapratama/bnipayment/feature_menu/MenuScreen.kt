@@ -28,8 +28,8 @@ import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
 import id.co.integrapratama.bnipayment.feature_home.homeNavigation
 import id.co.integrapratama.bnipayment.feature_init_menu.InitMenuScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
-import id.co.integrapratama.bnipayment.ui.theme.DividerColor
 import id.co.integrapratama.bnipayment.ui.theme.InactiveColor
+import id.co.integrapratama.bnipayment.ui.theme.LightGray
 import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
 @Composable
@@ -38,18 +38,27 @@ internal fun MenuScreen() {
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry?.destination
 
+    val shouldShowBottomBar = when {
+        currentDestination?.route?.contains("HomeRoute.Menu") == true -> true
+        currentDestination?.route?.contains("AdminRoute.Menu") == true -> true
+        currentDestination?.route?.contains("InitMenuRoute.Menu") == true -> true
+        else -> false
+    }
+
     Scaffold(
         bottomBar = {
-            MainBottomBar(
-                currentDestination = currentDestination?.route, onNavigate = { route ->
-                    bottomNavController.navigate(route) {
-                        popUpTo(BottomNavItem.HOME.route) {
-                            saveState = true
+            if (shouldShowBottomBar) {
+                MainBottomBar(
+                    currentDestination = currentDestination?.route, onNavigate = { route ->
+                        bottomNavController.navigate(route) {
+                            popUpTo(BottomNavItem.HOME.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                })
+                    })
+            }
         }) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             NavHost(
@@ -84,7 +93,7 @@ private fun MainBottomBar(
                     modifier = Modifier
                         .weight(1f)
                         .height(3.dp)
-                        .background(if (isSelected) SecondaryColor else DividerColor)
+                        .background(if (isSelected) SecondaryColor else LightGray)
                 )
             }
         }
@@ -92,8 +101,8 @@ private fun MainBottomBar(
         NavigationBar(containerColor = Color.White) {
             BottomNavItem.entries.forEach { item ->
                 val isSelected = when (item) {
-                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
-                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
+                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute.Menu") == true
+                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute.Menu") == true
                     BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
                 }
 

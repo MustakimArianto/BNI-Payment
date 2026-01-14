@@ -2,6 +2,7 @@ package id.co.integrapratama.bnipayment.feature_home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +36,8 @@ import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.ui.theme.DividerColor
 import id.co.integrapratama.bnipayment.ui.theme.PrimaryTextColor
-import id.co.integrapratama.bnipayment.ui.theme.SubTextBlueColor
-import id.co.integrapratama.bnipayment.ui.theme.SubTextGrayColor
+import id.co.integrapratama.bnipayment.ui.theme.TextGrayColor
+import id.co.integrapratama.bnipayment.ui.theme.TextLightBlueColor
 
 @Composable
 fun HomeMenuScreen(
@@ -46,7 +47,8 @@ fun HomeMenuScreen(
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
     onNavigateToSettlement: () -> Unit,
-    onNavigateToInstallment: () -> Unit
+    onNavigateToInstallment: () -> Unit,
+    onNavigateToMerchantCare: () -> Unit
 ) {
     val menuItems = remember {
         getHomeMenuItems(
@@ -63,14 +65,13 @@ fun HomeMenuScreen(
         Image(
             modifier = Modifier.fillMaxWidth(),
             painter = painterResource(R.drawable.ic_top_background),
-            contentDescription = null,
-            contentScale = ContentScale.Crop // Change to FillWidth
+            contentDescription = null, contentScale = ContentScale.Crop
         )
 
         Column(
             Modifier
                 .fillMaxSize()
-                .systemBarsPadding() // This pushes content below status bar
+                .systemBarsPadding()
                 .padding(horizontal = 16.dp)
         ) {
             Row(
@@ -84,7 +85,9 @@ fun HomeMenuScreen(
                     contentDescription = null
                 )
                 Image(
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clickable { onNavigateToMerchantCare() },
                     painter = painterResource(R.drawable.ic_help_outline_white_24),
                     contentDescription = null
                 )
@@ -96,11 +99,11 @@ fun HomeMenuScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("TID $tid", color = SubTextBlueColor)
+                Text("TID $tid", color = TextLightBlueColor)
                 HorizontalSpacer(SpacerSize.MEDIUM)
-                Text(text = "•", fontSize = 32.sp, color = SubTextBlueColor)
+                Text(text = "•", fontSize = 32.sp, color = TextLightBlueColor)
                 HorizontalSpacer(SpacerSize.MEDIUM)
-                Text("MID $mid", color = SubTextBlueColor)
+                Text("MID $mid", color = TextLightBlueColor)
             }
             VerticalSpacer(SpacerSize.MEDIUM)
             LazyVerticalGrid(
@@ -117,8 +120,6 @@ fun HomeMenuScreen(
             }
         }
     }
-
-
 }
 
 @Composable
@@ -131,7 +132,7 @@ fun MerchantInformationCard(
                 .background(Color.White)
                 .padding(16.dp)
         ) {
-            Text("Merchant Name", color = SubTextGrayColor)
+            Text("Merchant Name", color = TextGrayColor)
             VerticalSpacer(SpacerSize.MEDIUM)
             Text(merchantName, fontWeight = FontWeight.SemiBold, color = PrimaryTextColor)
             VerticalSpacer(SpacerSize.MEDIUM)
@@ -145,7 +146,7 @@ fun MerchantInformationCard(
                     contentDescription = null
                 )
                 HorizontalSpacer(SpacerSize.MEDIUM)
-                Text(merchantLocation, color = SubTextBlueColor)
+                Text(merchantLocation, color = TextLightBlueColor)
             }
         }
     }

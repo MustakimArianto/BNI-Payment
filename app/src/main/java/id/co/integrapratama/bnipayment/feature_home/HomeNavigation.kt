@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_home
 
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -34,7 +35,13 @@ fun NavGraphBuilder.homeNavigation(navController: NavController) {
                 onNavigateToVoid = { navController.navigate(AppRoute.Void) },
                 onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) },
                 onNavigateToInstallment = { navController.navigate(AppRoute.Installment) },
+                onNavigateToMerchantCare = { navController.navigate(HomeRoute.MerchantCare) }
             )
+        }
+        composable<HomeRoute.MerchantCare> {
+            SetStatusBarColor(color = Color.White, darkIcons = true)
+
+            HomeMerchantCareScreen()
         }
     }
 
