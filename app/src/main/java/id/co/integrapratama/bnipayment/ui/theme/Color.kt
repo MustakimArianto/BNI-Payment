@@ -14,11 +14,14 @@ val YellowBase = Color(0xFFFFAA3C)
 val NavBlue = Color(0xFF10AAB6)
 
 val DisabledInputFieldColor = Color(0xFFE9ECEF)
-val TextGray = Color.Gray
 val PrimaryButtonColor = Color(0xFFFF713C)
 
 val PrimaryColor = Color(0xFF006E85)
+val PrimaryVariantColor = Color(0xFF10AAB6)
 val SecondaryColor = Color(0xFFFF7F08)
 val DividerColor = Color(0xFFD0DDDE)
 val InactiveColor = Color(0xFFB3C4C5)
+val PrimaryTextColor = Color(0xFF004558)
+val SubTextGrayColor = Color(0xFF8C8C8C)
+val SubTextBlueColor = Color(0xFF80A2AB)
 

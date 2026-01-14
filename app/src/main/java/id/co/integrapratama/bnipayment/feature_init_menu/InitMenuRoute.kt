@@ -1,4 +1,4 @@
-package id.co.integrapratama.bnipayment.feature_account
+package id.co.integrapratama.bnipayment.feature_init_menu
 
 import kotlinx.serialization.Serializable
 

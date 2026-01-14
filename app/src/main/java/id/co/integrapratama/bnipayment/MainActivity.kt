@@ -14,13 +14,14 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import id.co.integrapratama.bnipayment.navigation.AppNavHost
 import id.co.integrapratama.bnipayment.ui.theme.BNIPaymentTheme
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryVariantColor
 import id.co.integrapratama.logsdk.LogSdk
 
 @AndroidEntryPoint
@@ -62,20 +63,16 @@ class MainActivity : ComponentActivity() {
             requestStoragePermission()
         }
 
+        val black50 = Color.Black.copy(alpha = 0.2f)
+
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
-                android.graphics.Color.TRANSPARENT
+                PrimaryVariantColor.toArgb()
             ),
             navigationBarStyle = SystemBarStyle.dark(
-                android.graphics.Color.TRANSPARENT
+                black50.toArgb()
             )
         )
-
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.navigationBars())
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
 
         setContent {
             BNIPaymentTheme {

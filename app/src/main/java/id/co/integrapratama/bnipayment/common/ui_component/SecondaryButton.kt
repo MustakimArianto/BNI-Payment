@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import id.co.integrapratama.bnipayment.ui.theme.TextGray
+import id.co.integrapratama.bnipayment.ui.theme.SubTextGrayColor
 
 @Composable
 fun SecondaryButton(
@@ -31,7 +31,7 @@ fun SecondaryButton(
         enabled = isEnabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.White,
-            contentColor = TextGray,
+            contentColor = SubTextGrayColor,
         ),
         border = BorderStroke(2.dp, Color.LightGray),
         onClick = onClick

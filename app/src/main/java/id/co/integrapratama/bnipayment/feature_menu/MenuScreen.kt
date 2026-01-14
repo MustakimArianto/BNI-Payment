@@ -18,22 +18,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import id.co.integrapratama.bnipayment.feature_account.InitMenuScreen
 import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
-import id.co.integrapratama.bnipayment.feature_home.HomeMenuScreen
+import id.co.integrapratama.bnipayment.feature_home.homeNavigation
+import id.co.integrapratama.bnipayment.feature_init_menu.InitMenuScreen
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 import id.co.integrapratama.bnipayment.ui.theme.InactiveColor
 import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
 @Composable
-internal fun MenuScreen(
-    onNavigateToMiniATM: () -> Unit,
-    onNavigateToSale: () -> Unit,
-    onNavigateToContactlessSale: () -> Unit,
-    onNavigateToVoid: () -> Unit,
-    onNavigateToSettlement: () -> Unit,
-    onNavigateToInstallment: () -> Unit
-) {
+internal fun MenuScreen() {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry?.destination
@@ -55,16 +48,7 @@ internal fun MenuScreen(
             NavHost(
                 navController = bottomNavController, startDestination = BottomNavItem.HOME.route
             ) {
-                composable<AppRoute.Home> {
-                    HomeMenuScreen(
-                        onNavigateToMiniATM = onNavigateToMiniATM,
-                        onNavigateToSale = onNavigateToSale,
-                        onNavigateToContactlessSale = onNavigateToContactlessSale,
-                        onNavigateToVoid = onNavigateToVoid,
-                        onNavigateToSettlement = onNavigateToSettlement,
-                        onNavigateToInstallment = onNavigateToInstallment
-                    )
-                }
+                homeNavigation(bottomNavController)
 
                 adminNavigation(bottomNavController)
 
@@ -83,7 +67,7 @@ private fun MainBottomBar(
     NavigationBar(containerColor = Color.White) {
         BottomNavItem.entries.forEach { item ->
             val isSelected = when (item) {
-                BottomNavItem.HOME -> currentDestination == AppRoute.Home::class.qualifiedName
+                BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
                 BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
                 BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
             }
