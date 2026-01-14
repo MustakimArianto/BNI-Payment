@@ -17,7 +17,7 @@ inline fun <reified T : Any> NavController.navigateFromCurrent(
 }
 
 fun NavController.navigateToHome() {
-    navigate(AppRoute.Main) {
+    navigate(AppRoute.Home) {
         popUpTo(0) {
             inclusive = true
         }

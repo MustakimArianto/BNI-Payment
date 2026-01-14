@@ -15,12 +15,10 @@ import androidx.compose.ui.unit.dp
 import id.co.integrapratama.bnipayment.common.ui_component.MenuItemView
 
 @Composable
-fun AdminScreen(
-    onLogon: () -> Unit,
-) {
+fun AdminScreen() {
     val menuItems = remember {
         getAdminMenuItems(
-            onLogon = onLogon
+            onLogon = {}
         )
     }
 

@@ -21,12 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import id.co.integrapratama.bnipayment.feature_admin.adminNavigation
 import id.co.integrapratama.bnipayment.feature_home.homeNavigation
-import id.co.integrapratama.bnipayment.feature_init_menu.InitMenuScreen
+import id.co.integrapratama.bnipayment.feature_init_menu.initMenuNavigation
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 import id.co.integrapratama.bnipayment.ui.theme.InactiveColor
 import id.co.integrapratama.bnipayment.ui.theme.LightGray
@@ -68,9 +67,7 @@ internal fun MenuScreen() {
 
                 adminNavigation(bottomNavController)
 
-                composable<AppRoute.InitMenu> {
-                    InitMenuScreen()
-                }
+                initMenuNavigation(bottomNavController)
             }
         }
     }
@@ -86,7 +83,7 @@ private fun MainBottomBar(
                 val isSelected = when (item) {
                     BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
                     BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
-                    BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
+                    BottomNavItem.INIT_MENU -> currentDestination?.contains("InitMenuRoute") == true
                 }
 
                 Box(
@@ -101,9 +98,9 @@ private fun MainBottomBar(
         NavigationBar(containerColor = Color.White) {
             BottomNavItem.entries.forEach { item ->
                 val isSelected = when (item) {
-                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute.Menu") == true
-                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute.Menu") == true
-                    BottomNavItem.INIT_MENU -> currentDestination == AppRoute.InitMenu::class.qualifiedName
+                    BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
+                    BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
+                    BottomNavItem.INIT_MENU -> currentDestination?.contains("InitMenuRoute") == true
                 }
 
                 NavigationBarItem(

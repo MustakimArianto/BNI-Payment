@@ -17,8 +17,5 @@ fun AppNavHost(navController: NavHostController) {
     ) {
         onboardingNavigation(navController)
         menuNavigation(navController)
-        homeNavigation(navController)
-        adminNavigation(navController)
-        initMenuNavigation(navController)
     }
 }
