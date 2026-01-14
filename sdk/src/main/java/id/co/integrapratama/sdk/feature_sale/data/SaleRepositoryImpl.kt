@@ -260,6 +260,7 @@ class SaleRepositoryImpl @Inject constructor(
                         amount = amount,
                         payID = payID,
                         pan = pan,
+                        track2Data = track2Data,
                         mID = mID,
                         tID = tID,
                         printFormats = printFormats,

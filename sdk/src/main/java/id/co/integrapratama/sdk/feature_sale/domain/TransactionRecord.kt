@@ -11,6 +11,7 @@ data class TransactionRecord(
     val amount: Long = 0,
     val payID: String,
     val pan: String = "",
+    val track2Data: String = "",
     val mID: String,
     val tID: String,
     val printFormats: String,
