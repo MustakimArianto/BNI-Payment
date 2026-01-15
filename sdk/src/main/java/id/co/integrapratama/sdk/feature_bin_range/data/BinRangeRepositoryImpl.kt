@@ -63,6 +63,8 @@ class BinRangeRepositoryImpl @Inject constructor(
             BinType.PL_KARTU_BANTUAN,
             BinType.PL_VA_BNDRA_PEL,
             BinType.MAESTRO_BNI,
+            BinType.DEBIT_BRI_OTHER,
+            BinType.DEBIT_MANDIRI_OTHER
                 -> {
                 CardClassification.DEBIT
             }
