@@ -14,8 +14,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -33,7 +33,9 @@ import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
 @Composable
 internal fun MenuScreen(
-    isHomeActive: Boolean
+    isCheckDefaultMenu: Boolean,
+    isHomeActive: Boolean,
+    onDisableMenuChecking: () -> Unit
 ) {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
@@ -41,16 +43,25 @@ internal fun MenuScreen(
 
     val shouldShowBottomBar = when {
         currentDestination?.route?.contains("HomeRoute.Menu") == true -> true
-        currentDestination?.route?.contains("AdminRoute.Menu") == true -> true
         currentDestination?.route?.contains("InitMenuRoute.Menu") == true -> true
         else -> false
     }
 
-    val startDestination = remember(isHomeActive) {
+    // Determine start destination based on conditions
+    val startDestination = if (isCheckDefaultMenu) {
         if (isHomeActive) {
             BottomNavItem.HOME.route
         } else {
             BottomNavItem.INIT_MENU.route
+        }
+    } else {
+        BottomNavItem.HOME.route
+    }
+
+    // Disable menu checking when we successfully reach Home screen
+    LaunchedEffect(currentDestination?.route, isCheckDefaultMenu) {
+        if (isCheckDefaultMenu && currentDestination?.route?.contains("HomeRoute") == true) {
+            onDisableMenuChecking()
         }
     }
 
@@ -58,8 +69,9 @@ internal fun MenuScreen(
         bottomBar = {
             if (shouldShowBottomBar) {
                 MainBottomBar(
-                    isHomeActive,
-                    currentDestination = currentDestination?.route, onNavigate = { route ->
+                    isHomeActive = isHomeActive,
+                    currentDestination = currentDestination?.route,
+                    onNavigate = { route ->
                         bottomNavController.navigate(route) {
                             popUpTo(BottomNavItem.HOME.route) {
                                 saveState = true
@@ -67,17 +79,18 @@ internal fun MenuScreen(
                             launchSingleTop = true
                             restoreState = true
                         }
-                    })
+                    }
+                )
             }
-        }) { paddingValues ->
+        }
+    ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             NavHost(
-                navController = bottomNavController, startDestination = startDestination
+                navController = bottomNavController,
+                startDestination = startDestination
             ) {
                 homeNavigation(bottomNavController)
-
                 adminNavigation(bottomNavController)
-
                 initMenuNavigation(bottomNavController)
             }
         }
@@ -86,7 +99,9 @@ internal fun MenuScreen(
 
 @Composable
 private fun MainBottomBar(
-    isHomeActive: Boolean, currentDestination: String?, onNavigate: (AppRoute) -> Unit
+    isHomeActive: Boolean,
+    currentDestination: String?,
+    onNavigate: (AppRoute) -> Unit
 ) {
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {

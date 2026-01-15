@@ -20,6 +20,7 @@ fun NavGraphBuilder.menuNavigation(navController: NavController) {
     composable<AppRoute.Main> {
         val viewModel = it.sharedViewModel<MenuViewModel>(navController)
         val isHomeActive by viewModel.isHomeActive.collectAsState()
+        val isCheckDefaultMenu by viewModel.isCheckDefaultMenu.collectAsState()
         val context = LocalContext.current
         val view = LocalView.current
 
@@ -36,7 +37,11 @@ fun NavGraphBuilder.menuNavigation(navController: NavController) {
         }
 
         MenuScreen(
-            isHomeActive
+            isCheckDefaultMenu = isCheckDefaultMenu,
+            isHomeActive = isHomeActive,
+            onDisableMenuChecking = {
+                viewModel.onEvent(MenuEvent.DisableMenuChecking)
+            }
         )
     }
 }

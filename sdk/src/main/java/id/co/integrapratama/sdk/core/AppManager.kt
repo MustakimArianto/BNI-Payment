@@ -8,6 +8,7 @@ class AppManager(
 ) {
     companion object {
         private const val FIRST_INSTALL_KEY = "FIRST_INSTALL_KEY"
+        private const val CHECK_DEFAULT_MENU_KEY = "CHECK_DEFAULT_MENU_KEY"
     }
 
     fun isFirstInstall(): Boolean {
@@ -16,5 +17,15 @@ class AppManager(
 
     fun updateFirstInstall() {
         sharedPrefs.edit { putBoolean(FIRST_INSTALL_KEY, false) }
+    }
+
+    fun isCheckDefaultMenu(): Boolean {
+        return sharedPrefs.getBoolean(CHECK_DEFAULT_MENU_KEY, true)
+    }
+
+    fun updateCheckDefaultMenu() {
+        sharedPrefs.edit {
+            putBoolean(CHECK_DEFAULT_MENU_KEY, false)
+        }
     }
 }
