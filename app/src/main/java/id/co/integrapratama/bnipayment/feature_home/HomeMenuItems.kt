@@ -36,9 +36,9 @@ fun getHomeMenuItems(
         selectedIcon = R.drawable.ic_installment,
         onClick = onNavigateToInstallment
     ),
-    MenuItem(
-        title = "Mini ATM",
-        selectedIcon = R.drawable.ic_sale,
-        onClick = onNavigateToMiniATM
-    )
+//    MenuItem(
+//        title = "Mini ATM",
+//        selectedIcon = R.drawable.ic_sale,
+//        onClick = onNavigateToMiniATM
+//    )
 )
