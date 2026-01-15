@@ -1,4 +1,3 @@
-// MenuScreen.kt
 package id.co.integrapratama.bnipayment.feature_menu
 
 import androidx.compose.foundation.background
@@ -16,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -32,7 +32,9 @@ import id.co.integrapratama.bnipayment.ui.theme.LightGray
 import id.co.integrapratama.bnipayment.ui.theme.SecondaryColor
 
 @Composable
-internal fun MenuScreen() {
+internal fun MenuScreen(
+    isHomeActive: Boolean
+) {
     val bottomNavController = rememberNavController()
     val currentBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry?.destination
@@ -44,10 +46,19 @@ internal fun MenuScreen() {
         else -> false
     }
 
+    val startDestination = remember(isHomeActive) {
+        if (isHomeActive) {
+            BottomNavItem.HOME.route
+        } else {
+            BottomNavItem.INIT_MENU.route
+        }
+    }
+
     Scaffold(
         bottomBar = {
             if (shouldShowBottomBar) {
                 MainBottomBar(
+                    isHomeActive,
                     currentDestination = currentDestination?.route, onNavigate = { route ->
                         bottomNavController.navigate(route) {
                             popUpTo(BottomNavItem.HOME.route) {
@@ -61,7 +72,7 @@ internal fun MenuScreen() {
         }) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             NavHost(
-                navController = bottomNavController, startDestination = BottomNavItem.HOME.route
+                navController = bottomNavController, startDestination = startDestination
             ) {
                 homeNavigation(bottomNavController)
 
@@ -75,7 +86,7 @@ internal fun MenuScreen() {
 
 @Composable
 private fun MainBottomBar(
-    currentDestination: String?, onNavigate: (AppRoute) -> Unit
+    isHomeActive: Boolean, currentDestination: String?, onNavigate: (AppRoute) -> Unit
 ) {
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -97,6 +108,11 @@ private fun MainBottomBar(
 
         NavigationBar(containerColor = Color.White) {
             BottomNavItem.entries.forEach { item ->
+                val enabled = when (item) {
+                    BottomNavItem.HOME -> isHomeActive
+                    else -> true
+                }
+
                 val isSelected = when (item) {
                     BottomNavItem.HOME -> currentDestination?.contains("HomeRoute") == true
                     BottomNavItem.ADMIN_SETTING -> currentDestination?.contains("AdminRoute") == true
@@ -105,11 +121,16 @@ private fun MainBottomBar(
 
                 NavigationBarItem(
                     selected = isSelected,
-                    onClick = { onNavigate(item.route) },
-                    label = { Text(text = item.title) },
+                    enabled = enabled,
+                    onClick = {
+                        if (enabled) {
+                            onNavigate(item.route)
+                        }
+                    },
+                    label = { Text(item.title) },
                     icon = {
                         Icon(
-                            painter = painterResource(id = item.icon),
+                            painter = painterResource(item.icon),
                             contentDescription = item.title
                         )
                     },
@@ -117,8 +138,14 @@ private fun MainBottomBar(
                         selectedIconColor = SecondaryColor,
                         selectedTextColor = Color.Black,
                         indicatorColor = Color.Transparent,
-                        unselectedIconColor = InactiveColor,
-                        unselectedTextColor = InactiveColor
+                        unselectedIconColor = if (enabled) InactiveColor else InactiveColor.copy(
+                            alpha = 0.4f
+                        ),
+                        unselectedTextColor = if (enabled) InactiveColor else InactiveColor.copy(
+                            alpha = 0.4f
+                        ),
+                        disabledIconColor = InactiveColor.copy(alpha = 0.4f),
+                        disabledTextColor = InactiveColor.copy(alpha = 0.4f)
                     )
                 )
             }

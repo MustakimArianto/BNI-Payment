@@ -7,7 +7,7 @@ import id.co.integrapratama.bnipayment.navigation.AppRoute
 enum class BottomNavItem(
     val title: String,
     @DrawableRes val icon: Int,
-    val route: AppRoute
+    val route: AppRoute,
 ) {
     HOME(
         title = "Home", icon = R.drawable.ic_home_bottombar, route = AppRoute.Home

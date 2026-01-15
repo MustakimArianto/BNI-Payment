@@ -33,6 +33,7 @@ fun NavGraphBuilder.initMenuNavigation(navController: NavController) {
                 onInitSuccess = {
                     CoroutineScope(Dispatchers.Main).launch {
                         delay(1000)
+                        viewModel.updateLastLogon()
                         navController.navigateToHome()
                     }
                 },

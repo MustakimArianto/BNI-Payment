@@ -28,12 +28,17 @@ class InitMenuViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     fun performLogon() {
-        // Temporary hardcoded tid and mid
-        terminalConfigManager.saveTid("12345678")
-        terminalConfigManager.saveMid("123456789012345")
-        logonManager.updateLastLogon()
+        viewModelScope.launch {
+            // Temporary hardcoded tid and mid
+            terminalConfigManager.saveTid("12345678")
+            terminalConfigManager.saveMid("123456789012345")
 
-        getCardList()
+            getCardList()
+        }
+    }
+
+    fun updateLastLogon() {
+        logonManager.updateLastLogon()
     }
 
     fun getCardList() {

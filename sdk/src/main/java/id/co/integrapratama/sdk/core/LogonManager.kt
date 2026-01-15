@@ -1,12 +1,16 @@
 package id.co.integrapratama.sdk.core
 
 import android.content.SharedPreferences
-import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.util.Calendar
 
 class LogonManager(
     private val sharedPrefs: SharedPreferences
 ) {
+    private val _isLoggedInToday = MutableStateFlow(isAlreadyLogonToday())
+    val isLoggedInToday: StateFlow<Boolean> = _isLoggedInToday
+
     companion object {
         private const val LAST_LOGON_KEY = "LAST_LOGON_KEY"
     }
@@ -16,8 +20,10 @@ class LogonManager(
     }
 
     fun updateLastLogon() {
-        val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        sharedPrefs.edit { putInt(LAST_LOGON_KEY, dayOfYear) }
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+        sharedPrefs.edit().putInt(LAST_LOGON_KEY, today).apply()
+
+        _isLoggedInToday.value = true
     }
 
     fun isAlreadyLogonToday(): Boolean {
