@@ -1,9 +1,13 @@
 package id.co.integrapratama.bnipayment.common.ui_component
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,9 +36,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -41,34 +49,106 @@ import androidx.compose.ui.window.DialogProperties
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadKeyCode
+import java.util.Locale
 
 @Composable
 fun PinPadButton(
     text: String,
+    fontSize: TextUnit = 32.sp,
+    fontWeight: FontWeight = FontWeight.Bold,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color(0xFFE0E0E0),
+    backgroundColor: Color = Color(0xFFFFFFFF),
     contentColor: Color = Color.Black
 ) {
     Box(
-        modifier = modifier.background(backgroundColor, shape = RectangleShape),
+        modifier = modifier
+            .background(backgroundColor, shape = RectangleShape)
+            .border(
+                width = 0.5.dp,
+                color = Color(0xFFCCCCCC)
+            )
+        ,
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = fontSize,
+            fontWeight = fontWeight,
             color = contentColor
         )
     }
 }
 
+sealed class CustomPinpadType {
+    class FullPinpadWithBackground(
+        val pin: String,
+        val onUpdatePinpadMapping: ((container: CustomPinpadUiBounds, buttons: List<CustomPinpadUiBounds>) -> Unit)? = null,
+    ) : CustomPinpadType()
+
+    class OnlyPinpadButton(
+        val onPinpadInput: ((CustomPinPadKeyCode?, String) -> Unit)? = null
+    ) : CustomPinpadType()
+}
+
+private fun convertFromKeyToCustomPinPadKeyCode(key: String): CustomPinPadKeyCode? {
+    return when (key) {
+        "1" -> CustomPinPadKeyCode.KEY_1
+        "2" -> CustomPinPadKeyCode.KEY_2
+        "3" -> CustomPinPadKeyCode.KEY_3
+        "4" -> CustomPinPadKeyCode.KEY_4
+        "5" -> CustomPinPadKeyCode.KEY_5
+        "6" -> CustomPinPadKeyCode.KEY_6
+        "7" -> CustomPinPadKeyCode.KEY_7
+        "8" -> CustomPinPadKeyCode.KEY_8
+        "9" -> CustomPinPadKeyCode.KEY_9
+        "0" -> CustomPinPadKeyCode.KEY_0
+        "CANCEL" -> CustomPinPadKeyCode.KEY_CANCEL
+        "ENTER" -> CustomPinPadKeyCode.KEY_ENTER
+        "CLEAR" -> CustomPinPadKeyCode.KEY_CLEAR
+        else -> null
+    }
+}
+
+@Composable
+fun CustomPinpad(
+    isPhysicalKeyboard: Boolean,
+    disorder: Boolean = false,
+    type: CustomPinpadType
+) {
+    when (type) {
+        is CustomPinpadType.FullPinpadWithBackground -> {
+            CustomPinpad(
+                pin = type.pin,
+                isPhysicalKeyboard = isPhysicalKeyboard,
+                disorder = disorder,
+                onUpdatePinpadMapping = type.onUpdatePinpadMapping,
+                usingDialog = true,
+                isFull = true
+            )
+        }
+        is CustomPinpadType.OnlyPinpadButton -> {
+            CustomPinpad(
+                pin = "123",
+                isPhysicalKeyboard = isPhysicalKeyboard,
+                disorder = disorder,
+                onPinpadInput = type.onPinpadInput,
+                usingDialog = false,
+                isFull = false
+            )
+        }
+    }
+}
+
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun CustomPinpad(
     pin: String,
-    modifier: Modifier = Modifier,
     isPhysicalKeyboard: Boolean,
     disorder: Boolean = false,
-    onUpdatePinpadMapping: (container: CustomPinpadUiBounds, buttons: List<CustomPinpadUiBounds>) -> Unit
+    usingDialog: Boolean = true,
+    isFull: Boolean = true,
+    onUpdatePinpadMapping: ((container: CustomPinpadUiBounds, buttons: List<CustomPinpadUiBounds>) -> Unit)? = null,
+    onPinpadInput: ((CustomPinPadKeyCode?, String) -> Unit)? = null,
 ) {
     // Collect button + container bounds
     val buttonRects = remember { mutableStateMapOf<String, Rect>() }
@@ -87,60 +167,67 @@ fun CustomPinpad(
     val componentModifier = Modifier
         .graphicsLayer { alpha = if (isPhysicalKeyboard) 0f else 1f }
 
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Box(
-            modifier = modifier
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val pinpadHeight = 52.dp
+
+    @Composable
+    fun pinpadContent() {
+        var boxModifier: Modifier = Modifier
+        if (isFull) {
+            boxModifier = boxModifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.6f))
                 .then(
                     Modifier.pointerInput(Unit) {
                         detectTapGestures { }
                     }
-                ),
-            contentAlignment = Alignment.BottomCenter
+                )
+        }
+        Box(
+            modifier = boxModifier,
+            contentAlignment = if (isFull) Alignment.BottomCenter else Alignment.TopStart
         ) {
+            var columnModifier: Modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(Color.White, shape = RectangleShape)
+            if (isFull) {
+                columnModifier = columnModifier.onGloballyPositioned { coords ->
+                    containerRect = coords.boundsInWindow()
+                }
+            }
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(Color.White, shape = RectangleShape)
-                    .onGloballyPositioned { coords ->
-                        containerRect = coords.boundsInWindow()
-                    },
+                modifier = columnModifier,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // PIN preview
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (pin.isEmpty()) {
-                        Text(
-                            text = "Please Input PIN",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.LightGray,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    } else {
-                        repeat(6) { index ->
-                            if (index < pin.length) {
-                                Text(
-                                    text = "●",
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black,
-                                    modifier = Modifier.padding(horizontal = 4.dp)
-                                )
+                if (isFull) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        if (pin.isEmpty()) {
+                            Text(
+                                text = "Please Input PIN",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.LightGray,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        } else {
+                            repeat(6) { index ->
+                                if (index < pin.length) {
+                                    Text(
+                                        text = "●",
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -151,13 +238,11 @@ fun CustomPinpad(
                     .take(9)
                     .chunked(3)
                     .toMutableList()
-                rows.add(listOf("", numberList.last(), ""))
-                rows.add(listOf("CANCEL", "CLEAR", "ENTER"))
 
                 var backgroundModifier: Modifier = Modifier
                 if (isPhysicalKeyboard) {
                     backgroundModifier = backgroundModifier.background(
-                        color = Color(0XFFF2F2F2)
+                        color = Color(0XFFFFFFFF)
                     )
                 }
 
@@ -170,36 +255,102 @@ fun CustomPinpad(
                             .fillMaxWidth()
                             .wrapContentHeight()
                     ) {
+                        Box(
+                            modifier = Modifier.height(
+                                height = 0.5.dp,
+                            ).background(
+                                color = Color(0xFFCCCCCC)
+                            ).fillMaxWidth()
+                        )
+                        @Composable
+                        fun pinpadButton(
+                            label: String,
+                            height: Dp,
+                        ) {
+                            var pinpadButtonModifier: Modifier = componentModifier
+                                .width(screenWidth / 3)
+                                .height(height)
+                            if (isFull) {
+                                pinpadButtonModifier = pinpadButtonModifier.onGloballyPositioned { coords ->
+                                    if (label.isNotBlank()) {
+                                        buttonRects[label] = coords.boundsInWindow()
+                                    }
+                                }
+                            } else {
+                                pinpadButtonModifier = pinpadButtonModifier.clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    onPinpadInput?.invoke(
+                                        convertFromKeyToCustomPinPadKeyCode(label), label
+                                    )
+                                }
+                            }
+                            PinPadButton(
+                                text = label.lowercase(
+                                    Locale.getDefault()
+                                ).replaceFirstChar {
+                                    if (it.isLowerCase()) {
+                                        it.titlecase(Locale.getDefault())
+                                    } else {
+                                        it.toString()
+                                    }
+                                }
+                                ,
+                                fontSize = when (label) {
+                                    "CANCEL", "ENTER", "CLEAR" -> 20.sp
+                                    else -> 32.sp
+                                },
+                                fontWeight = when (label) {
+                                    "CANCEL", "ENTER", "CLEAR" -> FontWeight.Normal
+                                    else -> FontWeight.Medium
+                                },
+                                modifier = pinpadButtonModifier,
+                                backgroundColor = when (label) {
+                                    "CANCEL" -> Color(0xFFE61919)
+                                    "ENTER" -> Color(0xFFFAD514)
+                                    "CLEAR" -> Color(0xFF5FC254)
+                                    else -> Color(0XFFFFFFFF)
+                                },
+                                contentColor = if (label in listOf("CANCEL", "CLEAR", "ENTER")) {
+                                    Color.White
+                                } else {
+                                    Color(0xFF004558)
+                                }
+                            )
+                        }
                         rows.forEach { row ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 row.forEach { label ->
-                                    PinPadButton(
-                                        text = label,
-                                        modifier = componentModifier
-                                            .weight(1f)
-                                            .height(70.dp)
-                                            .onGloballyPositioned { coords ->
-                                                if (label.isNotBlank()) {
-                                                    buttonRects[label] = coords.boundsInWindow()
-                                                }
-                                            },
-                                        backgroundColor = when (label) {
-                                            "CANCEL" -> Color(0xFFE53935)
-                                            "ENTER" -> Color(0xFF43A047)
-                                            "CLEAR" -> Color.Yellow
-                                            else -> Color(0XFFF2F2F2)
-                                        },
-                                        contentColor = if (label in listOf(
-                                                "CANCEL",
-                                                "ENTER"
-                                            )
-                                        ) Color.White else Color.Black
+                                    pinpadButton(
+                                        height = pinpadHeight,
+                                        label = label
                                     )
                                 }
                             }
+                        }
+                        Row {
+                            pinpadButton(
+                                height = pinpadHeight * 2,
+                                label = "CANCEL"
+                            )
+                            Column {
+                                pinpadButton(
+                                    height = pinpadHeight,
+                                    label = numberList.last()
+                                )
+                                pinpadButton(
+                                    height = pinpadHeight,
+                                    label = "CLEAR"
+                                )
+                            }
+                            pinpadButton(
+                                height = pinpadHeight * 2,
+                                label = "ENTER"
+                            )
                         }
                     }
 
@@ -248,6 +399,21 @@ fun CustomPinpad(
         }
     }
 
+    if (usingDialog) {
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+                usePlatformDefaultWidth = false
+            )
+        ) {
+            pinpadContent()
+        }
+    } else {
+        pinpadContent()
+    }
+
     // Fire only once when all measurements are ready
     LaunchedEffect(buttonRects.size, containerRect) {
         if (!hasReported && buttonRects.size == 13 && containerRect != null) {
@@ -279,29 +445,14 @@ fun CustomPinpad(
                 it.key
                 CustomPinpadUiBounds(
                     label = "Container",
-                    value = when (it.key) {
-                        "1" -> CustomPinPadKeyCode.KEY_1
-                        "2" -> CustomPinPadKeyCode.KEY_2
-                        "3" -> CustomPinPadKeyCode.KEY_3
-                        "4" -> CustomPinPadKeyCode.KEY_4
-                        "5" -> CustomPinPadKeyCode.KEY_5
-                        "6" -> CustomPinPadKeyCode.KEY_6
-                        "7" -> CustomPinPadKeyCode.KEY_7
-                        "8" -> CustomPinPadKeyCode.KEY_8
-                        "9" -> CustomPinPadKeyCode.KEY_9
-                        "0" -> CustomPinPadKeyCode.KEY_0
-                        "CANCEL" -> CustomPinPadKeyCode.KEY_CANCEL
-                        "ENTER" -> CustomPinPadKeyCode.KEY_ENTER
-                        "CLEAR" -> CustomPinPadKeyCode.KEY_CLEAR
-                        else -> null
-                    },
+                    value = convertFromKeyToCustomPinPadKeyCode(it.key),
                     x = it.value.left,
                     y = it.value.top,
                     width = it.value.width.toInt(),
                     height = it.value.height.toInt()
                 )
             }
-            onUpdatePinpadMapping(containerUiBounds, buttonUiBounds)
+            onUpdatePinpadMapping?.invoke(containerUiBounds, buttonUiBounds)
             hasReported = true // ✅ ensures callback only once
         }
     }
