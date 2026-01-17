@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.text.isDigitsOnly
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.payment2go.terminalsdkhelper.landi.pinpad.CustomPinPadKeyCode
@@ -86,8 +87,31 @@ sealed class CustomPinpadType {
     ) : CustomPinpadType()
 
     class OnlyPinpadButton(
-        val onPinpadInput: ((CustomPinPadKeyCode?, String) -> Unit)? = null
+        val behavior: OnlyPinpadButtonBehavior
     ) : CustomPinpadType()
+}
+
+sealed class OnlyPinpadButtonBehavior {
+    class OnPinpadInputPerCharacterBehavior(
+        val onPinpadInputPerCharacter: ((CustomPinPadKeyCode?, String) -> Unit)? = null
+    ): OnlyPinpadButtonBehavior()
+
+    class OnPinpadInputBasedEventBehavior(
+        val pinLength: Int = 4,
+        val onEvent: ((PinpadInputEvent) -> Unit)? = null
+    ): OnlyPinpadButtonBehavior()
+}
+
+sealed class PinpadInputEvent {
+    data class InputPin(val pin: String): PinpadInputEvent()
+    data class ClearPin(val pin: String): PinpadInputEvent()
+    data class CancelPin(val behavior: PinpadInputEventCancelPinBehavior): PinpadInputEvent()
+    data class EnterPin(val pin: String): PinpadInputEvent()
+}
+
+sealed class PinpadInputEventCancelPinBehavior {
+    data class FirstCancelPinBehavior(val pin: String): PinpadInputEventCancelPinBehavior()
+    object SecondCancelPinBehavior: PinpadInputEventCancelPinBehavior()
 }
 
 private fun convertFromKeyToCustomPinPadKeyCode(key: String): CustomPinPadKeyCode? {
@@ -127,11 +151,63 @@ fun CustomPinpad(
             )
         }
         is CustomPinpadType.OnlyPinpadButton -> {
+            var currentPin by remember { mutableStateOf("") }
             CustomPinpad(
-                pin = "123",
+                pin = "",
                 isPhysicalKeyboard = isPhysicalKeyboard,
                 disorder = disorder,
-                onPinpadInput = type.onPinpadInput,
+                onPinpadInput = { keyCode, value ->
+                    val behavior = type.behavior
+                    when (keyCode) {
+                        CustomPinPadKeyCode.KEY_ENTER -> {
+                            if (behavior is OnlyPinpadButtonBehavior.OnPinpadInputBasedEventBehavior) {
+                                if (currentPin.length == behavior.pinLength) {
+                                    behavior.onEvent?.invoke(PinpadInputEvent.EnterPin(currentPin))
+                                }
+                            }
+                        }
+                        CustomPinPadKeyCode.KEY_CLEAR -> {
+                            if (behavior is OnlyPinpadButtonBehavior.OnPinpadInputBasedEventBehavior) {
+                                val newPinStringBuilder = StringBuilder(currentPin)
+                                if (newPinStringBuilder.isNotEmpty()) {
+                                    newPinStringBuilder.setLength(newPinStringBuilder.length - 1)
+                                    currentPin = newPinStringBuilder.toString()
+                                }
+                                behavior.onEvent?.invoke(PinpadInputEvent.ClearPin(currentPin))
+                            }
+                        }
+                        CustomPinPadKeyCode.KEY_CANCEL -> {
+                            if (behavior is OnlyPinpadButtonBehavior.OnPinpadInputBasedEventBehavior) {
+                                lateinit var cancelPinBehavior: PinpadInputEventCancelPinBehavior
+                                if (currentPin.isNotEmpty()) {
+                                    val newPinStringBuilder = StringBuilder(currentPin)
+                                    newPinStringBuilder.setLength(0)
+                                    currentPin = newPinStringBuilder.toString()
+                                    cancelPinBehavior = PinpadInputEventCancelPinBehavior.FirstCancelPinBehavior(currentPin)
+                                } else {
+                                    cancelPinBehavior = PinpadInputEventCancelPinBehavior.SecondCancelPinBehavior
+                                }
+                                behavior.onEvent?.invoke(PinpadInputEvent.CancelPin(cancelPinBehavior))
+                            }
+                        }
+                        else -> {
+                            if (value.isDigitsOnly()) {
+                                if (behavior is OnlyPinpadButtonBehavior.OnPinpadInputBasedEventBehavior) {
+                                    val newPinStringBuilder = StringBuilder(currentPin)
+                                    newPinStringBuilder.append(value)
+                                    if (newPinStringBuilder.length > behavior.pinLength) {
+                                        newPinStringBuilder.setLength(behavior.pinLength)
+                                    }
+                                    currentPin = newPinStringBuilder.toString()
+                                    behavior.onEvent?.invoke(PinpadInputEvent.InputPin(currentPin))
+                                }
+                            }
+                        }
+                    }
+                    if (behavior is OnlyPinpadButtonBehavior.OnPinpadInputPerCharacterBehavior) {
+                        behavior.onPinpadInputPerCharacter?.invoke(keyCode, value)
+                    }
+                },
                 usingDialog = false,
                 isFull = false
             )
