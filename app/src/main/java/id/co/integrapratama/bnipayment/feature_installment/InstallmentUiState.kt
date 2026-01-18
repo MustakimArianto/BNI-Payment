@@ -1,6 +1,7 @@
 package id.co.integrapratama.bnipayment.feature_installment
 
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPeriodModel
 import id.co.integrapratama.sdk.feature_installment.domain.InstallmentPlanModel
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
@@ -21,6 +22,7 @@ data class InstallmentUiState(
     val pinBlock: String = "",
     val transactionDateTime: String = "",
     val binType: BinType = BinType.UNKNOWN,
+    val cardClassification: CardClassification? = null,
 
     // Process flags
     val isLoading: Boolean = false,

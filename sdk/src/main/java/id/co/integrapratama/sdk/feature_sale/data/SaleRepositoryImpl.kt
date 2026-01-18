@@ -60,7 +60,7 @@ class SaleRepositoryImpl @Inject constructor(
             val processingCode =
                 if (cardClassification == CardClassification.DEBIT) SALE_DEBIT_PROCODE else SALE_CREDIT_PROCODE
             val amount = request.txnAmount.padAmount()
-            val transactionDateTime = DateUtils.getTransactionDateTime(transactionDateTime)
+            val transactionDateTime = DateUtils.getFullTransactionDateTime(transactionDateTime)
             val stan = request.STAN.padStart(6, '0')
             val time = DateUtils.getTransactionTime(transactionDateTime)
             val date = DateUtils.getTransactionDate(transactionDateTime)
@@ -84,8 +84,6 @@ class SaleRepositoryImpl @Inject constructor(
 
             try {
                 emit(Resource.Loading("Mengirim data transaksi"))
-                traceNumberManager.saveLastTraceNo(traceNumberManager.getCurrentTraceNo())
-                traceNumberManager.increment()
 
                 reversalManager.saveSaleReversal(
                     if (cardClassification == CardClassification.DEBIT) {
@@ -193,6 +191,7 @@ class SaleRepositoryImpl @Inject constructor(
                         }
 
                         is Resource.Success -> {
+                            traceNumberManager.increment()
                             emit(Resource.Success(response.data ?: byteArrayOf()))
                         }
 
@@ -216,7 +215,7 @@ class SaleRepositoryImpl @Inject constructor(
         val authCode = "711162"
         val refNo = "000047111620000"
 
-        val currentTraceNoText = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
+        val currentTraceNoText = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0')
         val currentBatchNoText = terminalBatchManager.getCurrentBatch().toString().padStart(6, '0')
 
         val printFactory = SalePrintTemplateFactory(
@@ -250,6 +249,8 @@ class SaleRepositoryImpl @Inject constructor(
             try {
                 with(transactionRecord) {
                     val cardTransactionEntity = CardTransactionEntity(
+                        lastInvoice = lastInvoice,
+                        lastInvoiceDate = lastInvoiceDate,
                         invoice = invoice,
                         invoiceDate = invoiceDate,
                         issuerID = issuerID,
@@ -270,6 +271,10 @@ class SaleRepositoryImpl @Inject constructor(
                         cardExpiry = cardExpiry,
                         cardAID = cardAID,
                         cardAppName = cardAppName,
+                        cardBinType = cardBinType,
+                        cardClassificationType = cardClassificationType,
+                        transactionScope = transactionScope,
+                        nii = nii,
                         customerName = customerName,
                         currencyCode = currencyCode,
                         tVRData = tVRData,
@@ -375,9 +380,6 @@ class SaleRepositoryImpl @Inject constructor(
                     return@flow
                 }
 
-                stanManager.increaseStan()
-                traceNumberManager.increment()
-
                 emit(Resource.Loading("Mengecek data reversal"))
                 val processingCode = JsonParser.parseString(reversalData)
                     .asJsonObject
@@ -452,7 +454,6 @@ class SaleRepositoryImpl @Inject constructor(
                         }
 
                         is Resource.Success -> {
-
                             emit(Resource.Success(resource.data ?: byteArrayOf()))
                         }
 

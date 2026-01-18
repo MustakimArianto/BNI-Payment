@@ -1,6 +1,8 @@
 package id.co.integrapratama.sdk.feature_void.domain
 
 data class VoidRequestModel(
+    val lastInvoice: String,
+    val lastInvoiceDate: String,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,
@@ -11,6 +13,7 @@ data class VoidRequestModel(
     val amount: Long = 0,
     val payID: String,
     val pan: String = "",
+    val track2Data: String = "",
     val mID: String,
     val tID: String,
     val printFormats: String,
@@ -20,6 +23,10 @@ data class VoidRequestModel(
     val cardExpiry: String? = "",
     val cardAID: String? = "",
     val cardAppName: String? = "",
+    val cardBinType: String? = "",
+    val cardClassificationType: String? = "",
+    val transactionScope: String? = "",
+    val nii: String? = "",
     val customerName: String? = "",
     val currencyCode: String? = "",
     val tVRData: String? = "",
@@ -29,7 +36,7 @@ data class VoidRequestModel(
     val stan: String? = "",
     val maskedCardNo: String? = "",
     val insertModeCode: String? = "",
-    val rRNO: String,
+    val rrNo: String,
     val txnStatus: String,
     val cardType: String = "",
     val cardTypeCode: String = "",

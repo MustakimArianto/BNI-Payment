@@ -7,6 +7,7 @@ import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
+import id.co.integrapratama.sdk.feature_card_list.data.local.CardListEntity
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -24,7 +25,7 @@ class BinRangeRepositoryImpl @Inject constructor(
             emit(Resource.Loading("Mengecek jenis kartu"))
             try {
                 val cardBinRangeData = db.cardListDao().findCardByCardNumber(getCardNo(cardNumber))
-                val binRangeType = checkBinRange(cardBinRangeData?.name)
+                val binRangeType = checkBinRange(cardBinRangeData)
 
                 if (binRangeType == BinType.UNKNOWN) {
                     emit(Resource.Error("Jenis kartu tidak terdaftar"))
@@ -77,11 +78,18 @@ class BinRangeRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun checkBinRange(name: String?): BinType {
-        if (name.isNullOrBlank()) return BinType.UNKNOWN
+    private fun checkBinRange(cardListEntity: CardListEntity?): BinType {
+        val name = cardListEntity?.name
+
+        if (name.isNullOrBlank()) {
+            return BinType.UNKNOWN
+        }
 
         return BinType.entries.firstOrNull {
             it.description.lowercase().equals(name.lowercase().trim(), ignoreCase = true)
+        }.apply {
+            this?.nii = cardListEntity.nii
+            this?.isOnUs = cardListEntity.isOnUs == 1
         } ?: BinType.UNKNOWN
     }
 

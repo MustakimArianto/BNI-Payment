@@ -13,6 +13,7 @@ import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.core.utils.toTransactionScopeText
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
@@ -54,9 +55,6 @@ class SaleViewModel @Inject constructor(
     }
     private val _uiState = MutableStateFlow(SaleUiState())
     val uiState: StateFlow<SaleUiState> = _uiState.asStateFlow()
-
-    private val _event = MutableSharedFlow<String>()
-    val event = _event.asSharedFlow()
 
     init {
         checkReversalData()
@@ -288,7 +286,9 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    fun checkBinRange(cardNumber: String) {
+    fun checkBinRange(
+        cardNumber: String
+    ) {
         viewModelScope.launch {
             binRangeRepository.getBinType(cardNumber).collect { resource ->
                 when (resource) {
@@ -302,20 +302,21 @@ class SaleViewModel @Inject constructor(
                     }
 
                     is Resource.Success -> {
+                        val binType = resource.data ?: BinType.UNKNOWN
+                        val cardClassification = binRangeRepository.classifyCard(binType)
+
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                binType = resource.data ?: BinType.UNKNOWN
+                                binType = binType
                             )
                         }
 
-                        val cardClassification =
-                            binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
-
                         postSaleTransaction(
-                            cardClassification,
                             cardReadOutput = uiState.value.cardReadOutput
-                                ?: CardReadOutput()
+                                ?: CardReadOutput(),
+                            cardClassification = cardClassification,
+                            binType = binType
                         )
                     }
 
@@ -334,8 +335,9 @@ class SaleViewModel @Inject constructor(
     }
 
     fun postSaleTransaction(
+        cardReadOutput: CardReadOutput,
         cardClassification: CardClassification,
-        cardReadOutput: CardReadOutput
+        binType: BinType
     ) {
         _uiState.update {
             it.copy(
@@ -348,64 +350,57 @@ class SaleViewModel @Inject constructor(
                 cardClassification,
                 cardReadOutput,
                 uiState.value.transactionDateTime
-            )
-                .collect { resource ->
-                    when (resource) {
-                        is Resource.Loading -> {
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = true,
-                                    loadingMessage = resource.message ?: "Harap tunggu"
-                                )
-                            }
-                        }
-
-                        is Resource.Success -> {
-                            val response = IsoMessage().unpack(
-                                data = resource.data ?: byteArrayOf(),
-                                specs = IsoConfig.genericSpec,
+            ).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
                             )
+                        }
+                    }
 
-                            val responseCode = response.getField(39)
+                    is Resource.Success -> {
+                        val response = IsoMessage().unpack(
+                            data = resource.data ?: byteArrayOf(),
+                            specs = IsoConfig.genericSpec,
+                        )
 
-                            if (responseCode == "00") {
-                                reversalManager.clearSaleReversal()
+                        val responseCode = response.getField(39)
 
-                                val emvData = response.getField(55)
-                                val authCode = response.getField(38)
+                        if (responseCode == "00") {
+                            reversalManager.clearSaleReversal()
 
-                                if (uiState.value.isContactless) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isLoading = false,
-                                            loadingMessage = "",
-                                            isTransactionFinished = true,
-                                        )
-                                    }
+                            val emvData = response.getField(55)
+                            val authCode = response.getField(38)
 
-                                    saveTransactionToDatabase(
-                                        cardReadOutput = cardReadOutput
-                                    )
-                                } else {
-                                    verifyEmvHost(
-                                        emvHost = emvData,
-                                        authCode = authCode,
-                                        arc = responseCode,
-                                        authorizeFlag = "00",
-                                        cardReadOutput = cardReadOutput
-                                    )
-                                }
-                            } else {
+                            if (uiState.value.isContactless) {
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        errorMessage = resource.message ?: "Terjadi kesalahan",
+                                        loadingMessage = "",
+                                        isTransactionFinished = true,
                                     )
                                 }
-                            }
-                        }
 
-                        is Resource.Error -> {
+                                saveTransactionToDatabase(
+                                    cardReadOutput = cardReadOutput,
+                                    cardClassification = cardClassification,
+                                    binType = binType
+                                )
+                            } else {
+                                verifyEmvHost(
+                                    emvHost = emvData,
+                                    authCode = authCode,
+                                    arc = responseCode,
+                                    authorizeFlag = "00",
+                                    cardReadOutput = cardReadOutput,
+                                    cardClassification = cardClassification,
+                                    binType = binType
+                                )
+                            }
+                        } else {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -414,6 +409,16 @@ class SaleViewModel @Inject constructor(
                             }
                         }
                     }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -707,7 +712,9 @@ class SaleViewModel @Inject constructor(
         authCode: String?,
         arc: String?,
         authorizeFlag: String?,
-        cardReadOutput: CardReadOutput
+        cardReadOutput: CardReadOutput,
+        cardClassification: CardClassification,
+        binType: BinType
     ) {
         viewModelScope.launch {
             readCardRepository.verifyEMVHost(
@@ -733,7 +740,9 @@ class SaleViewModel @Inject constructor(
                         }
 
                         saveTransactionToDatabase(
-                            cardReadOutput = cardReadOutput
+                            cardReadOutput = cardReadOutput,
+                            cardClassification = cardClassification,
+                            binType = binType
                         )
                     }
 
@@ -747,7 +756,9 @@ class SaleViewModel @Inject constructor(
                         }
 
                         saveTransactionToDatabase(
-                            cardReadOutput = cardReadOutput
+                            cardReadOutput = cardReadOutput,
+                            cardClassification = cardClassification,
+                            binType = binType
                         )
 //                        _uiState.update {
 //                            it.copy(
@@ -771,11 +782,17 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    private fun saveTransactionToDatabase(cardReadOutput: CardReadOutput) {
+    private fun saveTransactionToDatabase(
+        cardReadOutput: CardReadOutput,
+        cardClassification: CardClassification,
+        binType: BinType
+    ) {
         viewModelScope.launch {
             saleRepository.insertCardTransactionToDatabase(
                 TransactionRecord(
-                    invoice = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    lastInvoice = "",
+                    lastInvoiceDate = "",
+                    invoice = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0'),
                     invoiceDate = DateUtils.getCurrentTransactionDateTime(),
                     issuerID = "2",
                     issuerName = "SALE",
@@ -789,26 +806,32 @@ class SaleViewModel @Inject constructor(
                     mID = "1234567890",
                     tID = "1234567890",
                     printFormats = "",
-                    refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    refNo = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0'),
                     txnTypeId = "",
                     programName = "",
-                    cardExpiry = "",
-                    cardAID = "",
-                    cardAppName = "",
-                    customerName = "",
-                    currencyCode = "",
-                    txnCatCode = "",
-                    txnCert = "",
+                    cardExpiry = cardReadOutput.cardExpiry,
+                    cardAID = cardReadOutput.cardAID,
+                    cardAppName = cardReadOutput.cardAppName,
+                    cardBinType = binType.description,
+                    cardClassificationType = cardClassification.name,
+                    transactionScope = binType.toTransactionScopeText(),
+                    nii = binType.nii.toString(),
+                    customerName = cardReadOutput.customerName,
+                    currencyCode = cardReadOutput.currencyCode,
+                    tVRData = cardReadOutput.terminalVerificationResults,
+                    tSIData = cardReadOutput.TSIData,
+                    txnCatCode = cardReadOutput.txnCategoryCode,
+                    txnCert = cardReadOutput.transactionCertificate,
                     stan = stanManager.getCurrentStan().toString().padStart(6, '0'),
                     maskedCardNo = uiState.value.maskedCardNumber,
-                    insertModeCode = "",
-                    rrNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0'),
+                    insertModeCode = cardReadOutput.insertModeCode,
+                    rrNo = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0'),
                     txnStatus = "Success",
                     cardType = uiState.value.binType.description,
                     cardTypeCode = "",
                     acquiringBank = "",
                     secureData = "",
-                    posEntryMode = "",
+                    posEntryMode = cardReadOutput.posEntryMode,
                     tipAmount = 0L,
                     cashAMT = 0L,
                     feeAmount = 0L,
@@ -817,7 +840,10 @@ class SaleViewModel @Inject constructor(
                     bankTID = "",
                     bankMID = "",
                     cashierID = "",
-                    terminalCapability = "",
+                    terminalCapability = cardReadOutput.terminalCapability,
+                    pinBlock = "", // Actually dangerous if including pin block in local DB, except the urgent but only with special purposes
+                    panSeq = cardReadOutput.PANSEQ,
+                    iccData = cardReadOutput.emvData,
                     jsonReceipt = getPrintTemplate().jsonString,
                     templateJsonReceipt = getPrintTemplate().printTemplateJsonString,
                     eMIAmount = 0L,
@@ -840,7 +866,6 @@ class SaleViewModel @Inject constructor(
                                 loadingMessage = ""
                             )
                         }
-                        traceNumberManager.increment()
                     }
 
                     is Resource.Error -> {

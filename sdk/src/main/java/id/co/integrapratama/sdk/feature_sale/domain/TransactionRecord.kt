@@ -1,6 +1,8 @@
 package id.co.integrapratama.sdk.feature_sale.domain
 
 data class TransactionRecord(
+    val lastInvoice: String,
+    val lastInvoiceDate: String,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,
@@ -21,6 +23,10 @@ data class TransactionRecord(
     val cardExpiry: String? = "",
     val cardAID: String? = "",
     val cardAppName: String? = "",
+    val cardBinType: String? = "",
+    val cardClassificationType: String? = "",
+    val transactionScope: String? = "",
+    val nii: String? = "",
     val customerName: String? = "",
     val currencyCode: String? = "",
     val tVRData: String? = "",
