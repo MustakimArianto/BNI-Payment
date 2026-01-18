@@ -2,13 +2,13 @@ package id.co.integrapratama.bnipayment.common.main.plain_pinpad
 
 import androidx.compose.runtime.Composable
 
-class CheckingAfterInputPinParameter(
+class InputPinScopeParameter(
     val pin: String,
     val inputPlainPinpadPhase: InputPlainPinpadPhase,
-    val action: CheckingAfterInputPinAction,
+    val action: InputPinAction,
 )
 
-class CheckingAfterInputPinAction(
+class InputPinAction(
     val enableSetTitleScope: @Composable (@Composable (EnableSetTitleScopeParameter) -> Unit) -> Unit,
     val enableSetDescriptionScope: @Composable (@Composable (EnableSetDescriptionScopeParameter) -> Unit) -> Unit,
     val enableSetPinpadCancelConfigScope: @Composable (@Composable (EnableSetPinpadCancelConfigScopeParameter) -> Unit) -> Unit,

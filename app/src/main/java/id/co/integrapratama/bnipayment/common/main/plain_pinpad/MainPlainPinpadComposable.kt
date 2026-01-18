@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,10 +80,10 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
             navBackStackEntry = it,
             enableInputPinScope = { it2 ->
                 it2(
-                    CheckingAfterInputPinParameter(
+                    InputPinScopeParameter(
                         pin = uiState.pin,
                         inputPlainPinpadPhase = uiState.inputPhase,
-                        action = CheckingAfterInputPinAction(
+                        action = InputPinAction(
                             enableSetTitleScope = { it3 ->
                                 it3(
                                     EnableSetTitleScopeParameter(
@@ -250,11 +251,25 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
 
                 Spacer(Modifier.height(30.dp))
 
-                PinUnderlineView(
+                Column(
                     modifier = Modifier.fillMaxSize().weight(1f),
-                    pinLength = uiState.pinMaxLength,
-                    value = uiState.pin
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PinUnderlineView(
+                        pinLength = uiState.pinMaxLength,
+                        value = uiState.pin
+                    )
+
+                    if (inputPhase is InputPlainPinpadPhase.DeclinePhase) {
+                        Spacer(Modifier.height(30.dp))
+
+                        Text(
+                            text = "PIN has incorrect",
+                            fontSize = 14.sp,
+                            color = Color.Red
+                        )
+                    }
+                }
             }
 
             Box(

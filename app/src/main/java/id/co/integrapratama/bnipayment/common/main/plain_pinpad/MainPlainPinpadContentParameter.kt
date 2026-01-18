@@ -5,5 +5,5 @@ import androidx.navigation.NavBackStackEntry
 
 class MainPlainPinpadContentParameter(
     val navBackStackEntry: NavBackStackEntry,
-    val enableInputPinScope: @Composable (@Composable (CheckingAfterInputPinParameter) -> Unit) -> Unit
+    val enableInputPinScope: @Composable (@Composable (InputPinScopeParameter) -> Unit) -> Unit
 )
