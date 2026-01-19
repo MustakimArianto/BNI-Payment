@@ -41,7 +41,6 @@ class MenuViewModel @Inject constructor(
             logonManager.isLoggedInToday.collect { loggedIn ->
                 val hasTransaction = transactionManager.isTerminalHasTransaction()
 
-                // Home OFF only when NOT logged in AND NO transaction
                 _isHomeActive.value = loggedIn || hasTransaction
             }
         }

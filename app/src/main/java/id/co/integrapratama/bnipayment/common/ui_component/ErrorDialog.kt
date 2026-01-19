@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -22,11 +23,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import id.co.integrapratama.bnipayment.R
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.HorizontalSpacer
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.ui.theme.TextGrayColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,63 +41,39 @@ fun ErrorDialog(
     title: String,
     message: String,
     textButton: String,
-    onCloseIconClick: () -> Unit,
-    onPrimaryButtonClicked: () -> Unit,
+    onButtonClicked: () -> Unit,
 ) {
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = {},
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
     ) {
         Card {
             Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Image(
-                    imageVector = Icons.Default.Close,
-                    contentScale = ContentScale.FillBounds,
-                    contentDescription = "close",
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .clickable {
-                            onCloseIconClick()
-                        }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .background(Color.White, CircleShape)
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                Row(Modifier.fillMaxWidth()) {
                     Image(
-                        imageVector = Icons.Default.Close,
-                        contentScale = ContentScale.FillBounds,
-                        contentDescription = "info"
+                        painter = painterResource(R.drawable.ic_info_red_24),
+                        contentDescription = null
+                    )
+                    HorizontalSpacer(SpacerSize.MEDIUM)
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
+                VerticalSpacer(SpacerSize.MEDIUM)
                 Text(
                     text = message,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
+                    color = TextGrayColor
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
                 PrimaryButton(
                     text = textButton,
-                    onClick = onPrimaryButtonClicked,
+                    onClick = onButtonClicked,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

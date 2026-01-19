@@ -26,7 +26,7 @@ fun VoidInputTraceNoScreen(
     Column(Modifier
         .padding(16.dp)
         .navigationBarsPadding()) {
-        TopBar(title = title, onBackClick = onNavigationBack)
+        TopBar(title = title)
         VerticalSpacer(SpacerSize.X_LARGE)
 
         PrimaryTextField(

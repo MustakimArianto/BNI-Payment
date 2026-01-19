@@ -68,6 +68,10 @@ class SaleViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(amount = event.amount)
             }
 
+            is SaleUiEvent.OnTipChange -> {
+                _uiState.value = _uiState.value.copy(tip = event.tip)
+            }
+
             is SaleUiEvent.OnConfirmCard -> {
                 confirmCard()
             }
@@ -182,7 +186,6 @@ class SaleViewModel @Inject constructor(
                 when (resourceReadCard) {
                     is Resource.Loading -> {
                         val loadingMessage: String = resourceReadCard.message.toString()
-                        Log.d("loadingMessage", loadingMessage)
                         val lowerCaseLoadingMessage: String = loadingMessage.lowercase(Locale.getDefault())
                         fun parsingPresentingCardAgainMessage(): String {
                             var step = 1

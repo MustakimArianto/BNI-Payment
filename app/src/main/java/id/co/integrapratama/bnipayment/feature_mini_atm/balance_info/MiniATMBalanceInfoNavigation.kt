@@ -63,10 +63,7 @@ fun NavGraphBuilder.miniAtmBalanceInfoNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
         }
 
@@ -127,10 +124,7 @@ fun NavGraphBuilder.miniAtmBalanceInfoNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
 
         }

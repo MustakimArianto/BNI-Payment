@@ -11,6 +11,7 @@ data class SaleUiState(
     // Transaction data
     var isContactless: Boolean = false,
     var amount: String = "",
+    var tip: String = "",
     var cardNumber: String = "",
     var maskedCardNumber: String = "",
     var cardType: Int? = null,

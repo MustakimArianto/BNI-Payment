@@ -25,3 +25,5 @@ val PrimaryTextColor = Color(0xFF004558)
 val TextGrayColor = Color(0xFF8C8C8C)
 val TextLightBlueColor = Color(0xFF80A2AB)
 val LightGray = Color(0xFFECF1F2)
+
+val ToggleDisabledColor = Color(0xFF4E5D5F)

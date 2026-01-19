@@ -28,7 +28,7 @@ fun MiniATMBalanceInfoInsertCardScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TopBar(title = title, onBackClick = onNavigationBack)
+        TopBar(title = title)
 
         Column(
             modifier = Modifier.fillMaxSize(),

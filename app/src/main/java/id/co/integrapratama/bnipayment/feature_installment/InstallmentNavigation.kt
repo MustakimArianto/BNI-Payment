@@ -71,10 +71,7 @@ fun NavGraphBuilder.installmentNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        viewModel.clearErrorMessage()
-                    },
-                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() })
+                    onButtonClicked = { viewModel.clearErrorMessage() })
             }
         }
 
@@ -109,10 +106,7 @@ fun NavGraphBuilder.installmentNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
         }
 
@@ -148,10 +142,7 @@ fun NavGraphBuilder.installmentNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
             InstallmentConfirmTransactionScreen(
                 pin = uiState.pin,

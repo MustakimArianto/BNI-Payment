@@ -62,10 +62,7 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        viewModel.clearErrorMessage()
-                    },
-                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() }
+                    onButtonClicked = { viewModel.clearErrorMessage() }
                 )
             }
         }
@@ -89,10 +86,7 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
             if (uiState.voidRequestModel != null) {
                 VoidConfirmTransactionScreen(

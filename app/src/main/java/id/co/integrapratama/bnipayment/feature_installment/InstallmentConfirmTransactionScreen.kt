@@ -48,7 +48,7 @@ fun InstallmentConfirmTransactionScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TopBar(title = "Installment", onBackClick = onNavigationBack)
+        TopBar(title = "Installment")
 
         Box(
             modifier = Modifier
