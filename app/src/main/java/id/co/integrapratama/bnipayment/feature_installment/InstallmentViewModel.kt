@@ -14,6 +14,7 @@ import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.core.utils.CardUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.StringUtil
+import id.co.integrapratama.sdk.core.utils.toTransactionScopeText
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
@@ -30,11 +31,8 @@ import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtil
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import id.co.payment2go.terminalsdkhelper.core.util.Util
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -42,6 +40,7 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.String
 
 @HiltViewModel
 class InstallmentViewModel @Inject constructor(
@@ -60,9 +59,6 @@ class InstallmentViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(InstallmentUiState())
     val uiState: StateFlow<InstallmentUiState> = _uiState.asStateFlow()
-
-    private val _event = MutableSharedFlow<String>()
-    val event = _event.asSharedFlow()
 
     fun onEvent(event: InstallmentUiEvent) {
         when (event) {
@@ -338,20 +334,22 @@ class InstallmentViewModel @Inject constructor(
                     }
 
                     is Resource.Success -> {
+                        val binType = resource.data ?: BinType.UNKNOWN
+                        val cardClassification = binRangeRepository.classifyCard(binType)
+
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                binType = resource.data ?: BinType.UNKNOWN
+                                binType = binType,
+                                cardClassification = cardClassification
                             )
                         }
 
-                        val cardClassification =
-                            binRangeRepository.classifyCard(resource.data ?: BinType.UNKNOWN)
-
                         postInstallmentTransaction(
-                            cardClassification,
                             cardReadOutput = uiState.value.cardReadOutput
-                                ?: CardReadOutput()
+                                ?: CardReadOutput(),
+                            cardClassification = cardClassification,
+                            binType = binType,
                         )
                     }
 
@@ -370,7 +368,8 @@ class InstallmentViewModel @Inject constructor(
 
     fun postInstallmentTransaction(
         cardClassification: CardClassification,
-        cardReadOutput: CardReadOutput
+        cardReadOutput: CardReadOutput,
+        binType: BinType
     ) {
         _uiState.update {
             it.copy(
@@ -409,7 +408,9 @@ class InstallmentViewModel @Inject constructor(
 
                             if (cardReadOutput.posEntryMode == Constant.POS_ENTRY_MODE_CONTACTLESS) {
                                 saveTransactionToDatabase(
-                                    cardReadOutput = cardReadOutput
+                                    cardReadOutput = cardReadOutput,
+                                    cardClassification = cardClassification,
+                                    binType = binType,
                                 )
                             } else {
                                 verifyEmvHost(
@@ -417,7 +418,9 @@ class InstallmentViewModel @Inject constructor(
                                     authCode = authCode,
                                     arc = responseCode,
                                     authorizeFlag = "00",
-                                    cardReadOutput = cardReadOutput
+                                    cardReadOutput = cardReadOutput,
+                                    cardClassification = cardClassification,
+                                    binType = binType,
                                 )
                             }
                         } else {
@@ -732,7 +735,9 @@ class InstallmentViewModel @Inject constructor(
         authCode: String?,
         arc: String?,
         authorizeFlag: String?,
-        cardReadOutput: CardReadOutput
+        cardReadOutput: CardReadOutput,
+        cardClassification: CardClassification,
+        binType: BinType,
     ) {
         viewModelScope.launch {
             readCardRepository.verifyEMVHost(
@@ -757,7 +762,11 @@ class InstallmentViewModel @Inject constructor(
                             )
                         }
 
-                        saveTransactionToDatabase(cardReadOutput)
+                        saveTransactionToDatabase(
+                            cardReadOutput = cardReadOutput,
+                            cardClassification = cardClassification,
+                            binType = binType,
+                        )
                     }
 
                     is Resource.Error -> {
@@ -769,7 +778,11 @@ class InstallmentViewModel @Inject constructor(
                             )
                         }
 
-                        saveTransactionToDatabase(cardReadOutput)
+                        saveTransactionToDatabase(
+                            cardReadOutput = cardReadOutput,
+                            cardClassification = cardClassification,
+                            binType = binType,
+                        )
 //                        _uiState.update {
 //                            it.copy(
 //                                isLoading = false,
@@ -783,17 +796,21 @@ class InstallmentViewModel @Inject constructor(
         }
     }
 
-    private fun saveTransactionToDatabase(cardReadOutput: CardReadOutput) {
+    private fun saveTransactionToDatabase(
+        cardReadOutput: CardReadOutput,
+        cardClassification: CardClassification,
+        binType: BinType
+    ) {
         viewModelScope.launch {
             val currentDate = Date()
-            val currentTraceNoText = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
+            val currentTraceNoText = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0')
             val currentBatchNoText = terminalBatchManager.getCurrentBatch().toString().padStart(6, '0')
             val currentStanText = stanManager.getCurrentStan().toString().padStart(6, '0')
             val amountText = StringUtil.formatRupiahCurrency(
                 ((cardReadOutput.txnAmount.toLongOrNull() ?: 0) / 100L).toString()
             )
             val authCode = StringUtil.getRandom6DigitsNumber()
-            val refNo = traceNumberManager.getCurrentTraceNo().toString().padStart(6, '0')
+            val refNo = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0')
             val installmentPrintTemplateFactory = InstallmentPrintTemplateFactory(
                 branchName = "DUMMY TRX",
                 branchAddress = "JL. JENDRAL SUDIRMAN",
@@ -817,6 +834,8 @@ class InstallmentViewModel @Inject constructor(
             val installmentPrintBasedOnTemplateParameter = installmentPrintTemplateFactory.getPrintBasedOnTemplateParameter {}
             installmentRepository.insertCardTransactionToDatabase(
                 TransactionRecord(
+                    lastInvoice = "",
+                    lastInvoiceDate = "",
                     invoice = currentTraceNoText,
                     invoiceDate = DateUtils.getFullTransactionDateTime(currentDate),
                     issuerID = "3",
@@ -837,6 +856,10 @@ class InstallmentViewModel @Inject constructor(
                     cardExpiry = cardReadOutput.cardExpiry,
                     cardAID = cardReadOutput.cardAID,
                     cardAppName = cardReadOutput.cardAppName,
+                    cardBinType = binType.description,
+                    cardClassificationType = cardClassification.name,
+                    transactionScope = binType.toTransactionScopeText(),
+                    nii = binType.nii.toString(),
                     customerName = cardReadOutput.customerName,
                     currencyCode = cardReadOutput.currencyCode,
                     tVRData = cardReadOutput.terminalVerificationResults,
@@ -866,7 +889,7 @@ class InstallmentViewModel @Inject constructor(
                     jsonResp = "",
                     eMIAmount = 0L,
                     redeemAmount = 0L,
-                    pinBlock = cardReadOutput.pinBlock,
+                    pinBlock = "", // Actually dangerous if including pin block in local DB, except the urgent but only with special purposes
                     isTxnActive = false,
                     isTxnVoid = false,
                     isVoidApplicable = false,
@@ -897,7 +920,6 @@ class InstallmentViewModel @Inject constructor(
                                 loadingMessage = ""
                             )
                         }
-                        traceNumberManager.increment()
                     }
 
                     is Resource.Error -> {

@@ -17,8 +17,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import id.co.integrapratama.bnipayment.common.main.dialog.MainDialogViewModel
+import id.co.integrapratama.bnipayment.common.main.pinpad.MainPinpadViewModel
 import id.co.integrapratama.bnipayment.navigation.AppNavHost
 import id.co.integrapratama.bnipayment.ui.theme.BNIPaymentTheme
 import id.co.integrapratama.bnipayment.ui.theme.PrimaryVariantColor
@@ -75,6 +78,9 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
+            viewModel<MainDialogViewModel>(this@MainActivity)
+            viewModel<MainPinpadViewModel>(this@MainActivity)
+
             BNIPaymentTheme {
                 val navController = rememberNavController()
                 AppNavHost(navController)

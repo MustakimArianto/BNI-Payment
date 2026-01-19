@@ -10,6 +10,7 @@ import id.co.integrapratama.bnipayment.feature_installment.installmentNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
 import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavigation
 import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
+import id.co.integrapratama.bnipayment.feature_settlement.settlementNavGraph
 import id.co.integrapratama.bnipayment.feature_void.voidNavigation
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 import id.co.integrapratama.bnipayment.ui.theme.PrimaryVariantColor
@@ -51,4 +52,5 @@ fun NavGraphBuilder.homeNavigation(navController: NavController) {
     installmentNavigation(navController)
     miniATMNavigation(navController)
     miniAtmBalanceInfoNavigation(navController)
+    settlementNavGraph(navController)
 }

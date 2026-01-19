@@ -172,6 +172,7 @@ class InstallmentRepositoryImpl(
                         }
 
                         is Resource.Success -> {
+                            traceNumberManager.increment()
                             emit(Resource.Success(response.data ?: byteArrayOf()))
                         }
 
@@ -193,6 +194,8 @@ class InstallmentRepositoryImpl(
             try {
                 with(transactionRecord) {
                     val installmentCardTransactionEntity = InstallmentCardTransactionEntity(
+                        lastInvoice = lastInvoice,
+                        lastInvoiceDate = lastInvoiceDate,
                         invoice = invoice,
                         invoiceDate = invoiceDate,
                         issuerID = issuerID,
@@ -213,6 +216,10 @@ class InstallmentRepositoryImpl(
                         cardExpiry = cardExpiry,
                         cardAID = cardAID,
                         cardAppName = cardAppName,
+                        cardBinType = cardBinType,
+                        cardClassificationType = cardClassificationType,
+                        transactionScope = transactionScope,
+                        nii = nii,
                         customerName = customerName,
                         currencyCode = currencyCode,
                         tVRData = tVRData,

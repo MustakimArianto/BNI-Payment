@@ -13,12 +13,40 @@ import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
+import id.co.integrapratama.bnipayment.feature_merchant_pin.merchantPinComposable
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
 fun NavGraphBuilder.voidNavigation(navController: NavController) {
     navigation<AppRoute.Void>(
-        startDestination = VoidRoute.InputTraceNo
+        startDestination = VoidRoute.InputMerchantPin
     ) {
+        merchantPinComposable<VoidRoute.InputMerchantPin>(
+            navController = navController
+        ) {
+            it.enableMerchantInputPinScope { it2 ->
+                val action = it2.action
+
+                action.enableSetTitleScope { it3 ->
+                    it3.enableLaunchScope("Void")
+                }
+
+                action.enableOnAcceptPinScope { it3 ->
+                    it3.enableLaunchScope {
+                        navController.navigateFromCurrent(
+                            VoidRoute.InputTraceNo,
+                            isInclusive = true
+                        )
+                    }
+                }
+
+                action.enableOnCancelPinScope { it3 ->
+                    it3.enableLaunchScope {
+                        navController.navigateToHome()
+                    }
+                }
+            }
+        }
+
         composable<VoidRoute.InputTraceNo> {
             val viewModel = it.sharedViewModel<VoidViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()

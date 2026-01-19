@@ -26,11 +26,11 @@ object DateUtils {
     }
 
     fun getTransactionDate(dateTime: String): String {
-        return dateFormat.format(dateTimeFormat.parse(dateTime) ?: Date())
+        return dateFormat.format(fullDateTimeFormat.parse(dateTime) ?: Date())
     }
 
     fun getTransactionTime(dateTime: String): String {
-        return timeFormat.format(dateTimeFormat.parse(dateTime) ?: Date())
+        return timeFormat.format(fullDateTimeFormat.parse(dateTime) ?: Date())
     }
 
     fun getTransactionDate(date: Date): String {

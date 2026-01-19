@@ -46,8 +46,6 @@ class MiniATMBalanceInfoRepositoryImpl @Inject constructor(
         return flow {
             try {
                 emit(Resource.Loading("Mengirim data transaksi"))
-                traceNumberManager.saveLastTraceNo(traceNumberManager.getCurrentTraceNo())
-                traceNumberManager.increment()
 
                 val processingCode =
                     if (isFromSaving) BALANCE_INQUIRY_SAVING_PROCODE else BALANCE_INQUIRY_CHECKING_PROCODE
@@ -89,6 +87,7 @@ class MiniATMBalanceInfoRepositoryImpl @Inject constructor(
                         }
 
                         is Resource.Success -> {
+                            traceNumberManager.increment()
                             emit(Resource.Success(resource.data ?: byteArrayOf()))
                         }
 

@@ -12,15 +12,16 @@ import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.MTI
 import id.co.integrapratama.sdk.core.utils.padAmount
+import id.co.integrapratama.sdk.core.utils.toCardClassification
 import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.CardClassification
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
 import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalCreditRequestDto
 import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalDebitRequestDto
+import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
 import id.co.integrapratama.sdk.feature_void.domain.VoidRepository
 import id.co.integrapratama.sdk.feature_void.domain.VoidRequestModel
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
-import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderValueComponent
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -44,7 +45,6 @@ class VoidRepositoryImpl @Inject constructor(
     }
 
     override suspend fun postVoidTransaction(
-        cardClassification: CardClassification,
         voidRequestModel: VoidRequestModel
     ): Flow<Resource<ByteArray>> {
         return flow {
@@ -75,8 +75,8 @@ class VoidRepositoryImpl @Inject constructor(
 
             try {
                 emit(Resource.Loading("Mengirim void"))
-                traceNumberManager.saveLastTraceNo(traceNumberManager.getCurrentTraceNo())
-                traceNumberManager.increment()
+
+                val cardClassification = voidRequestModel.cardClassificationType?.toCardClassification()
 
                 reversalManager.saveVoidReversal(
                     if (cardClassification == CardClassification.DEBIT) {
@@ -183,6 +183,7 @@ class VoidRepositoryImpl @Inject constructor(
                         }
 
                         is Resource.Success -> {
+                            traceNumberManager.increment()
                             emit(Resource.Success(response.data ?: byteArrayOf()))
                         }
 
@@ -205,6 +206,8 @@ class VoidRepositoryImpl @Inject constructor(
             throw CustomMessageException("Data tidak ditemukan untuk trace no: $traceNo")
         }
         return VoidRequestModel(
+            lastInvoice = voidRequest.lastInvoice,
+            lastInvoiceDate = voidRequest.lastInvoiceDate,
             invoice = voidRequest.invoice,
             invoiceDate = voidRequest.invoiceDate,
             issuerID = voidRequest.issuerID,
@@ -215,6 +218,7 @@ class VoidRepositoryImpl @Inject constructor(
             amount = voidRequest.amount / 100L,
             payID = voidRequest.payID,
             pan = voidRequest.pan,
+            track2Data = voidRequest.track2Data,
             mID = voidRequest.mID,
             tID = voidRequest.tID,
             printFormats = voidRequest.printFormats,
@@ -233,7 +237,7 @@ class VoidRepositoryImpl @Inject constructor(
             stan = voidRequest.stan,
             maskedCardNo = voidRequest.maskedCardNo,
             insertModeCode = voidRequest.insertModeCode,
-            rRNO = voidRequest.rrNo,
+            rrNo = voidRequest.rrNo,
             txnStatus = voidRequest.txnStatus,
             cardType = voidRequest.cardType,
             cardTypeCode = voidRequest.cardTypeCode,
@@ -264,6 +268,12 @@ class VoidRepositoryImpl @Inject constructor(
 
                 emit(Resource.Loading("Mengecek data void"))
 
+                // Check void first
+                val voidCheckResult = appDatabase.cardTransactionDao().getVoidedDataByLastTraceNo(paddedTraceNo)
+                if (voidCheckResult != null) {
+                    throw CustomMessageException("Void sudah dilakukan: $paddedTraceNo")
+                }
+
                 // Void request
                 val voidRequestModel = getVoidRequest(paddedTraceNo)
 
@@ -275,60 +285,107 @@ class VoidRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateVoidTransaction(traceNo: String): Flow<Resource<Unit>> {
+    override suspend fun createVoidTransaction(willBeVoidTraceNo: String): Flow<Resource<Unit>> {
         return flow {
             try {
-                val paddedTraceNo = traceNo.padStart(6, '0')
+                val paddedTraceNo = willBeVoidTraceNo.padStart(6, '0')
 
                 emit(Resource.Loading("Mengecek data void"))
 
                 // Void request
                 val voidRequest = getVoidRequest(paddedTraceNo)
 
+                val currentDate = Date()
+
                 val printBasedOnTemplateParameterBuilder = PrintBasedOnTemplateParameterBuilder().fromJson(
                     valueComponentJsonString = voidRequest.jsonReceipt,
                     templateComponentJsonString = voidRequest.templateJsonReceipt
-                )
+                ).run {
+                    // Edit VOID Label
+                    editValueComponentBasedKeyWithValue("Label") { "VOID" }
 
-                // Edit VOID Label
-                val voidValueComponentIndex = printBasedOnTemplateParameterBuilder.valueComponentList.indexOfFirst {
-                    it.key == "Label"
-                }
-                var voidValueComponent = printBasedOnTemplateParameterBuilder.valueComponentList[voidValueComponentIndex]
-                if (voidValueComponentIndex > 0) {
-                    voidValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-                        voidValueComponent.key,
-                        "VOID"
-                    )
-                    printBasedOnTemplateParameterBuilder.editValueComponentBasedIndex(
-                        index = voidValueComponentIndex,
-                        valueComponent = voidValueComponent
-                    )
-                }
+                    // Edit Date
+                    editValueComponentBasedKeyWithValue("Date") { DateUtils.getReceiptTransactionDate(currentDate) }
 
-                // Edit Amount
-                val amountValueComponentIndex = printBasedOnTemplateParameterBuilder.valueComponentList.indexOfFirst {
-                    it.key == "Amount"
-                }
-                var amountValueComponent = printBasedOnTemplateParameterBuilder.valueComponentList[amountValueComponentIndex]
-                if (amountValueComponentIndex > 0) {
-                    amountValueComponent = PrintBasedOnTemplateParameterBuilderValueComponent(
-                        amountValueComponent.key,
-                        "- ${amountValueComponent.value}"
-                    )
-                    printBasedOnTemplateParameterBuilder.editValueComponentBasedIndex(
-                        index = amountValueComponentIndex,
-                        valueComponent = amountValueComponent
-                    )
+                    // Edit Date
+                    editValueComponentBasedKeyWithValue("Time") { DateUtils.getReceiptTransactionTime(currentDate) }
+
+                    // Edit Amount
+                    editValueComponentBasedKeyWithValue("Amount") { "- ${it.value}" }
                 }
 
                 val printBasedOnTemplateParameter = printBasedOnTemplateParameterBuilder.toPrintBasedOnTemplateParameter {}
 
-                appDatabase.cardTransactionDao().updateTransactionStatusToVoid(paddedTraceNo)
-                appDatabase.cardTransactionDao().updateJsonReceiptAndTemplateJsonReceipt(
-                    traceNo = paddedTraceNo,
-                    jsonReceipt = printBasedOnTemplateParameter.jsonString,
-                    templateJsonReceipt = printBasedOnTemplateParameter.printTemplateJsonString
+                appDatabase.cardTransactionDao().insert(
+                    CardTransactionEntity(
+                        lastInvoice = voidRequest.invoice,
+                        lastInvoiceDate = voidRequest.invoiceDate,
+                        invoice = traceNumberManager.getCurrentLastTraceNo().toString().padStart(6, '0'),
+                        invoiceDate = DateUtils.getFullTransactionDateTime(currentDate),
+                        issuerID = voidRequest.issuerID,
+                        issuerName = "VOID",
+                        saleType = "VOID",
+                        batchNo = voidRequest.batchNo,
+                        authCode = voidRequest.authCode,
+                        amount = voidRequest.amount * 100L,
+                        payID = voidRequest.payID,
+                        pan = voidRequest.pan,
+                        track2Data = voidRequest.track2Data,
+                        mID = voidRequest.mID,
+                        tID = voidRequest.tID,
+                        printFormats = voidRequest.printFormats,
+                        refNo = voidRequest.refNo,
+                        txnTypeId = voidRequest.txnTypeId,
+                        programName = voidRequest.programName,
+                        cardExpiry = voidRequest.cardExpiry,
+                        cardAID = voidRequest.cardAID,
+                        cardAppName = voidRequest.cardAppName,
+                        cardBinType = voidRequest.cardBinType,
+                        cardClassificationType = voidRequest.cardClassificationType,
+                        transactionScope = voidRequest.transactionScope,
+                        nii = voidRequest.nii,
+                        customerName = voidRequest.customerName,
+                        currencyCode = voidRequest.currencyCode,
+                        tVRData = voidRequest.tVRData,
+                        tSIData = voidRequest.tSIData,
+                        txnCatCode = voidRequest.txnCatCode,
+                        txnCert = voidRequest.txnCert,
+                        stan = voidRequest.stan,
+                        maskedCardNo = voidRequest.maskedCardNo,
+                        insertModeCode = voidRequest.insertModeCode,
+                        rrNo = voidRequest.rrNo,
+                        txnStatus = voidRequest.txnStatus,
+                        cardType = voidRequest.cardType,
+                        cardTypeCode = voidRequest.cardTypeCode,
+                        acquiringBank = voidRequest.acquiringBank,
+                        secureData = voidRequest.secureData,
+                        posEntryMode = voidRequest.posEntryMode,
+                        tipAmount = voidRequest.tipAmount * 100L,
+                        cashAMT = voidRequest.cashAMT,
+                        feeAmount = voidRequest.feeAmount,
+                        refTxnTypeId = voidRequest.refTxnTypeId,
+                        tenure = voidRequest.tenure,
+                        bankTID = voidRequest.bankTID,
+                        bankMID = voidRequest.bankMID,
+                        cashierID = voidRequest.cashierID,
+                        terminalCapability = voidRequest.terminalCapability,
+                        jsonReq = voidRequest.jsonReq,
+                        jsonResp = voidRequest.jsonResp,
+                        eMIAmount = voidRequest.eMIAmount,
+                        redeemAmount = voidRequest.redeemAmount,
+                        pinBlock = voidRequest.pinBlock,
+                        isTxnActive = voidRequest.isTxnActive,
+                        isTxnVoid = voidRequest.isTxnVoid,
+                        isVoidApplicable = voidRequest.isVoidApplicable,
+                        isLoyaltyVoid = voidRequest.isLoyaltyVoid,
+                        loyaltyData = voidRequest.loyaltyData,
+                        panSeq = voidRequest.panSeq,
+                        iccData = voidRequest.iccData,
+                        responseCode = voidRequest.responseCode,
+                        mti = voidRequest.mti,
+                        jsonReceipt = printBasedOnTemplateParameter.jsonString,
+                        templateJsonReceipt = printBasedOnTemplateParameter.printTemplateJsonString
+                    )
                 )
 
                 emit(Resource.Success(Unit))
@@ -347,14 +404,17 @@ class VoidRepositoryImpl @Inject constructor(
                 emit(Resource.Loading("Mengecek data void"))
 
                 // Void request
-                val voidRequest = getVoidRequest(paddedTraceNo)
+                val voidedResult = appDatabase.cardTransactionDao().getVoidedDataByLastTraceNo(paddedTraceNo)
+                if (voidedResult == null) {
+                    throw CustomMessageException("Void belum dilakukan: $paddedTraceNo")
+                }
 
                 emit(Resource.Loading("Mencetak struk"))
 
                 printRepository.printWithBuilder(
                     builder = PrintBasedOnTemplateParameterBuilder().fromJson(
-                        valueComponentJsonString = voidRequest.jsonReceipt,
-                        templateComponentJsonString = voidRequest.templateJsonReceipt
+                        valueComponentJsonString = voidedResult.jsonReceipt,
+                        templateComponentJsonString = voidedResult.templateJsonReceipt
                     )
                 ).collect()
                 emit(Resource.Success(Unit))
@@ -374,9 +434,6 @@ class VoidRepositoryImpl @Inject constructor(
                     emit(Resource.Error("Data reversal tidak ditemukan"))
                     return@flow
                 }
-
-                stanManager.increaseStan()
-                traceNumberManager.increment()
 
                 emit(Resource.Loading("Mengecek data reversal"))
                 val processingCode = JsonParser.parseString(reversalData)

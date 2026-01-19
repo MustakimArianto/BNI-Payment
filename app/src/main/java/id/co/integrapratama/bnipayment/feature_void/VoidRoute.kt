@@ -4,6 +4,9 @@ import kotlinx.serialization.Serializable
 
 sealed interface VoidRoute {
     @Serializable
+    data object InputMerchantPin : VoidRoute
+
+    @Serializable
     data object InputTraceNo : VoidRoute
 
     @Serializable
