@@ -1,6 +1,10 @@
 package id.co.integrapratama.sdk.feature_bin_range.domain
 
-enum class BinType(val description: String) {
+enum class BinType(
+    val description: String,
+    var isOnUs: Boolean = true,
+    var nii: Int? = null
+) {
     DEBIT_SILVER("DEBIT SILVER"),
     DEBIT_GOLD("DEBIT GOLD"),
     DEBIT_GOLD_2("DEBIT GOLD 2"),

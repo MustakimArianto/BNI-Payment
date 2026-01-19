@@ -3,6 +3,7 @@ package id.co.integrapratama.bnipayment.feature_void
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import id.co.integrapratama.bnipayment.feature_settlement.SettlementUiEvent
 import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
@@ -12,6 +13,7 @@ import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_void.domain.VoidRepository
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +33,7 @@ class VoidViewModel @Inject constructor(
     private val reversalManager: ReversalManager
 ) : ViewModel() {
     companion object {
-        private const val TAG = "SaleViewModel"
+        private const val TAG = "VoidViewModel"
     }
     private val _uiState = MutableStateFlow(VoidUiState())
     val uiState: StateFlow<VoidUiState> = _uiState.asStateFlow()
@@ -110,7 +112,42 @@ class VoidViewModel @Inject constructor(
 
     private fun submitVoid() {
         viewModelScope.launch {
-            voidRepository.updateVoidTransaction(_uiState.value.traceNo).collect { resource ->
+            val voidRequestModel = _uiState.value.voidRequestModel
+            if (voidRequestModel == null) {
+                return@launch
+            }
+            voidRepository.postVoidTransaction(voidRequestModel).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        saveVoidToDatabase()
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = "",
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun saveVoidToDatabase() {
+        viewModelScope.launch {
+            voidRepository.createVoidTransaction(_uiState.value.traceNo).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
                         _uiState.update {

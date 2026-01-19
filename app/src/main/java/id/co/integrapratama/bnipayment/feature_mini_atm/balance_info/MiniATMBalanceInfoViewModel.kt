@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.bnipayment.common.maskCardNumber
 import id.co.integrapratama.iso8583sdk.IsoMessage
+import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
@@ -37,6 +38,7 @@ class MiniATMBalanceInfoViewModel @Inject constructor(
     private val miniATMBalanceInfoRepository: MiniATMBalanceInfoRepository,
     private val binRangeRepository: BinRangeRepository,
     private val deviceTypeManager: DeviceTypeManager,
+    private val stanManager: StanManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MiniATMBalanceInfoUiState())
     val uiState = _uiState.asStateFlow()
@@ -152,6 +154,8 @@ class MiniATMBalanceInfoViewModel @Inject constructor(
 
     private fun readCard() {
         viewModelScope.launch {
+            stanManager.increaseStan()
+
             readCardRepository.readCard(
                 amount = 0L,
                 cardOption = uiState.value.cardOption,

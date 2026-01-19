@@ -14,7 +14,7 @@ interface CardTransactionDao {
         traceNo: String
     ): CardTransactionEntity?
 
-    @Query("SELECT * FROM card_transaction WHERE txnTypeId IN (:txnTypeId) AND invoice =:traceNo ORDER BY id desc LIMIT 1")
+    @Query("SELECT * FROM card_transaction WHERE txnTypeId IN (:txnTypeId) AND invoice = :traceNo ORDER BY id desc LIMIT 1")
     suspend fun getTrxDataByTypeIdAndTraceNumber(
         traceNo: String,
         vararg txnTypeId: String,
@@ -22,6 +22,11 @@ interface CardTransactionDao {
 
     @Query("SELECT * FROM card_transaction")
     suspend fun getAllTrxData(): List<CardTransactionEntity>
+
+    @Query("SELECT * FROM card_transaction WHERE saleType = 'VOID' AND lastInvoice = :lastTraceNo ORDER BY id desc LIMIT 1")
+    suspend fun getVoidedDataByLastTraceNo(
+        lastTraceNo: String
+    ): CardTransactionEntity?
 
     @Query("SELECT * FROM card_transaction WHERE substr(invoiceDate, 1, 6) = :date")
     suspend fun getTransactionsByDate(date: String): List<CardTransactionEntity>

@@ -10,6 +10,8 @@ import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
 data class CardTransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null,
+    val lastInvoice: String,
+    val lastInvoiceDate: String,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,
@@ -30,6 +32,10 @@ data class CardTransactionEntity(
     val cardExpiry: String? = "",
     val cardAID: String? = "",
     val cardAppName: String? = "",
+    val cardBinType: String? = "",
+    val cardClassificationType: String? = "",
+    val transactionScope: String? = "",
+    val nii: String? = "",
     val customerName: String? = "",
     val currencyCode: String? = "",
     val tVRData: String? = "",
@@ -75,6 +81,8 @@ data class CardTransactionEntity(
     fun toPreviousBatch(): CardPrevTransactionEntity {
         return CardPrevTransactionEntity(
             id = id,
+            lastInvoice = lastInvoice,
+            lastInvoiceDate = lastInvoiceDate,
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -95,6 +103,10 @@ data class CardTransactionEntity(
             cardExpiry = cardExpiry,
             cardAID = cardAID,
             cardAppName = cardAppName,
+            cardBinType = cardBinType,
+            cardClassificationType = cardClassificationType,
+            transactionScope = transactionScope,
+            nii = nii,
             customerName = customerName,
             currencyCode = currencyCode,
             tVRData = tVRData,
@@ -130,6 +142,8 @@ data class CardTransactionEntity(
 
     fun toTransactionRecord(): TransactionRecord {
         return TransactionRecord(
+            lastInvoice = lastInvoice,
+            lastInvoiceDate = lastInvoiceDate,
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -150,6 +164,10 @@ data class CardTransactionEntity(
             cardExpiry = cardExpiry,
             cardAID = cardAID,
             cardAppName = cardAppName,
+            cardBinType = cardBinType,
+            cardClassificationType = cardClassificationType,
+            transactionScope = transactionScope,
+            nii = nii,
             customerName = customerName,
             currencyCode = currencyCode,
             tVRData = tVRData,

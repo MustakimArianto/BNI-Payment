@@ -3,11 +3,14 @@ package id.co.integrapratama.sdk.feature_installment.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import id.co.integrapratama.sdk.feature_sale.domain.TransactionRecord
+import kotlin.String
 
 @Entity
 data class InstallmentCardTransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null,
+    val lastInvoice: String,
+    val lastInvoiceDate: String,
     val invoice: String,
     val invoiceDate: String,
     val issuerID: String,
@@ -28,6 +31,10 @@ data class InstallmentCardTransactionEntity(
     val cardExpiry: String? = "",
     val cardAID: String? = "",
     val cardAppName: String? = "",
+    val cardBinType: String? = "",
+    val cardClassificationType: String? = "",
+    val transactionScope: String? = "",
+    val nii: String? = "",
     val customerName: String? = "",
     val currencyCode: String? = "",
     val tVRData: String? = "",
@@ -73,6 +80,8 @@ data class InstallmentCardTransactionEntity(
     fun toPreviousBatch(): InstallmentCardPrevTransactionEntity {
         return InstallmentCardPrevTransactionEntity(
             id = id,
+            lastInvoice = lastInvoice,
+            lastInvoiceDate = lastInvoiceDate,
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -93,6 +102,10 @@ data class InstallmentCardTransactionEntity(
             cardExpiry = cardExpiry,
             cardAID = cardAID,
             cardAppName = cardAppName,
+            cardBinType = cardBinType,
+            cardClassificationType = cardClassificationType,
+            transactionScope = transactionScope,
+            nii = nii,
             customerName = customerName,
             currencyCode = currencyCode,
             tVRData = tVRData,
@@ -128,6 +141,8 @@ data class InstallmentCardTransactionEntity(
 
     fun toTransactionRecord(): TransactionRecord {
         return TransactionRecord(
+            lastInvoice = lastInvoice,
+            lastInvoiceDate = lastInvoiceDate,
             invoice = invoice,
             invoiceDate = invoiceDate,
             issuerID = issuerID,
@@ -148,6 +163,10 @@ data class InstallmentCardTransactionEntity(
             cardExpiry = cardExpiry,
             cardAID = cardAID,
             cardAppName = cardAppName,
+            cardBinType = cardBinType,
+            cardClassificationType = cardClassificationType,
+            transactionScope = transactionScope,
+            nii = nii,
             customerName = customerName,
             currencyCode = currencyCode,
             tVRData = tVRData,
