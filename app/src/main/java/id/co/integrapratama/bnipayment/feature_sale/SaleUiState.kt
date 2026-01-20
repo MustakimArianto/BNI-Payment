@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
+import id.co.integrapratama.sdk.core.model.AIDName
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
 import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
@@ -11,7 +12,7 @@ data class SaleUiState(
     // Transaction data
     var isContactless: Boolean = false,
     var amount: String = "",
-    var tip: String = "",
+    var tip: String = "0",
     var cardNumber: String = "",
     var maskedCardNumber: String = "",
     var cardType: Int? = null,
@@ -21,6 +22,8 @@ data class SaleUiState(
     var pinBlock: String = "",
     var transactionDateTime: Date = Date(),
     var binType: BinType = BinType.UNKNOWN,
+    var aidName: AIDName = AIDName.UNKNOWN,
+    var refNo: String = "000047111620000",
 
     // Process flags
     val isLoading: Boolean = false,
@@ -29,6 +32,7 @@ data class SaleUiState(
     val isCardConfirmed: Boolean = false,
     val isShowPinpad: Boolean = false,
     val isShowOfflinePinpad: Boolean = false,
+    val isShowContactlessDialog: Boolean = false,
     val onInsertOnlinePinAction: OnInsertOnlinePinAction? = null,
     val onInsertOfflinePinAction: OnInsertOfflinePinAction? = null,
     val isPhysicalKeyboard: Boolean = false,
@@ -36,6 +40,7 @@ data class SaleUiState(
     // Completion states
     var isFinishedReadCard: Boolean = false,
     var isTransactionFinished: Boolean = false,
+    var isPrintingFinished: Boolean = false,
 
     // UI feedback
     var loadingMessage: String = "",
@@ -46,7 +51,7 @@ data class SaleUiState(
 ) {
     // Computed property that always reflects current value
     val title: String
-        get() = "Sale ${if (isContactless) "Contactless" else ""}"
+        get() = if (isContactless) "Contactless" else "Sale"
     val cardOption: CardOption
         get() = CardOption(
             supportContactless = isContactless,

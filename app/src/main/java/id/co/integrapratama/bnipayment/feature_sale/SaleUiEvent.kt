@@ -8,6 +8,8 @@ sealed class SaleUiEvent {
     data class OnTipChange(val tip: String) : SaleUiEvent()
     data object OnConfirmCard : SaleUiEvent()
 
+    data object OnConfirmContactless : SaleUiEvent()
+
     data class MappingPinpad(
         val containerInfo: CustomPinpadUiBounds,
         val pinpadMap: List<CustomPinpadUiBounds>,

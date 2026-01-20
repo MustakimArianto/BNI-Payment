@@ -32,6 +32,7 @@ class InitMenuViewModel @Inject constructor(
             // Temporary hardcoded tid and mid
             terminalConfigManager.saveTid("12345678")
             terminalConfigManager.saveMid("123456789012345")
+            terminalConfigManager.saveMerchantName("Cahaya Abadi Lestari")
 
             getCardList()
         }

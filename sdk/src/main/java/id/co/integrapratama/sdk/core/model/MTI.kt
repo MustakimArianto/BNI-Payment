@@ -1,4 +1,4 @@
-package id.co.integrapratama.sdk.core.utils
+package id.co.integrapratama.sdk.core.model
 
 enum class MTI(val code: String) {
     AUTHORIZATION("0100"),

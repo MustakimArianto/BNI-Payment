@@ -9,8 +9,8 @@ import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.exception.CustomMessageException
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
+import id.co.integrapratama.sdk.core.model.MTI
 import id.co.integrapratama.sdk.core.utils.DateUtils
-import id.co.integrapratama.sdk.core.utils.MTI
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toCardClassification
 import id.co.integrapratama.sdk.core.utils.toResourceError

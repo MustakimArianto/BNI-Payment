@@ -1,6 +1,7 @@
 package id.co.integrapratama.sdk.core.utils
 
 import android.util.Log
+import id.co.integrapratama.sdk.core.model.AIDName
 import id.co.payment2go.terminalsdkhelper.common.emv.AidKernelConfig
 import id.co.payment2go.terminalsdkhelper.common.emv.AidParam
 import id.co.payment2go.terminalsdkhelper.common.emv.AmexAidKernelConfig
@@ -140,5 +141,19 @@ object AidUtil {
             kernelConfig = aidKernelConfig,
             priority = priority.toInt().toAidPriority()
         )
+    }
+
+    fun getAIDName(aid: String): AIDName {
+        val aidName =
+            if (aid.contains("?")) aid.substringBefore("?").lowercase() else aid.lowercase()
+
+        return when {
+            aidName.contains("nsiccs") or aidName.contains("gpn") -> AIDName.GPN
+            aidName.contains("mastercard") -> AIDName.MASTERCARD
+            aidName.contains("visa") -> AIDName.VISA
+            aidName.contains("jcb") -> AIDName.JCB
+            aidName.contains("amex") -> AIDName.AMERICAN_EXPRESS
+            else -> AIDName.GPN
+        }
     }
 }

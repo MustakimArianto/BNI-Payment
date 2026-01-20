@@ -9,6 +9,7 @@ class TerminalConfigManager(
     companion object {
         private const val TID_KEY = "TID_KEY"
         private const val MID_KEY = "MID_KEY"
+        private const val MERCHANT_NAME = "MERCHANT_NAME_KEY"
     }
 
     fun getTid(): String? {
@@ -25,5 +26,13 @@ class TerminalConfigManager(
 
     fun saveMid(mid: String) {
         sharedPrefs.edit { putString(MID_KEY, mid) }
+    }
+
+    fun getMerchantName(): String? {
+        return sharedPrefs.getString(MERCHANT_NAME, null)
+    }
+
+    fun saveMerchantName(merchantName: String) {
+        sharedPrefs.edit { putString(MERCHANT_NAME, merchantName) }
     }
 }

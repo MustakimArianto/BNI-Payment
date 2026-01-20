@@ -21,7 +21,7 @@ fun PrimaryButton(
     onClick: () -> Unit,
     text: String,
     isBold: Boolean = true,
-    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(8.dp),
+    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(22.dp),
     isEnabled: Boolean = true,
     appearance: PrimaryButtonAppearance = PrimaryButtonAppearance.Solid
 ) {

@@ -31,7 +31,7 @@ ksp = "2.2.10-2.0.2"
 
 serialization = "1.7.3"
 
-terminalSdkHelper = "1.0.0-beta01-landiatom44-pinpad01"
+terminalSdkHelper = "1.0.0-beta01-landiatom45-pinpad01"
 logSdk = "1.0.3"
 iso8583Sdk = "1.2.0-no-padding"
 
