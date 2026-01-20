@@ -361,8 +361,12 @@ class SaleRepositoryImpl @Inject constructor(
                         valueComponentJsonString = cardTransactionEntity.jsonReceipt,
                         templateComponentJsonString = cardTransactionEntity.templateJsonReceipt
                     )
-                ).collect()
-                emit(Resource.Success(Unit))
+                ).collect {
+                    if (it is Resource.Loading) {
+                        return@collect
+                    }
+                    emit(it)
+                }
             } catch (e: Exception) {
                 LogSdk.error(TAG, "printReceiptBasedTraceNo: ${e.stackTraceToString()}")
                 emit(e.toResourceError())

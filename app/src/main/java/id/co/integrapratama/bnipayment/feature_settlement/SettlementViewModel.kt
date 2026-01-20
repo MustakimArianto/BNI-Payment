@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.integrapratama.sdk.feature_settlement.domain.SettlementRepository
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameter.PrintBasedOnTemplateParameter
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,6 +62,42 @@ class SettlementViewModel @Inject constructor(
     private fun performSettlementAndBatchUpload() {
         viewModelScope.launch {
             settlementRepository.postSettlementAndBatchUpload().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        printSettlementReceipt(
+                            resource.data!!.settlementPrintBasedOnTemplateParameter
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = "",
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun printSettlementReceipt(
+        settlementPrintBasedOnTemplateParameter: PrintBasedOnTemplateParameter
+    ) {
+        viewModelScope.launch {
+            settlementRepository.printSettlement(
+                settlementPrintBasedOnTemplateParameter
+            ).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
                         _uiState.update {

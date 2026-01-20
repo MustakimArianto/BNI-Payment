@@ -297,8 +297,12 @@ class InstallmentRepositoryImpl(
                         valueComponentJsonString = installmentCardTransactionEntity.jsonReceipt,
                         templateComponentJsonString = installmentCardTransactionEntity.templateJsonReceipt
                     )
-                ).collect()
-                emit(Resource.Success(Unit))
+                ).collect {
+                    if (it is Resource.Loading) {
+                        return@collect
+                    }
+                    emit(it)
+                }
             } catch (e: Exception) {
                 LogSdk.error(TAG, "printReceiptBasedTraceNo: ${e.stackTraceToString()}")
                 emit(e.toResourceError())

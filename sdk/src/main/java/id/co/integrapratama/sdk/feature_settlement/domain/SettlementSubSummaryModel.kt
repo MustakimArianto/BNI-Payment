@@ -1,7 +1,7 @@
 package id.co.integrapratama.sdk.feature_settlement.domain
 
-class SettlementSubSummaryModel(
+data class SettlementSubSummaryModel(
     val title: String,
-    val count: Int,
+    val count: Int? = null,
     val amount: Long
 )

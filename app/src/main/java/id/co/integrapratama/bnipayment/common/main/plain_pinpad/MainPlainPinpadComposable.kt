@@ -229,7 +229,6 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
             TopBar(
                 title = uiState.title,
             )

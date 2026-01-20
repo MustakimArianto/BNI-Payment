@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.feature_settlement
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,11 +27,12 @@ fun TotalSettlementSummaryScreen(
     onBackClick: () -> Unit,
     onStartSettlement: () -> Unit
 ) {
-    Column(
-        Modifier.padding(PaddingValues(top = 16.dp))
-            .navigationBarsPadding()
-    ) {
-        TopBar(title = "Settlement", onBackClick = onBackClick)
+    Column {
+        BackHandler {
+            onBackClick()
+        }
+
+        TopBar(title = "Settlement")
         VerticalSpacer(SpacerSize.X_LARGE)
 
         TotalSettlementSummaryView(

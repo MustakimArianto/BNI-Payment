@@ -12,6 +12,10 @@ interface PrintRepository {
         imageData: ((ImageDataParameter) -> ByteArray?)? = null
     ): Flow<Resource<Unit>>
 
+    suspend fun printWithBuilder(
+        builder: PrintBasedOnTemplateParameterBuilder
+    ): Flow<Resource<Unit>>
+
     suspend fun printWithTemplateFactory(
         templateFactory: PrintTemplateFactory,
     ): Flow<Resource<Unit>>
