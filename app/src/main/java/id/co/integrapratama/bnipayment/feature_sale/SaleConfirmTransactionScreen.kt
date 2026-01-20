@@ -1,31 +1,23 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpad
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
-import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
-import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.ui.theme.DisabledInputFieldColor
@@ -35,14 +27,12 @@ import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 @Composable
 fun SaleConfirmTransactionScreen(
     title: String,
-    pin: String = "",
+    pin: String,
     cardNumber: String,
     isPhysicalKeyboard: Boolean,
     showPinpad: Boolean = false,
     showOfflinePinpad: Boolean = false,
-    onCancel: () -> Unit,
     onNext: () -> Unit,
-    onNavigationBack: () -> Unit,
     onButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
     onOfflinePinButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
 ) {
@@ -51,8 +41,6 @@ fun SaleConfirmTransactionScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TopBar(title = title, onBackClick = onNavigationBack)
-
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -62,10 +50,7 @@ fun SaleConfirmTransactionScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_insert_card),
-                    contentDescription = null
-                )
+                Text("Confirm Transaction")
 
                 Column(
                     modifier = Modifier
@@ -77,7 +62,7 @@ fun SaleConfirmTransactionScreen(
                         .padding(16.dp, 8.dp)
                 ) {
                     Text(
-                        "Nomor Kartu",
+                        text = stringResource(R.string.message_card_number),
                         color = TextGrayColor,
                         fontWeight = FontWeight.Light,
                         fontSize = 14.sp
@@ -88,24 +73,11 @@ fun SaleConfirmTransactionScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            SecondaryButton(
-                modifier = Modifier.weight(1f),
-                text = "Batal",
-                onClick = onCancel
-            )
-            Spacer(Modifier.width(18.dp))
-            PrimaryButton(
-                modifier = Modifier.weight(1f),
-                text = "Lanjut",
-                onClick = onNext
-            )
-        }
+        PrimaryButton(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            text = stringResource(R.string.button_next),
+            onClick = onNext
+        )
     }
 
     if (showPinpad) {

@@ -1,5 +1,6 @@
 package id.co.integrapratama.bnipayment.common.main.plain_pinpad
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Text
@@ -217,22 +217,21 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
 
         content(mainPlainPinpadContentParameter)
 
-        Column(
-            modifier = Modifier.navigationBarsPadding(),
-        ) {
+        Column {
+            BackHandler {
+                val pinpadCancelConfig = uiState.pinpadCancelConfig
+                viewModel.onEvent(
+                    MainPlainPinpadUiEvent.UpdateInputPlainPinpadPhase(
+                        InputPlainPinpadPhase.CancelPhase(
+                            withDisableTap = pinpadCancelConfig?.withDisableTap ?: true
+                        )
+                    )
+                )
+            }
+
             Spacer(Modifier.height(16.dp))
             TopBar(
                 title = uiState.title,
-                onBackClick = {
-                    val pinpadCancelConfig = uiState.pinpadCancelConfig
-                    viewModel.onEvent(
-                        MainPlainPinpadUiEvent.UpdateInputPlainPinpadPhase(
-                            InputPlainPinpadPhase.CancelPhase(
-                                withDisableTap = pinpadCancelConfig?.withDisableTap ?: true
-                            )
-                        )
-                    )
-                }
             )
             VerticalSpacer(SpacerSize.X_LARGE)
 
@@ -252,7 +251,9 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
                 Spacer(Modifier.height(30.dp))
 
                 Column(
-                    modifier = Modifier.fillMaxSize().weight(1f),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     PinUnderlineView(
@@ -290,11 +291,13 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
                 )
                 if (uiState.ableToTap) {
                     Box(
-                        modifier = Modifier.matchParentSize().then(
-                            Modifier.pointerInput(Unit) {
-                                detectTapGestures { }
-                            }
-                        )
+                        modifier = Modifier
+                            .matchParentSize()
+                            .then(
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures { }
+                                }
+                            )
                     )
                 }
             }

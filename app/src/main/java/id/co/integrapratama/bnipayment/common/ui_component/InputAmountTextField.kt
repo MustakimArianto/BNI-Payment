@@ -12,36 +12,48 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.common.formatCurrency
 import id.co.integrapratama.bnipayment.common.unformatCurrency
+import id.co.integrapratama.bnipayment.ui.theme.TextGrayColor
 
 @Composable
 fun InputAmountTextField(
     modifier: Modifier = Modifier,
-    amount: String,  // Raw value from ViewModel: "5000"
-    onAmountChanged: (String) -> Unit,  // Sends raw value back: "5000"
-    label: String = "Nominal"
+    amount: String,
+    onAmountChanged: (String) -> Unit,
+    onFocusChanged: (Boolean) -> Unit = {},
 ) {
     val maxLength = 12
 
-    // Manage TextFieldValue internally
     var textFieldValue by remember {
         mutableStateOf(TextFieldValue())
     }
 
-    // Track the last known amount to detect external changes
     var lastAmount by remember { mutableStateOf(amount) }
+    var isFocused by remember { mutableStateOf(false) }
 
-    // Only update TextFieldValue when amount changes from OUTSIDE (not from user typing)
     LaunchedEffect(amount) {
-        if (amount != lastAmount && amount != unformatCurrency(textFieldValue.text)) {
+        // Don't update if the amount starts with zero (leading zero check)
+        if (amount.isNotEmpty() && amount.startsWith("0")) {
+            return@LaunchedEffect
+        }
+
+        if (amount != lastAmount && amount != unformatCurrency(textFieldValue.text.removePrefix("Rp"))) {
             lastAmount = amount
-            val formatted = formatCurrency(amount)
+            val formatted = if (amount.isNotEmpty()) {
+                "Rp${formatCurrency(amount)}"
+            } else {
+                ""
+            }
             textFieldValue = TextFieldValue(
                 text = formatted,
                 selection = TextRange(formatted.length)
@@ -49,60 +61,113 @@ fun InputAmountTextField(
         }
     }
 
+    // Determine text color
+    val textColor = if (textFieldValue.text.isEmpty() || textFieldValue.text == "Rp") {
+        TextGrayColor
+    } else {
+        Color.Black
+    }
+
     TextField(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .onFocusChanged { focusState ->
+                isFocused = focusState.isFocused
+                onFocusChanged(focusState.isFocused)
+            },
         value = textFieldValue,
         onValueChange = { newValue ->
-            val cleanText = unformatCurrency(newValue.text)
+            var inputText = newValue.text
+
+            // Remove "Rp" prefix for processing
+            if (inputText.startsWith("Rp")) {
+                inputText = inputText.substring(2)
+            }
+
+            val cleanText = unformatCurrency(inputText)
 
             // Only accept digits and respect max length
             if ((cleanText.isEmpty() || cleanText.all { it.isDigit() }) && cleanText.length <= maxLength) {
-                val formatted = formatCurrency(cleanText)
+                val formatted = if (cleanText.isNotEmpty()) {
+                    "Rp${formatCurrency(cleanText)}"
+                } else {
+                    ""
+                }
 
-                // Calculate new cursor position
-                val oldText = textFieldValue.text
-                val oldCursor = newValue.selection.start
+                // Calculate cursor position
+                val newCursor = if (formatted.isEmpty()) {
+                    0
+                } else {
+                    val oldTextWithoutPrefix = textFieldValue.text.removePrefix("Rp")
+                    val newTextWithoutPrefix = formatted.substring(2)
 
-                // Count dots before cursor in old text
-                val dotsBeforeInOld =
-                    oldText.take(oldCursor.coerceAtMost(oldText.length)).count { it == '.' }
+                    // Get cursor position relative to "Rp" prefix
+                    val oldCursorPos = (newValue.selection.start - 2).coerceAtLeast(0)
 
-                // Find equivalent position in clean text
-                val cleanCursor = oldCursor - dotsBeforeInOld
+                    // Count dots before cursor in old text
+                    val dotsBeforeInOld = oldTextWithoutPrefix
+                        .take(oldCursorPos.coerceAtMost(oldTextWithoutPrefix.length))
+                        .count { it == '.' }
 
-                // Count characters (including dots) needed to reach that clean position in new formatted text
-                var newCursor = 0
-                var cleanCount = 0
-                for (i in formatted.indices) {
-                    if (cleanCount >= cleanCursor) break
-                    if (formatted[i] != '.') cleanCount++
-                    newCursor++
+                    // Get clean cursor position (without dots)
+                    val cleanCursorPos = oldCursorPos - dotsBeforeInOld
+
+                    // Find new cursor position in formatted text
+                    var newCursorPos = 0
+                    var cleanCount = 0
+
+                    for (i in newTextWithoutPrefix.indices) {
+                        if (cleanCount >= cleanCursorPos) break
+                        if (newTextWithoutPrefix[i] != '.') {
+                            cleanCount++
+                        }
+                        newCursorPos++
+                    }
+
+                    // Add 2 for "Rp" prefix
+                    (newCursorPos + 2).coerceIn(2, formatted.length)
                 }
 
                 textFieldValue = TextFieldValue(
                     text = formatted,
-                    selection = TextRange(newCursor.coerceIn(0, formatted.length))
+                    selection = TextRange(newCursor)
                 )
 
                 lastAmount = cleanText
 
-                // Send raw value to ViewModel
+                // Send raw digits only to ViewModel
                 onAmountChanged(cleanText)
             }
         },
-        label = { Text(label) },
-        prefix = { Text("Rp") },
+        textStyle = TextStyle(
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        ),
+        placeholder = {
+            if (!isFocused || textFieldValue.text.isEmpty()) {
+                Text(
+                    text = "Rp",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextGrayColor
+                )
+            }
+        },
         keyboardOptions = KeyboardOptions.Default.copy(
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Done,
         ),
         colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFE8F4F8),
-            focusedContainerColor = Color(0xFFE8F4F8),
-            unfocusedIndicatorColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            cursorColor = Color(0xFF5C6BC0),
-            disabledContainerColor = Color(0xFFE8F4F8)
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.LightGray,
+            focusedIndicatorColor = Color.LightGray,
+            cursorColor = Color.Black,
+            disabledContainerColor = Color.Transparent,
+            disabledIndicatorColor = Color.LightGray
         ),
+        singleLine = true,
+        readOnly = true  // Make it read-only to prevent system keyboard
     )
 }

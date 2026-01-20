@@ -54,7 +54,7 @@ fun VoidConfirmTransactionScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TopBar(title = "Void", onBackClick = onBackClick)
+        TopBar(title = "Void")
         VerticalSpacer(SpacerSize.X_LARGE)
         Box(
             modifier = Modifier

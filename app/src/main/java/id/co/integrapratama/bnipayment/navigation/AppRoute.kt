@@ -4,10 +4,19 @@ import kotlinx.serialization.Serializable
 
 sealed interface AppRoute {
     @Serializable
+    data object Onboarding : AppRoute
+
+    @Serializable
     data object Main : AppRoute
 
     @Serializable
     data object Home : AppRoute
+
+    @Serializable
+    data object AdminSetting : AppRoute
+
+    @Serializable
+    data object InitMenu : AppRoute
 
     @Serializable
     data object MiniATM : AppRoute
@@ -23,13 +32,4 @@ sealed interface AppRoute {
 
     @Serializable
     data object Settlement : AppRoute
-
-    @Serializable
-    data object Information : AppRoute
-
-    @Serializable
-    data object Admin : AppRoute
-
-    @Serializable
-    data object Account : AppRoute
 }

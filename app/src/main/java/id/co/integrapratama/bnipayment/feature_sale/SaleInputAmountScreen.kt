@@ -1,46 +1,143 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import id.co.integrapratama.bnipayment.common.ui_component.CustomAmountKeypad
+import id.co.integrapratama.bnipayment.common.ui_component.InputAmountTextField
+import id.co.integrapratama.bnipayment.common.ui_component.PrimaryToggle
+import id.co.integrapratama.bnipayment.common.ui_component.SmallText
+import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
-import id.co.integrapratama.bnipayment.common.ui_component.InputAmountTextField
-import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
-import id.co.integrapratama.bnipayment.common.ui_component.TopBar
+
+enum class FocusedField {
+    AMOUNT, TIP, NONE
+}
 
 @Composable
 fun InputAmountScreen(
     title: String,
-    amount: String = "",
+    amount: String,
+    tip: String,
     onAmountChanged: (String) -> Unit,
-    onNextClick: () -> Unit,
-    onNavigationBack: () -> Unit,
+    onTipChanged: (String) -> Unit,
+    onOkClick: () -> Unit,
 ) {
-    Column(Modifier
-        .padding(16.dp)
-        .navigationBarsPadding()) {
-        TopBar(title = title, onBackClick = onNavigationBack)
+    var isTipEnabled by remember { mutableStateOf(false) }
+    var focusedField by remember { mutableStateOf(FocusedField.AMOUNT) }
+
+    Column(
+        Modifier.fillMaxSize()
+    ) {
+        TopBar(title = title)
         VerticalSpacer(SpacerSize.X_LARGE)
-
-        InputAmountTextField(
-            amount = amount,
-            onAmountChanged = onAmountChanged,
-            label = "Nominal"
-        )
-
-        Box(Modifier.fillMaxSize()) {
-            PrimaryButton(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                text = "Lanjut",
-                onClick = onNextClick
+        Column(Modifier.padding(horizontal = 16.dp)) {
+            SmallText(text = "Input Amount")
+            InputAmountTextField(
+                amount = amount,
+                onAmountChanged = onAmountChanged,
+                onFocusChanged = { isFocused ->
+                    if (isFocused) {
+                        focusedField = FocusedField.AMOUNT
+                    }
+                }
             )
+
+            VerticalSpacer(SpacerSize.MEDIUM)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SmallText(text = "Input Tip")
+
+                PrimaryToggle(
+                    checked = isTipEnabled,
+                    onCheckedChange = { isChecked ->
+                        isTipEnabled = isChecked
+                        if (!isChecked) {
+                            onTipChanged("")
+                            focusedField = FocusedField.AMOUNT
+                        } else {
+                            focusedField = FocusedField.TIP
+                        }
+                    }
+                )
+            }
+
+            if (isTipEnabled) {
+                VerticalSpacer(SpacerSize.MEDIUM)
+                InputAmountTextField(
+                    amount = tip,
+                    onAmountChanged = onTipChanged,
+                    onFocusChanged = { isFocused ->
+                        if (isFocused) {
+                            focusedField = FocusedField.TIP
+                        }
+                    }
+                )
+            }
         }
+
+        Spacer(Modifier.weight(1f)) // Pushes keypad to bottom
+
+        CustomAmountKeypad(
+            onNumberClick = { number ->
+                when (focusedField) {
+                    FocusedField.AMOUNT -> {
+                        val newAmount = amount + number
+                        // Don't allow leading zeros and respect max length
+                        if (newAmount.length <= 12 && !newAmount.startsWith("0")) {
+                            onAmountChanged(newAmount)
+                        }
+                    }
+                    FocusedField.TIP -> {
+                        val newTip = tip + number
+                        // Don't allow leading zeros and respect max length
+                        if (newTip.length <= 12 && !newTip.startsWith("0")) {
+                            onTipChanged(newTip)
+                        }
+                    }
+                    FocusedField.NONE -> {}
+                }
+            },
+            onBackspaceClick = {
+                when (focusedField) {
+                    FocusedField.AMOUNT -> {
+                        if (amount.isNotEmpty()) {
+                            onAmountChanged(amount.dropLast(1))
+                        }
+                    }
+                    FocusedField.TIP -> {
+                        if (tip.isNotEmpty()) {
+                            onTipChanged(tip.dropLast(1))
+                        }
+                    }
+                    FocusedField.NONE -> {}
+                }
+            },
+            onClearClick = {
+                when (focusedField) {
+                    FocusedField.AMOUNT -> onAmountChanged("")
+                    FocusedField.TIP -> onTipChanged("")
+                    FocusedField.NONE -> {}
+                }
+            },
+            onConfirmClick = onOkClick
+        )
     }
 }

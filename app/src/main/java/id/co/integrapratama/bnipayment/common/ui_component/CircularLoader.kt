@@ -89,3 +89,34 @@ fun CircularLoader(
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun CircularLoaderExample() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Example 1: Default size (120.dp)
+        CircularLoader(
+            logoRes = R.drawable.ic_initialize_loading
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Example 2: Custom size
+        CircularLoader(
+            logoRes = R.drawable.ic_initialize_loading,
+            size = 150.dp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Example 3: Smaller size
+        CircularLoader(
+            logoRes = R.drawable.ic_initialize_loading,
+            size = 80.dp
+        )
+    }
+}

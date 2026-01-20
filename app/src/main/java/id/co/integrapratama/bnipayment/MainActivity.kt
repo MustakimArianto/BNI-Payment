@@ -10,9 +10,12 @@ import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -21,6 +24,7 @@ import id.co.integrapratama.bnipayment.common.main.dialog.MainDialogViewModel
 import id.co.integrapratama.bnipayment.common.main.pinpad.MainPinpadViewModel
 import id.co.integrapratama.bnipayment.navigation.AppNavHost
 import id.co.integrapratama.bnipayment.ui.theme.BNIPaymentTheme
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryVariantColor
 import id.co.integrapratama.logsdk.LogSdk
 
 @AndroidEntryPoint
@@ -62,7 +66,17 @@ class MainActivity : ComponentActivity() {
             requestStoragePermission()
         }
 
-        enableEdgeToEdge()
+        val black50 = Color.Black.copy(alpha = 0.2f)
+
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                PrimaryVariantColor.toArgb()
+            ),
+            navigationBarStyle = SystemBarStyle.dark(
+                black50.toArgb()
+            )
+        )
+
         setContent {
             viewModel<MainDialogViewModel>(this@MainActivity)
             viewModel<MainPinpadViewModel>(this@MainActivity)

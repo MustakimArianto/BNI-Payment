@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">BNI Payment</string>
+
+    <string name="message_insert_card">Dip or Tap Card</string>
+    <string name="message_checking_card">Checking Card</string>
+    <string name="message_card_number">Nomor Kartu</string>
+    <string name="button_next">Lanjut</string>
 </resources>

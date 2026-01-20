@@ -3,6 +3,7 @@ package id.co.integrapratama.bnipayment.feature_sale
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -14,7 +15,9 @@ import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
+import id.co.integrapratama.bnipayment.common.ui_component.SetStatusBarColor
 import id.co.integrapratama.bnipayment.navigation.AppRoute
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryColor
 
 fun NavGraphBuilder.saleNavigation(navController: NavController) {
     navigation<AppRoute.Sale>(
@@ -23,6 +26,12 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
         composable<SaleRoute.InputAmount> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            SetStatusBarColor(PrimaryColor)
+
+            BackHandler {
+                navController.navigateToHome()
+            }
 
             LaunchedEffect(Unit) {
                 viewModel.clearUiState()
@@ -38,32 +47,38 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             InputAmountScreen(
                 title = uiState.title,
                 amount = uiState.amount,
+                tip = uiState.tip,
                 onAmountChanged = { amount -> viewModel.onEvent(SaleUiEvent.OnAmountChange(amount)) },
-                onNextClick = {
-                    if (uiState.amount.isNotEmpty()) {
+                onTipChanged = { tip ->
+                    viewModel.onEvent(SaleUiEvent.OnTipChange(tip))
+                },
+                onOkClick = {
+                    if (uiState.amount.isNotEmpty() || uiState.amount == "0") {
                         navController.navigateFromCurrent(SaleRoute.InsertCard)
                     } else {
-                        viewModel.setErrorMessage("Nominal tidak boleh kosong")
+                        viewModel.setErrorMessage("Amount cannot be empty")
                     }
                 },
-                onNavigationBack = { navController.navigateToHome() }
             )
 
             if (uiState.errorMessage.isNotEmpty()) {
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
-                    textButton = "Ok",
-                    onCloseIconClick = {
-                        viewModel.clearErrorMessage()
-                    },
-                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() })
+                    textButton = "Okay",
+                    onButtonClicked = { viewModel.clearErrorMessage() })
             }
         }
 
         composable<SaleRoute.InsertCard> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            SetStatusBarColor(Color.White, darkIcons = true)
+
+            BackHandler {
+                navController.navigateToHome()
+            }
 
             LaunchedEffect(Unit) {
                 viewModel.startCardReading()
@@ -79,8 +94,7 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             }
 
             InsertCardScreen(
-                title = uiState.title,
-                onNavigationBack = { navController.popBackStack() }
+                isReadingCard = uiState.isReadingCard
             )
 
             LaunchedEffect(uiState.isTransactionFinished) {
@@ -89,20 +103,12 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                 }
             }
 
-            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.loadingMessage)
-            }
-
             if (uiState.errorMessage.isNotEmpty()) {
 
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
-                    textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    textButton = "Ok", onButtonClicked = { navController.navigateToHome() })
             }
         }
 
@@ -136,23 +142,17 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
-                    textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    textButton = "Ok", onButtonClicked = { navController.navigateToHome() })
             }
+
             SaleConfirmTransactionScreen(
                 title = uiState.title,
                 pin = uiState.pin,
+                cardNumber = uiState.cardNumber,
                 isPhysicalKeyboard = uiState.isPhysicalKeyboard,
-                cardNumber = uiState.maskedCardNumber,
-                onCancel = { navController.popBackStack() },
-                onNext = {
-                    viewModel.onEvent(SaleUiEvent.OnConfirmCard)
-                },
                 showPinpad = uiState.isShowPinpad,
                 showOfflinePinpad = uiState.isShowOfflinePinpad,
+                onNext = { viewModel.onEvent(SaleUiEvent.OnConfirmCard) },
                 onButtonMapReady = { containerInfo, pinpadMap ->
                     viewModel.onEvent(
                         SaleUiEvent.MappingPinpad(
@@ -169,7 +169,6 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                         )
                     )
                 },
-                onNavigationBack = { navController.popBackStack() }
             )
         }
 

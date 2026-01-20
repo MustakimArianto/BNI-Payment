@@ -16,7 +16,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.feature_merchant_pin.merchantPinComposable
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.voidNavGraph(navController: NavController) {
+fun NavGraphBuilder.voidNavigation(navController: NavController) {
     navigation<AppRoute.Void>(
         startDestination = VoidRoute.InputMerchantPin
     ) {
@@ -89,10 +89,7 @@ fun NavGraphBuilder.voidNavGraph(navController: NavController) {
                     title = "Void",
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        viewModel.clearErrorMessage()
-                    },
-                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() }
+                    onButtonClicked = { viewModel.clearErrorMessage() }
                 )
             }
         }
@@ -116,10 +113,7 @@ fun NavGraphBuilder.voidNavGraph(navController: NavController) {
                     title = "Void",
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
             if (uiState.voidRequestModel != null) {
                 VoidConfirmTransactionScreen(

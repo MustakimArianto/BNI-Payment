@@ -17,6 +17,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 
 @Composable
 fun VoidInputTraceNoScreen(
+    title: String,
     traceNo: String = "",
     onTraceNoChanged: (String) -> Unit,
     onNextClick: () -> Unit,
@@ -25,7 +26,7 @@ fun VoidInputTraceNoScreen(
     Column(Modifier
         .padding(16.dp)
         .navigationBarsPadding()) {
-        TopBar(title = "Void", onBackClick = onNavigationBack)
+        TopBar(title = title)
         VerticalSpacer(SpacerSize.X_LARGE)
 
         PrimaryTextField(

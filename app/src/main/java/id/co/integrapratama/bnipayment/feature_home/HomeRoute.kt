@@ -5,4 +5,7 @@ import kotlinx.serialization.Serializable
 sealed interface HomeRoute {
     @Serializable
     data object Menu : HomeRoute
+
+    @Serializable
+    data object MerchantCare : HomeRoute
 }

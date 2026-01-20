@@ -15,7 +15,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
-fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
+fun NavGraphBuilder.installmentNavigation(navController: NavController) {
     navigation<AppRoute.Installment>(
         startDestination = InstallmentRoute.InputAmount
     ) {
@@ -71,10 +71,7 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        viewModel.clearErrorMessage()
-                    },
-                    onPrimaryButtonClicked = { viewModel.clearErrorMessage() })
+                    onButtonClicked = { viewModel.clearErrorMessage() })
             }
         }
 
@@ -109,10 +106,7 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
         }
 
@@ -148,10 +142,7 @@ fun NavGraphBuilder.installmentNavGraph(navController: NavController) {
                     title = uiState.title,
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onCloseIconClick = {
-                        navController.navigateToHome()
-                    },
-                    onPrimaryButtonClicked = { navController.navigateToHome() })
+                    onButtonClicked = { navController.navigateToHome() })
             }
             InstallmentConfirmTransactionScreen(
                 pin = uiState.pin,

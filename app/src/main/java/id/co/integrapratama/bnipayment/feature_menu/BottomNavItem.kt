@@ -7,26 +7,15 @@ import id.co.integrapratama.bnipayment.navigation.AppRoute
 enum class BottomNavItem(
     val title: String,
     @DrawableRes val icon: Int,
-    val route: AppRoute
+    val route: AppRoute,
 ) {
     HOME(
-        title = "Beranda",
-        icon = R.drawable.ic_home_filled_white_24,
-        route = AppRoute.Home
+        title = "Home", icon = R.drawable.ic_home_bottombar, route = AppRoute.Home
     ),
-    INFORMATION(
-        title = "Informasi",
-        icon = R.drawable.ic_notifications_filled_white_24,
-        route = AppRoute.Information
+    ADMIN_SETTING(
+        title = "Admin Setting", icon = R.drawable.ic_admin_bottombar, route = AppRoute.AdminSetting
     ),
-    REPORT(
-        title = "Admin",
-        icon = R.drawable.ic_report_filled_white_24,
-        route = AppRoute.Admin
-    ),
-    ACCOUNT(
-        title = "Akun",
-        icon = R.drawable.ic_account_circle_filled_white_24,
-        route = AppRoute.Account
+    INIT_MENU(
+        title = "Initialized Menu", icon = R.drawable.ic_init_bottombar, route = AppRoute.InitMenu
     )
 }

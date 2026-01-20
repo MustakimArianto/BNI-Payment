@@ -3,36 +3,16 @@ package id.co.integrapratama.bnipayment.navigation
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import id.co.integrapratama.bnipayment.feature_account.accountNavGraph
-import id.co.integrapratama.bnipayment.feature_admin.adminNavGraph
-import id.co.integrapratama.bnipayment.feature_home.homeNavGraph
-import id.co.integrapratama.bnipayment.feature_information.informationNavGraph
-import id.co.integrapratama.bnipayment.feature_installment.installmentNavGraph
-import id.co.integrapratama.bnipayment.feature_menu.mainNavGraph
-import id.co.integrapratama.bnipayment.feature_mini_atm.balance_info.miniAtmBalanceInfoNavigation
-import id.co.integrapratama.bnipayment.feature_mini_atm.miniATMNavGraph
-import id.co.integrapratama.bnipayment.feature_sale.saleNavigation
-import id.co.integrapratama.bnipayment.feature_settlement.settlementNavGraph
-import id.co.integrapratama.bnipayment.feature_void.voidNavGraph
+import id.co.integrapratama.bnipayment.feature_menu.menuNavigation
+import id.co.integrapratama.bnipayment.feature_onboarding.onboardingNavigation
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = AppRoute.Main
+        startDestination = AppRoute.Onboarding
     ) {
-        mainNavGraph(navController)
-        homeNavGraph(navController)
-        informationNavGraph(navController)
-        adminNavGraph(navController)
-        accountNavGraph(navController)
-        saleNavigation(navController)
-        voidNavGraph(navController)
-        installmentNavGraph(navController)
-        settlementNavGraph(navController)
-
-        // Mini ATM
-        miniATMNavGraph(navController)
-        miniAtmBalanceInfoNavigation(navController)
+        onboardingNavigation(navController)
+        menuNavigation(navController)
     }
 }

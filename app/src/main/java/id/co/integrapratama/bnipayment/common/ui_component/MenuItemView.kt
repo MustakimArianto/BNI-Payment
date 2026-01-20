@@ -5,8 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -17,6 +15,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
+import id.co.integrapratama.bnipayment.ui.theme.TextLightBlueColor
 
 @Composable
 fun MenuItemView(
@@ -33,19 +34,19 @@ fun MenuItemView(
             contentAlignment = Alignment.Center
         ) {
             Image(
-                modifier = Modifier.size(82.dp),
+                modifier = Modifier.size(62.dp),
                 painter = painterResource(iconRes),
                 contentDescription = label
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
-
+        VerticalSpacer(SpacerSize.SMALL)
         Text(
             text = label,
             fontSize = 12.sp,
             maxLines = 2,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = TextLightBlueColor
         )
     }
 }

@@ -51,7 +51,7 @@ fun MiniATMBalanceInfoConfirmCardScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TopBar(title = title, onBackClick = onNavigationBack)
+        TopBar(title = title)
 
         Box(
             modifier = Modifier

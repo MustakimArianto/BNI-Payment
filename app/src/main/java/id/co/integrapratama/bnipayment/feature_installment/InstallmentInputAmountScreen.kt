@@ -44,7 +44,7 @@ fun InstallmentInputAmountScreen(
             .padding(16.dp)
             .navigationBarsPadding()
     ) {
-        TopBar(title = "Installment", onBackClick = onNavigationBack)
+        TopBar(title = "Installment")
         VerticalSpacer(SpacerSize.X_LARGE)
 
         Text(
@@ -109,7 +109,6 @@ fun InstallmentInputAmountScreen(
         InputAmountTextField(
             amount = amount,
             onAmountChanged = onAmountChanged,
-            label = "Nominal"
         )
 
         Box(Modifier.fillMaxSize()) {
