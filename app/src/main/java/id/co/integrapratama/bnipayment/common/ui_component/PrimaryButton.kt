@@ -56,7 +56,7 @@ sealed class PrimaryButtonAppearance {
     abstract val borderStroke: BorderStroke?
 
     object Solid : PrimaryButtonAppearance() {
-        override val buttonColors: ButtonColors
+        override val buttonColors: ButtonColors?
             @Composable
             get() {
                 return ButtonDefaults.buttonColors(
@@ -72,7 +72,7 @@ sealed class PrimaryButtonAppearance {
     }
 
     object Outline : PrimaryButtonAppearance() {
-        override val buttonColors: ButtonColors
+        override val buttonColors: ButtonColors?
             @Composable
             get() {
                 return ButtonDefaults.buttonColors(
@@ -81,7 +81,7 @@ sealed class PrimaryButtonAppearance {
                 )
             }
 
-        override val borderStroke: BorderStroke
+        override val borderStroke: BorderStroke?
             get() {
                 return BorderStroke(
                     width = 1.dp,
