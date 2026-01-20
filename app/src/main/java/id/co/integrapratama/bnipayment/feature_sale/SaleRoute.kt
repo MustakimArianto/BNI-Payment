@@ -13,5 +13,8 @@ sealed interface SaleRoute {
     data object ConfirmCard : SaleRoute
 
     @Serializable
+    data object ProcessingTransaction : SaleRoute
+
+    @Serializable
     data object TransactionStatus : SaleRoute
 }

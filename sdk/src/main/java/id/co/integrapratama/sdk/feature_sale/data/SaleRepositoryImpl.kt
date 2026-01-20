@@ -9,9 +9,9 @@ import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
+import id.co.integrapratama.sdk.core.model.MTI
 import id.co.integrapratama.sdk.core.utils.CardUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
-import id.co.integrapratama.sdk.core.utils.MTI
 import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toResourceError
@@ -27,13 +27,11 @@ import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplatepar
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import id.co.payment2go.terminalsdkhelper.core.util.Util
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import java.util.Date
 import javax.inject.Inject
-import kotlin.text.padStart
 
 class SaleRepositoryImpl @Inject constructor(
     private val isoRepository: Iso8583Repository,
@@ -342,12 +340,7 @@ class SaleRepositoryImpl @Inject constructor(
                 emit(Resource.Loading("Mencari data"))
 
                 Log.d(TAG, "printReceiptBasedTraceNo current: $traceNo")
-                appDatabase.cardTransactionDao().getAllTrxData().forEach {
-                    Log.d(
-                        TAG,
-                        "printReceiptBasedTraceNo alldata: ${it.amount} - ${it.saleType} - ${it.invoice}"
-                    )
-                }
+
                 val cardTransactionEntity =
                     appDatabase.cardTransactionDao().getTrxDataByTraceNo(traceNo)
 

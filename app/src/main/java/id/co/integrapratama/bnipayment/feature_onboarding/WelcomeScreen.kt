@@ -54,7 +54,9 @@ fun WelcomeScreen(onEnterClick: () -> Unit) {
             textAlign = TextAlign.Center,
             color = PrimaryColor
         )
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
             PrimaryButton(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 text = "Enter",

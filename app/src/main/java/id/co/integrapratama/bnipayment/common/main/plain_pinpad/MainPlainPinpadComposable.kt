@@ -6,12 +6,16 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -23,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +38,7 @@ import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.bnipayment.common.ext.copyWith
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpad
@@ -40,6 +46,7 @@ import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpadType
 import id.co.integrapratama.bnipayment.common.ui_component.OnlyPinpadButtonBehavior
 import id.co.integrapratama.bnipayment.common.ui_component.PinUnderlineView
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.HorizontalSpacer
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import kotlin.reflect.KType
@@ -242,11 +249,16 @@ inline fun <reified T : Any> NavGraphBuilder.mainPlainPinpadComposable(
                     .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = uiState.description.ifEmpty { "Enter PIN" },
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    Image(painterResource(R.drawable.ic_key_orange_24), contentDescription = null)
+                    HorizontalSpacer(SpacerSize.MEDIUM)
+                    Text(
+                        text = uiState.description.ifEmpty { "Enter PIN" },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
 
                 Spacer(Modifier.height(30.dp))
 

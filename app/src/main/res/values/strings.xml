@@ -5,4 +5,17 @@
     <string name="message_checking_card">Checking Card</string>
     <string name="message_card_number">Nomor Kartu</string>
     <string name="button_next">Lanjut</string>
+    <string name="message_confirm_transaction">Confirm Transaction</string>
+    <string name="text_amount">Amount</string>
+    <string name="text_tip">Tip</string>
+    <string name="text_total_amount">Total Amount</string>
+    <string name="message_processing">Processing</string>
+    <string name="message_printing_receipt">Printing receipt..</string>
+    <string name="text_print">Print</string>
+    <string name="text_email">Email</string>
+    <string name="text_back_to_home">Back to Home</string>
+    <string name="text_transaction_approved">Transaction Approved!</string>
+    <string name="label_merchant_name">Merchant Name</string>
+    <string name="message_tap_card">Please tap your card on the EDC machine.</string>
+    <string name="text_okay">Okay</string>
 </resources>

@@ -13,6 +13,9 @@ object DateUtils {
     val receiptDateFormat = SimpleDateFormat("dd MMM yyyy", locale)
     val receiptTimeFormat = SimpleDateFormat("HH:mm:ss", locale)
 
+    val timeFormatScreenReceipt = SimpleDateFormat("HH:mm", locale)
+    val dateFormatScreenReceipt = SimpleDateFormat("dd MMM yyyy", locale)
+
     fun getFullTransactionDateTime(date: Date): String {
         return fullDateTimeFormat.format(date)
     }
@@ -47,5 +50,13 @@ object DateUtils {
 
     fun getReceiptTransactionTime(date: Date): String {
         return receiptTimeFormat.format(date)
+    }
+
+    fun getScreenReceiptTransactionDate(date: Date): String {
+        return dateFormatScreenReceipt.format(date)
+    }
+
+    fun getScreenReceiptTransactionTime(date: Date): String {
+        return timeFormatScreenReceipt.format(date) + " WIB"
     }
 }

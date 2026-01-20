@@ -1,6 +1,5 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,9 +8,11 @@ import id.co.integrapratama.iso8583sdk.IsoMessage
 import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
+import id.co.integrapratama.sdk.core.TerminalConfigManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
+import id.co.integrapratama.sdk.core.utils.AidUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.toTransactionScopeText
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
@@ -27,10 +28,8 @@ import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplatepar
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -48,7 +47,8 @@ class SaleViewModel @Inject constructor(
     private val traceNumberManager: TraceNumberManager,
     private val stanManager: StanManager,
     private val batchManager: TerminalBatchManager,
-    private val reversalManager: ReversalManager
+    private val reversalManager: ReversalManager,
+    private val terminalConfigManager: TerminalConfigManager
 ) : ViewModel() {
     companion object {
         private const val TAG = "SaleViewModel"
@@ -63,15 +63,32 @@ class SaleViewModel @Inject constructor(
     fun onEvent(event: SaleUiEvent) {
         when (event) {
             is SaleUiEvent.OnAmountChange -> {
-                _uiState.value = _uiState.value.copy(amount = event.amount)
+                _uiState.update {
+                    it.copy(
+                        amount = event.amount
+                    )
+                }
             }
 
             is SaleUiEvent.OnTipChange -> {
-                _uiState.value = _uiState.value.copy(tip = event.tip)
+                _uiState.update {
+                    it.copy(
+                        amount = event.tip
+                    )
+                }
             }
 
             is SaleUiEvent.OnConfirmCard -> {
                 confirmCard()
+            }
+
+            is SaleUiEvent.OnConfirmContactless -> {
+                _uiState.update {
+                    it.copy(
+                        isShowContactlessDialog = true
+                    )
+                }
+                readCard()
             }
 
             is SaleUiEvent.MappingPinpad -> {
@@ -228,6 +245,16 @@ class SaleViewModel @Inject constructor(
                             }
                         }
 
+                        if (cardReadOutput?.cardAppName?.isNotEmpty() == true) {
+                            _uiState.update {
+                                it.copy(
+                                    aidName = AidUtil.getAIDName(
+                                        resourceReadCard.data?.cardReadOutput?.cardAppName ?: ""
+                                    )
+                                )
+                            }
+                        }
+
 
                         if (resourceReadCard.data != null) {
                             if (resourceReadCard.data!!.isShowPinpad) {
@@ -268,8 +295,16 @@ class SaleViewModel @Inject constructor(
                                 isLoading = false,
                                 isReadingCard = false,
                                 cardReadOutput = resourceReadCard.data?.cardReadOutput,
+                                isShowContactlessDialog = false,
                                 cardNumber = resourceReadCard.data?.cardReadOutput?.cardNo
                                     ?: "",
+                                maskedCardNumber = maskCardNumber(
+                                    resourceReadCard.data?.cardReadOutput?.cardNo
+                                        ?: ""
+                                ),
+                                aidName = AidUtil.getAIDName(
+                                    resourceReadCard.data?.cardReadOutput?.cardAppName ?: ""
+                                )
                             )
                         }
 
@@ -280,6 +315,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                isShowContactlessDialog = false,
                                 errorMessage = resourceReadCard.message ?: "Terjadi kesalahan",
                             )
                         }
@@ -344,7 +380,8 @@ class SaleViewModel @Inject constructor(
     ) {
         _uiState.update {
             it.copy(
-                transactionDateTime = Date()
+                transactionDateTime = Date(),
+                isProcessing = true
             )
         }
 
@@ -383,6 +420,7 @@ class SaleViewModel @Inject constructor(
                                     it.copy(
                                         isLoading = false,
                                         loadingMessage = "",
+                                        isProcessing = false,
                                         isTransactionFinished = true,
                                     )
                                 }
@@ -417,6 +455,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                isProcessing = false,
                                 errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
@@ -738,6 +777,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 loadingMessage = "",
+                                isProcessing = false,
                                 isTransactionFinished = true,
                             )
                         }
@@ -754,6 +794,7 @@ class SaleViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 loadingMessage = "",
+                                isProcessing = false,
                                 isTransactionFinished = true,
                             )
                         }
@@ -763,22 +804,6 @@ class SaleViewModel @Inject constructor(
                             cardClassification = cardClassification,
                             binType = binType
                         )
-//                        _uiState.update {
-//                            it.copy(
-//                                isLoading = false,
-//                                loadingMessage = "",
-//                                isTransactionFinished = true,
-//                            )
-//                        }
-//
-//                        saveTransactionToDatabase()
-//                        _uiState.update {
-//                            it.copy(
-//                                isLoading = false,
-//                                isTransactionFinished = true,
-//                                transactionResultMessage = resource.message ?: "Terjadi kesalahan",
-//                            )
-//                        }
                     }
                 }
             }
@@ -958,7 +983,7 @@ class SaleViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                isTransactionFinished = true,
+                                isPrintingFinished = true,
                                 errorMessage = "",
                                 loadingMessage = resource.message ?: "Harap tunggu"
                             )
@@ -976,6 +1001,18 @@ class SaleViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun getMerchantName(): String {
+        return terminalConfigManager.getMerchantName() ?: ""
+    }
+
+    fun getTid(): String {
+        return terminalConfigManager.getTid() ?: ""
+    }
+
+    fun getTraceNumber(): Long {
+        return traceNumberManager.getCurrentLastTraceNo()
     }
 
     fun clearErrorMessage() {
