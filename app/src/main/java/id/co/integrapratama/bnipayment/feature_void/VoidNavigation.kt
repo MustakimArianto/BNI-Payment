@@ -62,7 +62,6 @@ fun NavGraphBuilder.voidNavGraph(navController: NavController) {
             }
 
             VoidInputTraceNoScreen(
-                title = uiState.title,
                 traceNo = uiState.traceNo,
                 onTraceNoChanged = { traceNo ->
                     viewModel.onEvent(
@@ -87,7 +86,7 @@ fun NavGraphBuilder.voidNavGraph(navController: NavController) {
 
             if (uiState.errorMessage.isNotEmpty()) {
                 ErrorDialog(
-                    title = uiState.title,
+                    title = "Void",
                     message = uiState.errorMessage,
                     textButton = "Ok",
                     onCloseIconClick = {
@@ -114,7 +113,7 @@ fun NavGraphBuilder.voidNavGraph(navController: NavController) {
 
             if (uiState.errorMessage.isNotEmpty()) {
                 ErrorDialog(
-                    title = uiState.title,
+                    title = "Void",
                     message = uiState.errorMessage,
                     textButton = "Ok",
                     onCloseIconClick = {

@@ -6,9 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface SettlementRepository {
     fun getTotalSettlementSummary(): Flow<Resource<TotalSettlementSummaryModel>>
 
-    fun postSettlement(): Flow<Resource<ByteArray>>
-
-    fun postBatchUpload(): Flow<Resource<ByteArray>>
+    fun postSettlementAndBatchUpload(): Flow<Resource<ByteArray>>
 
     fun printSettlement(): Flow<Resource<Unit>>
 }

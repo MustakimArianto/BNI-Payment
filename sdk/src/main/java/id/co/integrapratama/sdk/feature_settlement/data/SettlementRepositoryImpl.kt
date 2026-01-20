@@ -9,6 +9,7 @@ import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
 import id.co.integrapratama.sdk.feature_settlement.domain.SettlementRepository
+import id.co.integrapratama.sdk.feature_settlement.domain.SettlementSummaryModel
 import id.co.integrapratama.sdk.feature_settlement.domain.TotalSettlementSummaryModel
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.Dispatchers
@@ -40,13 +41,36 @@ class SettlementRepositoryImpl(
                 // Get all trx from card transaction
                 val cardTransactionEntityList = db.cardTransactionDao().getAllTrxData()
 
+                var totalSettlementSummaryModel = TotalSettlementSummaryModel(
+                    totalSale = 0,
+                    totalVoid = 0,
+                    totalRefund = 0
+                )
+
+                cardTransactionEntityList.forEach { cardTransactionEntity ->
+                    val saleType = cardTransactionEntity.saleType.lowercase()
+                    when (saleType) {
+                        "sale" -> {
+                            totalSettlementSummaryModel = totalSettlementSummaryModel.copy(
+                                totalSale = totalSettlementSummaryModel.totalSale + 1
+                            )
+                        }
+                        "void" -> {
+                            totalSettlementSummaryModel = totalSettlementSummaryModel.copy(
+                                totalVoid = totalSettlementSummaryModel.totalVoid + 1
+                            )
+                        }
+                        "refund" -> {
+                            totalSettlementSummaryModel = totalSettlementSummaryModel.copy(
+                                totalRefund = totalSettlementSummaryModel.totalRefund + 1
+                            )
+                        }
+                    }
+                }
+
                 emit(
                     Resource.Success(
-                        TotalSettlementSummaryModel(
-                            totalSale = 0,
-                            totalVoid = 0,
-                            totalRefund = 0
-                        )
+                        totalSettlementSummaryModel
                     )
                 )
             } catch (e: Exception) {
@@ -56,10 +80,12 @@ class SettlementRepositoryImpl(
         }.flowOn(Dispatchers.IO)
     }
 
-    override fun postSettlement(): Flow<Resource<ByteArray>> {
+    override fun postSettlementAndBatchUpload(): Flow<Resource<ByteArray>> {
         return flow {
             try {
                 emit(Resource.Loading())
+
+                val settlementSummaryModelList = mutableListOf<SettlementSummaryModel>()
 
                 // Get all trx from card transaction
                 val cardTransactionEntityList = db.cardTransactionDao().getAllTrxData()
@@ -69,20 +95,6 @@ class SettlementRepositoryImpl(
                 )
             } catch (e: Exception) {
                 LogSdk.error(TAG, "postSettlement: ${e.message}")
-                emit(e.toResourceError())
-            }
-        }.flowOn(Dispatchers.IO)
-    }
-
-    override fun postBatchUpload(): Flow<Resource<ByteArray>> {
-        return flow {
-            emit(Resource.Loading())
-            try {
-                emit(
-                    Resource.Success(byteArrayOf())
-                )
-            } catch (e: Exception) {
-                LogSdk.error(TAG, "postBatchUpload: ${e.message}")
                 emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)

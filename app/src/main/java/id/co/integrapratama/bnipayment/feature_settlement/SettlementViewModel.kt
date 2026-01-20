@@ -3,13 +3,8 @@ package id.co.integrapratama.bnipayment.feature_settlement
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import id.co.integrapratama.sdk.core.StanManager
-import id.co.integrapratama.sdk.core.TerminalBatchManager
-import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.feature_settlement.domain.SettlementRepository
-import id.co.payment2go.terminalsdkhelper.common.system.device.DeviceManagerUtility
-import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
-import kotlinx.coroutines.delay
+import id.co.payment2go.terminalsdkhelper.core.util.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,11 +14,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettlementViewModel @Inject constructor(
-    private val deviceTypeManager: DeviceTypeManager,
-    private val deviceManagerUtility: DeviceManagerUtility,
-    private val traceNumberManager: TraceNumberManager,
-    private val terminalBatchManager: TerminalBatchManager,
-    private val stanManager: StanManager,
     private val settlementRepository: SettlementRepository
 ) : ViewModel() {
     companion object {
@@ -35,9 +25,71 @@ class SettlementViewModel @Inject constructor(
 
     fun onEvent(event: SettlementUiEvent) {
         when (event) {
-            is SettlementUiEvent.LoadTotalSettlement -> {}
-            is SettlementUiEvent.ShowSettlementConfirmationDialog -> {}
-            is SettlementUiEvent.PerformSettlementAndBatchUpload -> {}
+            is SettlementUiEvent.LoadTotalSettlement -> {
+                loadTotalSettlement()
+            }
+            is SettlementUiEvent.ShowPerformSettlementAndBatchUploadPromptDialog -> {
+                _uiState.update {
+                    it.copy(
+                        showPerformSettlementAndBatchUploadPromptDialog = true
+                    )
+                }
+            }
+            is SettlementUiEvent.ApplyPerformSettlementAndBatchUploadPromptDialog -> {
+                _uiState.update {
+                    it.copy(
+                        showPerformSettlementAndBatchUploadPromptDialog = false
+                    )
+                }
+                performSettlementAndBatchUpload()
+            }
+        }
+    }
+
+    private fun loadTotalSettlement() {
+        viewModelScope.launch {
+            settlementRepository.getTotalSettlementSummary().collect { resource ->
+                _uiState.update {
+                    it.copy(
+                        totalSettlementSummaryModelResult = resource
+                    )
+                }
+            }
+        }
+    }
+
+    private fun performSettlementAndBatchUpload() {
+        viewModelScope.launch {
+            settlementRepository.postSettlementAndBatchUpload().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true,
+                                loadingMessage = resource.message ?: "Harap tunggu"
+                            )
+                        }
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = "",
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                loadingMessage = "",
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
