@@ -18,4 +18,7 @@
     <string name="label_merchant_name">Merchant Name</string>
     <string name="message_tap_card">Please tap your card on the EDC machine.</string>
     <string name="text_okay">Okay</string>
+    <string name="message_incorrect_pin">PIN is incorrect</string>
+    <string name="label_enter_pin">Enter PIN</string>
+    <string name="text_trace">Trace</string>
 </resources>

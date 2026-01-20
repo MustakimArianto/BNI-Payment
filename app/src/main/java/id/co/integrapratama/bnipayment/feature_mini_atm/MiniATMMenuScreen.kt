@@ -3,7 +3,6 @@ package id.co.integrapratama.bnipayment.feature_mini_atm
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -31,7 +30,6 @@ fun MiniATMMenuScreen(
     Column(
         Modifier
             .padding(16.dp)
-            .navigationBarsPadding()
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),

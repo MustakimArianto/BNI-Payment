@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +35,6 @@ fun InstallmentTransactionStatus(
         Box(
             Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .padding(16.dp)
         ) {
             Column(
@@ -75,7 +73,6 @@ fun InstallmentTransactionStatus(
         Box(
             Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .padding(16.dp)
         ) {
             Column(

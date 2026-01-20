@@ -18,19 +18,19 @@ fun NavGraphBuilder.settlementNavGraph(navController: NavController) {
     ) {
         merchantPinComposable<SettlementRoute.InputMerchantPin>(
             navController = navController
-        ) {
-            val viewModel = it.navBackStackEntry.sharedViewModel<SettlementViewModel>(navController)
+        ) { contentParam ->
+            val viewModel = contentParam.navBackStackEntry.sharedViewModel<SettlementViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            it.enableMerchantInputPinScope { it2 ->
-                val action = it2.action
+            contentParam.renderPinInput { pinScope ->
+                val callbacks = pinScope.callbacks
 
-                action.enableSetTitleScope { it3 ->
-                    it3.enableLaunchScope("Settlement")
+                callbacks.setTitle { titleSetter ->
+                    titleSetter.invoke("Settlement")
                 }
 
-                action.enableOnAcceptPinScope { it3 ->
-                    it3.enableLaunchScope {
+                callbacks.onAccept { acceptHandler ->
+                    acceptHandler.invoke {
                         navController.navigateFromCurrent(
                             SettlementRoute.TotalSettlement,
                             isInclusive = true
@@ -38,17 +38,19 @@ fun NavGraphBuilder.settlementNavGraph(navController: NavController) {
                     }
                 }
 
-                action.enableOnCancelPinScope { it3 ->
-                    it3.enableLaunchScope {
+                callbacks.onCancel { cancelHandler ->
+                    cancelHandler.invoke {
                         navController.navigateToHome()
                     }
                 }
             }
         }
 
-        composable<SettlementRoute.TotalSettlement> {
-            val viewModel = it.sharedViewModel<SettlementViewModel>(navController)
+        composable<SettlementRoute.TotalSettlement> { backStackEntry ->
+            val viewModel = backStackEntry.sharedViewModel<SettlementViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            // TODO: Add TotalSettlement screen content
         }
     }
 }

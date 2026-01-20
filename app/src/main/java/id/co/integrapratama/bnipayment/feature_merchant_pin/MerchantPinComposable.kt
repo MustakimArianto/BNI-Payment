@@ -17,6 +17,8 @@ import androidx.navigation.NavType
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.main.plain_pinpad.mainPlainPinpadComposable
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
+import id.co.integrapratama.bnipayment.common.ui_component.SetStatusBarColor
+import id.co.integrapratama.bnipayment.ui.theme.PrimaryColor
 import kotlin.reflect.KType
 
 inline fun <reified T : Any> NavGraphBuilder.merchantPinComposable(
@@ -39,49 +41,51 @@ inline fun <reified T : Any> NavGraphBuilder.merchantPinComposable(
         popEnterTransition = popEnterTransition,
         popExitTransition = popExitTransition,
         sizeTransform = sizeTransform
-    ) {
-        val viewModel = it.navBackStackEntry.sharedViewModel<MerchantPinViewModel>(navController)
+    ) { pinpadParam ->
+        val viewModel = pinpadParam.navBackStackEntry.sharedViewModel<MerchantPinViewModel>(navController)
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        SetStatusBarColor(PrimaryColor)
 
         content(
             MerchantPinContentParameter(
-                navBackStackEntry = it.navBackStackEntry,
-                enableMerchantInputPinScope = { it2 ->
-                    it.enableInputPinScope { it3 ->
-                        val action = it3.action
+                navBackStackEntry = pinpadParam.navBackStackEntry,
+                renderPinInput = { merchantPinContent ->
+                    pinpadParam.enableInputPinScope { pinInputScope ->
+                        val pinCallbacks = pinInputScope.action
 
-                        it2(
-                            MerchantInputPinScopeParameter(
-                                pin = it3.pin,
-                                action = MerchantInputPinAction(
-                                    enableSetTitleScope = { it4 ->
-                                        it4(
-                                            MerchantPinEnableSetTitleScopeParameter(
-                                                enableLaunchScope = { it5 ->
-                                                    action.enableSetTitleScope { it6 ->
-                                                        it6.enableLaunchScope(it5)
+                        merchantPinContent(
+                            MerchantPinScope(
+                                pin = pinInputScope.pin,
+                                callbacks = MerchantPinCallbacks(
+                                    setTitle = { titleCallback ->
+                                        titleCallback(
+                                            TitleSetter(
+                                                invoke = { title ->
+                                                    pinCallbacks.enableSetTitleScope { titleScope ->
+                                                        titleScope.enableLaunchScope(title)
                                                     }
                                                 }
                                             )
                                         )
                                     },
-                                    enableOnAcceptPinScope = { it4 ->
-                                        it4(
-                                            MerchantEnableOnAcceptPinScopeParameter(
-                                                enableLaunchScope = { it5 ->
-                                                    action.enableOnAcceptPinScope { it6 ->
-                                                        it6.enableLaunchScope(it5)
+                                    onAccept = { acceptCallback ->
+                                        acceptCallback(
+                                            AcceptHandler(
+                                                invoke = { handler ->
+                                                    pinCallbacks.enableOnAcceptPinScope { acceptScope ->
+                                                        acceptScope.enableLaunchScope(handler)
                                                     }
                                                 }
                                             )
                                         )
                                     },
-                                    enableOnCancelPinScope = { it4 ->
-                                        it4(
-                                            MerchantEnableOnCancelPinScopeParameter(
-                                                enableLaunchScope = { it5 ->
-                                                    action.enableOnCancelPinScope { it6 ->
-                                                        it6.enableLaunchScope(it5)
+                                    onCancel = { cancelCallback ->
+                                        cancelCallback(
+                                            CancelHandler(
+                                                invoke = { handler ->
+                                                    pinCallbacks.enableOnCancelPinScope { cancelScope ->
+                                                        cancelScope.enableLaunchScope(handler)
                                                     }
                                                 }
                                             )
@@ -91,35 +95,28 @@ inline fun <reified T : Any> NavGraphBuilder.merchantPinComposable(
                             )
                         )
 
-                        action.enableSetDescriptionScope { it4 ->
-                            it4.enableLaunchScope("Enter Merchant PIN")
+                        pinCallbacks.enableSetDescriptionScope { descScope ->
+                            descScope.enableLaunchScope("Enter Merchant PIN")
                         }
 
-                        action.enableOnPreCheckPinScope { it4 ->
+                        pinCallbacks.enableOnPreCheckPinScope { preCheckScope ->
                             LaunchedEffect(uiState.checkingMerchantPinStatus) {
-                                if (uiState.checkingMerchantPinStatus == 1) {
-                                    it4.accept()
-                                } else if (uiState.checkingMerchantPinStatus == 0) {
-                                    it4.decline()
+                                when (uiState.checkingMerchantPinStatus) {
+                                    1 -> preCheckScope.accept()
+                                    0 -> preCheckScope.decline()
                                 }
                             }
 
-                            it4.enableLaunchScope {
+                            preCheckScope.enableLaunchScope {
                                 viewModel.onEvent(
-                                    MerchantPinUiEvent.ChangeMerchantPin(
-                                        pin = it3.pin
-                                    )
+                                    MerchantPinUiEvent.ChangeMerchantPin(pin = pinInputScope.pin)
                                 )
-                                viewModel.onEvent(
-                                    MerchantPinUiEvent.SubmitMerchantPin
-                                )
+                                viewModel.onEvent(MerchantPinUiEvent.SubmitMerchantPin)
                             }
                         }
 
                         if (uiState.loadingMessage.isNotEmpty()) {
-                            LoadingDialog(
-                                message = uiState.loadingMessage,
-                            )
+                            LoadingDialog(message = uiState.loadingMessage)
                         }
                     }
                 }

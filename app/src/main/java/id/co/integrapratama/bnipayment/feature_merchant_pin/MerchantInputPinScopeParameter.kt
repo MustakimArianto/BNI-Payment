@@ -2,25 +2,25 @@ package id.co.integrapratama.bnipayment.feature_merchant_pin
 
 import androidx.compose.runtime.Composable
 
-class MerchantInputPinScopeParameter(
+class MerchantPinScope(
     val pin: String,
-    val action: MerchantInputPinAction,
+    val callbacks: MerchantPinCallbacks,
 )
 
-class MerchantInputPinAction(
-    val enableSetTitleScope: @Composable (@Composable (MerchantPinEnableSetTitleScopeParameter) -> Unit) -> Unit,
-    val enableOnAcceptPinScope: @Composable (@Composable (MerchantEnableOnAcceptPinScopeParameter) -> Unit) -> Unit,
-    val enableOnCancelPinScope: @Composable (@Composable (MerchantEnableOnCancelPinScopeParameter) -> Unit) -> Unit,
+class MerchantPinCallbacks(
+    val setTitle: @Composable (@Composable (TitleSetter) -> Unit) -> Unit,
+    val onAccept: @Composable (@Composable (AcceptHandler) -> Unit) -> Unit,
+    val onCancel: @Composable (@Composable (CancelHandler) -> Unit) -> Unit,
 )
 
-class MerchantPinEnableSetTitleScopeParameter(
-    val enableLaunchScope: @Composable (String) -> Unit
+class TitleSetter(
+    val invoke: @Composable (String) -> Unit
 )
 
-class MerchantEnableOnAcceptPinScopeParameter(
-    val enableLaunchScope: @Composable (() -> Unit) -> Unit
+class AcceptHandler(
+    val invoke: @Composable (() -> Unit) -> Unit
 )
 
-class MerchantEnableOnCancelPinScopeParameter(
-    val enableLaunchScope: @Composable (() -> Unit) -> Unit
+class CancelHandler(
+    val invoke: @Composable (() -> Unit) -> Unit
 )
