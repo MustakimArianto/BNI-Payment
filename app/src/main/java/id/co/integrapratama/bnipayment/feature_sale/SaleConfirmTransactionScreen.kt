@@ -1,12 +1,13 @@
 package id.co.integrapratama.bnipayment.feature_sale
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,18 +17,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
+import id.co.integrapratama.bnipayment.common.ui_component.CardNumberCard
 import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpad
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
+import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
-import id.co.integrapratama.bnipayment.ui.theme.DisabledInputFieldColor
+import id.co.integrapratama.bnipayment.ui.theme.LightGray
 import id.co.integrapratama.bnipayment.ui.theme.TextGrayColor
+import id.co.integrapratama.sdk.core.model.AIDName
 import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
+import id.co.integrapratama.sdk.core.utils.StringUtil
 
 @Composable
 fun SaleConfirmTransactionScreen(
     title: String,
+    amount: String,
+    tip: String,
+    total: String,
     pin: String,
+    aidName: AIDName,
     cardNumber: String,
     isPhysicalKeyboard: Boolean,
     showPinpad: Boolean = false,
@@ -39,45 +48,45 @@ fun SaleConfirmTransactionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Confirm Transaction")
+        TopBar(title = title)
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            DisabledInputFieldColor,
-                            shape = RoundedCornerShape(6.dp, 6.dp, 0.dp, 0.dp)
-                        )
-                        .padding(16.dp, 8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.message_card_number),
-                        color = TextGrayColor,
-                        fontWeight = FontWeight.Light,
-                        fontSize = 14.sp
-                    )
-                    VerticalSpacer(SpacerSize.SMALL)
-                    Text(cardNumber)
-                }
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                stringResource(R.string.message_confirm_transaction),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+            VerticalSpacer(SpacerSize.MEDIUM)
+            CardNumberCard(cardNumber, aidName)
+            VerticalSpacer(SpacerSize.X_LARGE)
+            AmountAndTipSection(amount, tip)
+            Text(stringResource(R.string.text_total_amount))
+            VerticalSpacer(SpacerSize.MEDIUM)
+            Text(
+                StringUtil.formatRupiahCurrency(total),
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        }
+    }
+
+
+    Box(Modifier.fillMaxSize()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            Column(Modifier.fillMaxWidth()) {
+                HorizontalDivider(color = LightGray)
+                PrimaryButton(
+                    modifier = Modifier.padding(16.dp),
+                    text = stringResource(R.string.button_next),
+                    onClick = onNext
+                )
             }
         }
-
-        PrimaryButton(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            text = stringResource(R.string.button_next),
-            onClick = onNext
-        )
     }
 
     if (showPinpad) {
@@ -92,5 +101,26 @@ fun SaleConfirmTransactionScreen(
             isPhysicalKeyboard = isPhysicalKeyboard,
             onUpdatePinpadMapping = onOfflinePinButtonMapReady
         )
+    }
+}
+
+@Composable
+fun AmountAndTipSection(amount: String, tip: String) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.text_amount), color = TextGrayColor)
+            Text(text = StringUtil.formatRupiahCurrency(amount))
+        }
+        VerticalSpacer(SpacerSize.MEDIUM)
+        HorizontalDivider(thickness = 1.dp, color = LightGray)
+        VerticalSpacer(SpacerSize.LARGE)
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.text_tip), color = TextGrayColor)
+            Text(text = StringUtil.formatRupiahCurrency(tip))
+        }
+        VerticalSpacer(SpacerSize.MEDIUM)
+        HorizontalDivider(thickness = 1.dp, color = LightGray)
+        VerticalSpacer(SpacerSize.LARGE)
     }
 }

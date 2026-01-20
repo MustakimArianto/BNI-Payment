@@ -4,20 +4,23 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import id.co.integrapratama.bnipayment.R
 import id.co.integrapratama.bnipayment.common.ext.navigateFromCurrent
 import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
-import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.common.ui_component.SetStatusBarColor
+import id.co.integrapratama.bnipayment.common.ui_component.TransactionScreenReceipt
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 import id.co.integrapratama.bnipayment.ui.theme.PrimaryColor
+import id.co.integrapratama.sdk.core.utils.StringUtil
 
 fun NavGraphBuilder.saleNavigation(navController: NavController) {
     navigation<AppRoute.Sale>(
@@ -26,7 +29,6 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
         composable<SaleRoute.InputAmount> {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
             SetStatusBarColor(PrimaryColor)
 
             BackHandler {
@@ -54,12 +56,32 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                 },
                 onOkClick = {
                     if (uiState.amount.isNotEmpty() || uiState.amount == "0") {
-                        navController.navigateFromCurrent(SaleRoute.InsertCard)
+                        if (!uiState.isContactless) {
+                            navController.navigateFromCurrent(
+                                SaleRoute.InsertCard, isInclusive = true
+                            )
+                        }
+                        viewModel.onEvent(SaleUiEvent.OnConfirmContactless)
                     } else {
                         viewModel.setErrorMessage("Amount cannot be empty")
                     }
                 },
             )
+
+            if (uiState.isShowContactlessDialog) {
+                SaleContactlessDialog(
+                    uiState.title,
+                    stringResource(R.string.message_tap_card)
+                )
+            }
+
+            LaunchedEffect(uiState.isProcessing) {
+                if (uiState.isProcessing) {
+                    navController.navigateFromCurrent(
+                        SaleRoute.ProcessingTransaction, isInclusive = true
+                    )
+                }
+            }
 
             if (uiState.errorMessage.isNotEmpty()) {
                 ErrorDialog(
@@ -75,10 +97,6 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             SetStatusBarColor(Color.White, darkIcons = true)
-
-            BackHandler {
-                navController.navigateToHome()
-            }
 
             LaunchedEffect(Unit) {
                 viewModel.startCardReading()
@@ -104,11 +122,11 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
-
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
-                    textButton = "Ok", onButtonClicked = { navController.navigateToHome() })
+                    textButton = "Ok",
+                    onButtonClicked = { navController.navigateToHome() })
             }
         }
 
@@ -116,39 +134,42 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            if (uiState.isShowPinpad) {
+            SetStatusBarColor(PrimaryColor)
+
+            if (uiState.isShowPinpad || uiState.isShowOfflinePinpad) {
                 BackHandler {
-
+                    // Prevent back navigation during PIN entry
                 }
-            }
-
-            if (uiState.isShowOfflinePinpad) {
+            } else {
                 BackHandler {
-
+                    navController.navigateToHome()
                 }
             }
 
-            LaunchedEffect(uiState.isTransactionFinished) {
-                if (uiState.isTransactionFinished) {
-                    navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
+            LaunchedEffect(uiState.isProcessing) {
+                if (uiState.isProcessing) {
+                    navController.navigateFromCurrent(
+                        SaleRoute.ProcessingTransaction, isInclusive = true
+                    )
                 }
-            }
-
-            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.loadingMessage)
             }
 
             if (uiState.errorMessage.isNotEmpty()) {
                 ErrorDialog(
                     title = uiState.title,
                     message = uiState.errorMessage,
-                    textButton = "Ok", onButtonClicked = { navController.navigateToHome() })
+                    textButton = "Ok",
+                    onButtonClicked = { navController.navigateToHome() })
             }
 
             SaleConfirmTransactionScreen(
                 title = uiState.title,
+                amount = uiState.amount,
+                tip = uiState.tip,
+                total = (uiState.amount.toLong() + uiState.tip.ifEmpty { "0" }.toLong()).toString(),
                 pin = uiState.pin,
-                cardNumber = uiState.cardNumber,
+                aidName = uiState.aidName,
+                cardNumber = uiState.maskedCardNumber,
                 isPhysicalKeyboard = uiState.isPhysicalKeyboard,
                 showPinpad = uiState.isShowPinpad,
                 showOfflinePinpad = uiState.isShowOfflinePinpad,
@@ -172,26 +193,72 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
             )
         }
 
-        composable<SaleRoute.TransactionStatus> {
-            fun navigateToHome() {
-                navController.navigateToHome()
-            }
+        composable<SaleRoute.ProcessingTransaction> {
+            SetStatusBarColor(Color.Transparent, darkIcons = true)
 
             BackHandler {
-                navigateToHome()
+
             }
 
             val viewModel = it.sharedViewModel<SaleViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.loadingMessage)
+            LaunchedEffect(uiState.isTransactionFinished) {
+                if (uiState.isTransactionFinished) {
+                    viewModel.printReceipt()
+                }
             }
 
-            SaleTransactionStatus(
-                transactionResultMessage = uiState.transactionResultMessage,
-                onGoToHome = { navigateToHome() },
-                onPrintReceipt = { viewModel.printReceipt() }
+            LaunchedEffect(uiState.isPrintingFinished) {
+                if (uiState.isPrintingFinished) {
+                    navController.navigateFromCurrent(SaleRoute.TransactionStatus, true)
+                }
+            }
+
+            if (uiState.errorMessage.isNotEmpty()) {
+                ErrorDialog(
+                    title = uiState.title,
+                    message = uiState.errorMessage,
+                    textButton = stringResource(R.string.text_okay),
+                    onButtonClicked = { viewModel.clearErrorMessage() })
+            }
+
+            SaleProcessingScreen(
+                isProcessing = uiState.isProcessing,
+            )
+
+        }
+
+        composable<SaleRoute.TransactionStatus> {
+            BackHandler {
+                navController.navigateToHome()
+            }
+
+            SetStatusBarColor(PrimaryColor)
+
+            val viewModel = it.sharedViewModel<SaleViewModel>(navController)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            TransactionScreenReceipt(
+                title = uiState.title,
+                amount = uiState.amount,
+                dateTime = uiState.transactionDateTime,
+                content = {
+                    SaleScreenReceiptScreen(
+                        uiState.maskedCardNumber,
+                        uiState.aidName,
+                        viewModel.getMerchantName(),
+                        viewModel.getTid(),
+                        viewModel.getTraceNumber().toString(),
+                        uiState.refNo,
+                        StringUtil.formatRupiahCurrency(uiState.tip),
+                        StringUtil.formatRupiahCurrency(uiState.amount),
+                        StringUtil.formatRupiahCurrency((uiState.amount.toLong() + uiState.tip.toLong()).toString()),
+                    )
+                },
+                onEmail = { },
+                onBackToHome = { navController.navigateToHome() },
+                onPrint = { viewModel.printReceipt() }
             )
         }
     }
