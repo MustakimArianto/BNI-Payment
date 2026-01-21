@@ -10,6 +10,7 @@ import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.exception.CustomMessageException
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.model.MTI
+import id.co.integrapratama.sdk.core.utils.AidUtil
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toCardClassification
@@ -19,6 +20,7 @@ import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
 import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalCreditRequestDto
 import id.co.integrapratama.sdk.feature_sale.data.dto.ReversalDebitRequestDto
 import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
+import id.co.integrapratama.sdk.feature_void.domain.ListVoidModel
 import id.co.integrapratama.sdk.feature_void.domain.VoidRepository
 import id.co.integrapratama.sdk.feature_void.domain.VoidRequestModel
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
@@ -202,9 +204,8 @@ class VoidRepositoryImpl @Inject constructor(
     private suspend fun getVoidRequest(traceNo: String): VoidRequestModel {
         // Check the card transaction
         val voidRequest = appDatabase.cardTransactionDao().getTrxDataByTraceNo(traceNo)
-        if (voidRequest == null) {
-            throw CustomMessageException("Data tidak ditemukan untuk trace no: $traceNo")
-        }
+            ?: throw CustomMessageException("Data tidak ditemukan untuk trace no: $traceNo")
+
         return VoidRequestModel(
             lastInvoice = voidRequest.lastInvoice,
             lastInvoiceDate = voidRequest.lastInvoiceDate,
@@ -420,6 +421,55 @@ class VoidRepositoryImpl @Inject constructor(
                 emit(Resource.Success(Unit))
             } catch (e: Exception) {
                 LogSdk.error(TAG, "printVoidBasedTraceNo: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override suspend fun updateTransactionStatusToVoid(traceNo: String): Flow<Resource<Unit>> {
+        return flow {
+            try {
+                emit(Resource.Loading("Updating transaction status"))
+
+                appDatabase.cardTransactionDao().updateTransactionStatusToVoid(traceNo)
+
+                emit(Resource.Success(Unit))
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "updateTransactionStatusToVoid: ${e.stackTraceToString()}")
+                emit(e.toResourceError())
+            }
+        }
+    }
+
+    override suspend fun getListTransaction(): Flow<Resource<List<ListVoidModel>>> {
+        return flow {
+            try {
+                emit(Resource.Loading("Searching transactions"))
+                val listTransaction = appDatabase.cardTransactionDao().getAllTrxData()
+                val result = mutableListOf<ListVoidModel>()
+
+                listTransaction.forEach { data ->
+                    if (data.saleType != "VOID" && data.txnStatus != "Void") {
+                        result.add(
+                            ListVoidModel(
+                                cardNo = data.pan,
+                                invoice = data.invoice,
+                                invoiceDate = data.invoiceDate,
+                                aidName = AidUtil.getAIDName(data.cardAppName ?: ""),
+                                refNo = data.refNo,
+                                amount = data.amount / 100,
+                                tip = data.tipAmount,
+                                customerName = data.customerName?.trim() ?: "",
+                                cardClassification = data.cardClassificationType ?: "",
+                                transactionScope = data.transactionScope ?: ""
+                            )
+                        )
+                    }
+                }
+
+                emit(Resource.Success(result))
+            } catch (e: Exception) {
+                LogSdk.error(TAG, "getListTransaction: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }

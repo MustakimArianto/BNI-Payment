@@ -70,7 +70,12 @@ interface CardTransactionDao {
     @Query("DELETE FROM card_prev_transaction")
     suspend fun deleteAllPreviousTransactions()
 
-    @Query("UPDATE card_transaction SET txnStatus = 'Void' WHERE invoice = :traceNo")
+    @Query("""
+        UPDATE card_transaction 
+        SET txnStatus = 'Void' 
+        WHERE invoice = :traceNo 
+        AND UPPER(saleType) != 'VOID'
+    """)
     suspend fun updateTransactionStatusToVoid(traceNo: String)
 
     @Query("UPDATE card_transaction SET jsonReceipt = :jsonReceipt, templateJsonReceipt = :templateJsonReceipt WHERE invoice = :traceNo")

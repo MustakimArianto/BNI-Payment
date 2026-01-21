@@ -12,7 +12,7 @@ object StringUtil {
             decimalSeparator = ','
         }
         val formatter = DecimalFormat("#,###", symbols)
-        return "Rp. ${formatter.format(value)}"
+        return "Rp${formatter.format(value)}"
     }
 
     fun getRandom6DigitsNumber(): String {

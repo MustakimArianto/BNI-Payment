@@ -73,7 +73,7 @@ class SaleViewModel @Inject constructor(
             is SaleUiEvent.OnTipChange -> {
                 _uiState.update {
                     it.copy(
-                        amount = event.tip
+                        tip = event.tip
                     )
                 }
             }
@@ -292,6 +292,7 @@ class SaleViewModel @Inject constructor(
                     is Resource.Success -> {
                         _uiState.update {
                             it.copy(
+                                tip = it.tip.ifEmpty { "0" },
                                 isLoading = false,
                                 isReadingCard = false,
                                 cardReadOutput = resourceReadCard.data?.cardReadOutput,

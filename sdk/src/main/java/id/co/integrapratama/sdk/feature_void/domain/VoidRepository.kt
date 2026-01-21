@@ -15,4 +15,8 @@ interface VoidRepository {
     suspend fun createVoidTransaction(willBeVoidTraceNo: String): Flow<Resource<Unit>>
 
     suspend fun printVoidBasedTraceNo(traceNo: String): Flow<Resource<Unit>>
+
+    suspend fun updateTransactionStatusToVoid(traceNo: String): Flow<Resource<Unit>>
+
+    suspend fun getListTransaction(): Flow<Resource<List<ListVoidModel>>>
 }

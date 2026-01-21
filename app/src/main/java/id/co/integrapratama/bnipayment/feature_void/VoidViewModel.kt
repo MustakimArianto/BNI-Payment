@@ -1,9 +1,8 @@
 package id.co.integrapratama.bnipayment.feature_void
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import id.co.integrapratama.bnipayment.feature_settlement.SettlementUiEvent
+import id.co.integrapratama.bnipayment.BaseViewModel
 import id.co.integrapratama.sdk.core.ReversalManager
 import id.co.integrapratama.sdk.core.StanManager
 import id.co.integrapratama.sdk.core.TerminalBatchManager
@@ -13,7 +12,6 @@ import id.co.integrapratama.sdk.feature_read_card.domain.ReadCardRepository
 import id.co.integrapratama.sdk.feature_void.domain.VoidRepository
 import id.co.payment2go.terminalsdkhelper.core.DeviceTypeManager
 import id.co.payment2go.terminalsdkhelper.core.util.Resource
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,13 +28,17 @@ class VoidViewModel @Inject constructor(
     private val traceNumberManager: TraceNumberManager,
     private val stanManager: StanManager,
     private val batchManager: TerminalBatchManager,
-    private val reversalManager: ReversalManager
-) : ViewModel() {
+    private val reversalManager: ReversalManager,
+) : BaseViewModel() {
     companion object {
         private const val TAG = "VoidViewModel"
     }
     private val _uiState = MutableStateFlow(VoidUiState())
     val uiState: StateFlow<VoidUiState> = _uiState.asStateFlow()
+
+    init {
+        getListTransaction()
+    }
 
     fun onEvent(event: VoidUiEvent) {
         when (event) {
@@ -49,6 +51,16 @@ class VoidViewModel @Inject constructor(
             }
 
             is VoidUiEvent.ConfirmVoid -> {
+                confirmVoid()
+            }
+
+            is VoidUiEvent.TransactionListClicked -> {
+                _uiState.update {
+                    it.copy(
+                        currentVoidTransaction = event.transaction
+                    )
+                }
+
                 confirmVoid()
             }
 
@@ -70,6 +82,31 @@ class VoidViewModel @Inject constructor(
         }
     }
 
+    fun getListTransaction() {
+        viewModelScope.launch {
+            voidRepository.getListTransaction().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                transactionList = resource.data
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+
+                    }
+                }
+            }
+        }
+
+
+    }
     private fun confirmVoid() {
         viewModelScope.launch {
             voidRepository.checkVoidTransaction(_uiState.value.traceNo).collect { resource ->
@@ -112,10 +149,7 @@ class VoidViewModel @Inject constructor(
 
     private fun submitVoid() {
         viewModelScope.launch {
-            val voidRequestModel = _uiState.value.voidRequestModel
-            if (voidRequestModel == null) {
-                return@launch
-            }
+            val voidRequestModel = _uiState.value.voidRequestModel ?: return@launch
             voidRepository.postVoidTransaction(voidRequestModel).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> {
@@ -128,6 +162,7 @@ class VoidViewModel @Inject constructor(
                     }
 
                     is Resource.Success -> {
+                        updateTransactionStatusToVoid()
                         saveVoidToDatabase()
                     }
 
@@ -177,6 +212,31 @@ class VoidViewModel @Inject constructor(
                                 errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateTransactionStatusToVoid() {
+        viewModelScope.launch {
+            voidRepository.updateTransactionStatusToVoid(_uiState.value.traceNo).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> {
+
+                    }
+
+                    is Resource.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = "",
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+
                     }
                 }
             }

@@ -23,11 +23,11 @@ fun PrimaryButton(
     isBold: Boolean = true,
     roundedCornerShape: RoundedCornerShape = RoundedCornerShape(22.dp),
     isEnabled: Boolean = true,
+    isMaxWidth: Boolean = true,
     appearance: PrimaryButtonAppearance = PrimaryButtonAppearance.Solid
 ) {
     Button(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = if (isMaxWidth) modifier.fillMaxWidth() else modifier,
         shape = roundedCornerShape,
         enabled = isEnabled,
         colors = appearance.buttonColors ?: ButtonDefaults.buttonColors(
