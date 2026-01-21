@@ -6,4 +6,5 @@ sealed class SettlementUiEvent {
     data class ApplyPerformSettlementAndBatchUploadPromptDialog(
         val type: ApplyPerformSettlementAndBatchUploadPromptDialogType
     ) : SettlementUiEvent()
+    data object ClearErrorMessage : SettlementUiEvent()
 }

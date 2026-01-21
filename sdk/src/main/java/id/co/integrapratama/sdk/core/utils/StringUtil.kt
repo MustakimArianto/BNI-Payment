@@ -3,6 +3,7 @@ package id.co.integrapratama.sdk.core.utils
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 object StringUtil {
     fun formatRupiahCurrency(amount: String): String {
@@ -12,7 +13,7 @@ object StringUtil {
             decimalSeparator = ','
         }
         val formatter = DecimalFormat("#,###", symbols)
-        return "Rp${formatter.format(value)}"
+        return "${if (value < 0) "- " else ""}Rp${formatter.format(value.absoluteValue)}"
     }
 
     fun getRandom6DigitsNumber(): String {

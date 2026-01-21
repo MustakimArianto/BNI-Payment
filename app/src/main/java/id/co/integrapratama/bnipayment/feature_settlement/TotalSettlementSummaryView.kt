@@ -52,9 +52,9 @@ fun TotalSettlementSummaryView(
                             text = "Void"
                         )
                         Text(
-                            "- ${StringUtil.formatRupiahCurrency(
+                            StringUtil.formatRupiahCurrency(
                                 totalSettlementSummaryModel!!.totalVoid.toString()
-                            )}",
+                            ),
                             fontWeight = FontWeight(584)
                         )
                     }
@@ -65,9 +65,9 @@ fun TotalSettlementSummaryView(
                             text = "Refund"
                         )
                         Text(
-                            "- ${StringUtil.formatRupiahCurrency(
+                            StringUtil.formatRupiahCurrency(
                                 totalSettlementSummaryModel!!.totalRefund.toString()
-                            )}",
+                            ),
                             fontWeight = FontWeight(584)
                         )
                     }

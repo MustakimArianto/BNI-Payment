@@ -78,13 +78,18 @@ class SettlementRepositoryImpl(
                     }
                 }
 
+                totalSettlementSummaryModel = totalSettlementSummaryModel.copy(
+                    totalVoid = -totalSettlementSummaryModel.totalVoid,
+                    totalRefund = -totalSettlementSummaryModel.totalRefund
+                )
+
                 emit(
                     Resource.Success(
                         totalSettlementSummaryModel
                     )
                 )
             } catch (e: Exception) {
-                LogSdk.error(TAG, "getTotalSettlementSummary: ${e.message}")
+                LogSdk.error(TAG, "getTotalSettlementSummary: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)
@@ -95,7 +100,7 @@ class SettlementRepositoryImpl(
             try {
                 val currentDate = Date()
 
-                emit(Resource.Loading())
+                emit(Resource.Loading("Melakukan Settlement"))
 
                 val settlementSummaryGroupModelList = mutableListOf<SettlementSummaryGroupModel>()
 
@@ -149,9 +154,10 @@ class SettlementRepositoryImpl(
                             )
                         } else {
                             debitCardTransactionEntityGroupMap.forEach { key, value ->
+                                val effectiveKey = key.ifBlank { "OTHER" }
                                 settlementSummaryModelList.add(
                                     SettlementSummaryModel(
-                                        title = key,
+                                        title = effectiveKey,
                                         subSummaryList = fun(): MutableList<SettlementSubSummaryModel> {
                                             val subSummaryModelList =
                                                 mutableListOf<SettlementSubSummaryModel>()
@@ -174,7 +180,7 @@ class SettlementRepositoryImpl(
                                             val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
                                                 title = "VOID",
                                                 count = voidCardTransactionEntityList.size,
-                                                amount = voidCardTransactionEntityList.sumOf { it.amount / 100 }
+                                                amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
                                             )
                                             subSummaryModelList.add(voidSettlementSubSummaryModel)
 
@@ -243,9 +249,10 @@ class SettlementRepositoryImpl(
                             )
                         } else {
                             creditCardTransactionEntityGroupMap.forEach { key, value ->
+                                val effectiveKey = key.ifBlank { "OTHER" }
                                 settlementSummaryModelList.add(
                                     SettlementSummaryModel(
-                                        title = key,
+                                        title = effectiveKey,
                                         subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
                                             val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
 
@@ -267,7 +274,7 @@ class SettlementRepositoryImpl(
                                             val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
                                                 title = "VOID",
                                                 count = voidCardTransactionEntityList.size,
-                                                amount = voidCardTransactionEntityList.sumOf { it.amount / 100 }
+                                                amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
                                             )
                                             subSummaryModelList.add(voidSettlementSubSummaryModel)
 
@@ -302,6 +309,7 @@ class SettlementRepositoryImpl(
                 )
                 val settlementPrintBasedOnTemplateParameter = settlementPrintTemplateFactory.getPrintBasedOnTemplateParameter {}
 
+                db.cardTransactionDao().moveAllTrxToPreviousBatch()
                 traceNumberManager.reset()
                 batchManager.reset()
                 stanManager.resetStan()
@@ -315,7 +323,7 @@ class SettlementRepositoryImpl(
                     )
                 )
             } catch (e: Exception) {
-                LogSdk.error(TAG, "postSettlementAndBatchUpload: ${e.message}")
+                LogSdk.error(TAG, "postSettlementAndBatchUpload: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)
@@ -337,7 +345,7 @@ class SettlementRepositoryImpl(
                     emit(it)
                 }
             } catch (e: Exception) {
-                LogSdk.error(TAG, "printSettlement: ${e.message}")
+                LogSdk.error(TAG, "printSettlement: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }

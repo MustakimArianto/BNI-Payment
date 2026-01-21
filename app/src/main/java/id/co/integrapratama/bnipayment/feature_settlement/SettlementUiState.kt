@@ -6,6 +6,8 @@ import id.co.payment2go.terminalsdkhelper.core.util.Resource
 data class SettlementUiState(
     val isLoading: Boolean = false,
     val loadingMessage: String = "",
+    val errorMessage: String = "",
+    val hasSettlementCompleted: Boolean = false,
     val totalSettlementSummaryModelResult: Resource<TotalSettlementSummaryModel>? = null,
     val showPerformSettlementAndBatchUploadPromptDialog: Boolean = false
 )

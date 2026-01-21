@@ -1,5 +1,6 @@
 package id.co.integrapratama.sdk.feature_settlement.core
 
+import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
 import id.co.integrapratama.sdk.feature_settlement.domain.SettlementSummaryGroupModel
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.BasePrintBasedOnTemplateParameterBuilderTemplateComponent
@@ -99,6 +100,7 @@ class SettlementPrintTemplateFactory(
                 key = "SummaryGroupTitle-$i",
                 value = settlementSummaryGroupModel.title
             )
+            settlementSummaryGroupValueComponent.add(summaryGroupTitle)
             settlementSummaryGroupTemplateComponent.add(
                 PrintBasedOnTemplateParameterBuilderTemplateComponent(
                     valueComponent = summaryGroupTitle,
@@ -114,17 +116,27 @@ class SettlementPrintTemplateFactory(
                 val i2 = summaryModelIndexedValue.index
                 val summaryModel = summaryModelIndexedValue.value
 
+                settlementSummaryGroupTemplateComponent.add(
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = line,
+                        key = "",
+                        value = "",
+                        alignment = "L",
+                        font = "S"
+                    ),
+                )
                 val summaryTitle = PrintBasedOnTemplateParameterBuilderValueComponent(
                     key = "SummaryTitle-$i-$i2",
                     value = summaryModel.title
                 )
+                settlementSummaryGroupValueComponent.add(summaryTitle)
                 settlementSummaryGroupTemplateComponent.add(
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = summaryTitle,
                         key = "",
                         value = "",
                         alignment = "L",
-                        font = "M"
+                        font = "S"
                     ),
                 )
 
@@ -176,7 +188,9 @@ class SettlementPrintTemplateFactory(
                     addNewTemplateComponentFromValueList(subSummaryModel.count.toString()) {
                         subSummaryModel.count != null
                     }
-                    addNewTemplateComponentFromValueList(subSummaryModel.amount.toString())
+                    addNewTemplateComponentFromValueList(
+                        StringUtil.formatRupiahCurrency(subSummaryModel.amount.toString())
+                    )
 
                     settlementSummaryGroupValueComponent.addAll(
                         newSubSummaryValueComponentList
@@ -193,6 +207,8 @@ class SettlementPrintTemplateFactory(
         val builder = PrintBasedOnTemplateParameterBuilder()
             .addAllValueComponent(
                 listOf(
+                    line,
+                    separator,
                     headerImage,
                     branchName,
                     branchAddress,
@@ -203,6 +219,7 @@ class SettlementPrintTemplateFactory(
                     date,
                     time,
                     batch,
+                    labelSettlement,
                     labelTransactionTotalByIssuer,
                     labelSettlementClosed
                 )
@@ -265,15 +282,15 @@ class SettlementPrintTemplateFactory(
                         templateComponentList = mutableListOf(
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
                                 valueComponent = terminalId,
-                                key = "",
-                                value = "TID",
+                                key = "TID",
+                                value = "",
                                 alignment = "L",
                                 font = "S"
                             ),
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
                                 valueComponent = merchantId,
-                                key = "",
-                                value = "MID",
+                                key = "MID",
+                                value = "",
                                 alignment = "R",
                                 font = "S"
                             )
@@ -283,15 +300,15 @@ class SettlementPrintTemplateFactory(
                         templateComponentList = mutableListOf(
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
                                 valueComponent = date,
-                                key = "",
-                                value = "DATE",
+                                key = "DATE",
+                                value = "",
                                 alignment = "L",
                                 font = "S"
                             ),
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
                                 valueComponent = time,
-                                key = "",
-                                value = "TIME",
+                                key = "TIME",
+                                value = "",
                                 alignment = "R",
                                 font = "S"
                             )
@@ -299,8 +316,8 @@ class SettlementPrintTemplateFactory(
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = batch,
-                        key = "",
-                        value = "BATCH",
+                        key = "BATCH",
+                        value = "",
                         alignment = "L",
                         font = "S"
                     ),
@@ -315,14 +332,14 @@ class SettlementPrintTemplateFactory(
                         valueComponent = labelTransactionTotalByIssuer,
                         key = "",
                         value = "",
-                        alignment = "L",
+                        alignment = "C",
                         font = "M"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = separator,
                         key = "",
                         value = "",
-                        alignment = "L",
+                        alignment = "C",
                         font = "S"
                     ),
                 )
@@ -343,7 +360,7 @@ class SettlementPrintTemplateFactory(
                         valueComponent = labelSettlementClosed,
                         key = "",
                         value = "",
-                        alignment = "L",
+                        alignment = "C",
                         font = "S"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(

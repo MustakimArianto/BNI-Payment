@@ -11,6 +11,8 @@ import id.co.integrapratama.bnipayment.common.ext.navigateFromCurrent
 import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
 import id.co.integrapratama.bnipayment.common.ui_component.ConfirmationDialog
+import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
+import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.feature_merchant_pin.merchantPinComposable
 import id.co.integrapratama.bnipayment.navigation.AppRoute
 
@@ -52,6 +54,12 @@ fun NavGraphBuilder.settlementNavGraph(navController: NavController) {
             val viewModel = it.sharedViewModel<SettlementViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+            LaunchedEffect(uiState.hasSettlementCompleted) {
+                if (uiState.hasSettlementCompleted) {
+                    navController.navigateToHome()
+                }
+            }
+
             LaunchedEffect("Load Total Settlement") {
                 viewModel.onEvent(
                     SettlementUiEvent.LoadTotalSettlement
@@ -88,6 +96,23 @@ fun NavGraphBuilder.settlementNavGraph(navController: NavController) {
                             SettlementUiEvent.ApplyPerformSettlementAndBatchUploadPromptDialog(
                                 ApplyPerformSettlementAndBatchUploadPromptDialogType.NO
                             )
+                        )
+                    }
+                )
+            }
+
+            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
+                LoadingDialog(message = uiState.loadingMessage)
+            }
+
+            if (uiState.errorMessage.isNotEmpty()) {
+                ErrorDialog(
+                    title = "Settlement",
+                    message = uiState.errorMessage,
+                    textButton = "Ok",
+                    onButtonClicked = {
+                        viewModel.onEvent(
+                            SettlementUiEvent.ClearErrorMessage
                         )
                     }
                 )

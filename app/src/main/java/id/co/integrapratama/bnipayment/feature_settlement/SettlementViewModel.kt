@@ -44,6 +44,13 @@ class SettlementViewModel @Inject constructor(
                 }
                 performSettlementAndBatchUpload()
             }
+            is SettlementUiEvent.ClearErrorMessage -> {
+                _uiState.update {
+                    it.copy(
+                        errorMessage = ""
+                    )
+                }
+            }
         }
     }
 
@@ -83,6 +90,7 @@ class SettlementViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 loadingMessage = "",
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
                     }
@@ -113,6 +121,7 @@ class SettlementViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 loadingMessage = "",
+                                hasSettlementCompleted = true
                             )
                         }
                     }
@@ -121,7 +130,7 @@ class SettlementViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                loadingMessage = "",
+                                errorMessage = resource.message ?: "Terjadi kesalahan",
                             )
                         }
                     }
