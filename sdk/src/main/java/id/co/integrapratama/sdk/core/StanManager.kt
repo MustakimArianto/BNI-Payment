@@ -37,7 +37,7 @@ class StanManager(
         saveStan(value)
     }
 
-    private fun resetStan() {
+    fun resetStan() {
         saveStan(0L)
     }
 

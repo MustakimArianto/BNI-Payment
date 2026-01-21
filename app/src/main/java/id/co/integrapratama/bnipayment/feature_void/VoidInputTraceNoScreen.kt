@@ -36,13 +36,13 @@ import id.co.integrapratama.sdk.feature_void.domain.ListVoidModel
 
 @Composable
 fun VoidInputTraceNoScreen(
-    title: String,
-    traceNo: String = "", transactionList: List<ListVoidModel>?,
+    traceNo: String = "",
+    transactionList: List<ListVoidModel>?,
     onTraceNoChanged: (String) -> Unit,
     onTraceClick: () -> Unit, onTransactionItemClick: ((ListVoidModel) -> Unit)? = null
 ) {
     Column(Modifier.background(Color.White), verticalArrangement = Arrangement.Center) {
-        TopBar(title = title)
+        TopBar(title = "Void")
         Column(Modifier.padding(16.dp)) {
             Row(
                 Modifier.fillMaxWidth(),

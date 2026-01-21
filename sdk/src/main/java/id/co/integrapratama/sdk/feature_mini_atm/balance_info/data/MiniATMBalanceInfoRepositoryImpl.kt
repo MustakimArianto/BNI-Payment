@@ -154,8 +154,12 @@ class MiniATMBalanceInfoRepositoryImpl @Inject constructor(
                         valueComponentJsonString = template.jsonString,
                         templateComponentJsonString = template.printTemplateJsonString
                     )
-                ).collect()
-                emit(Resource.Success(Unit))
+                ).collect {
+                    if (it is Resource.Loading) {
+                        return@collect
+                    }
+                    emit(it)
+                }
             } catch (e: Exception) {
                 LogSdk.error(TAG, "printCurrentReceipt: ${e.stackTraceToString()}")
                 emit(e.toResourceError())

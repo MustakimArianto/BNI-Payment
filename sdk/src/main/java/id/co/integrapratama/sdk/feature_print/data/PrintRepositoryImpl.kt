@@ -45,15 +45,21 @@ class PrintRepositoryImpl(
         }
     }
 
-    override suspend fun printWithTemplateFactory(templateFactory: PrintTemplateFactory): Flow<Resource<Unit>> {
+    override suspend fun printWithBuilder(builder: PrintBasedOnTemplateParameterBuilder): Flow<Resource<Unit>> {
         return printWithBuilder(
-            builder = templateFactory.getPrintBasedOnTemplateParameterBuilder(),
+            builder = builder,
             imageData = {
                 if (it.headerImageValue == "bni.png") {
                     Util.readAssetsFile(ctx, it.headerImageValue)
                 }
                 null
             }
+        )
+    }
+
+    override suspend fun printWithTemplateFactory(templateFactory: PrintTemplateFactory): Flow<Resource<Unit>> {
+        return printWithBuilder(
+            builder = templateFactory.getPrintBasedOnTemplateParameterBuilder()
         )
     }
 }

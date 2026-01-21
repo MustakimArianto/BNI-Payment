@@ -47,6 +47,4 @@ data class VoidUiState(
     var errorMessage: String = "",
     var transactionResultMessage: String = "",
     var reversalResultMessage: String = ""
-) {
-    val title: String = "Void"
-}
+)

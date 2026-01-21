@@ -4,5 +4,6 @@ enum class MTI(val code: String) {
     AUTHORIZATION("0100"),
     FINANCIAL("0200"),
     REVERSAL("0400"),
-    SETTLEMENT("0500")
+    SETTLEMENT("0500"),
+    BATCH_UPLOAD("0320")
 }

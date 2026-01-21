@@ -1,7 +1,9 @@
 package id.co.integrapratama.sdk.feature_settlement.core
 
-import id.co.integrapratama.sdk.core.utils.CardUtil
+import id.co.integrapratama.sdk.core.utils.StringUtil
 import id.co.integrapratama.sdk.feature_print.core.PrintTemplateFactory
+import id.co.integrapratama.sdk.feature_settlement.domain.SettlementSummaryGroupModel
+import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.BasePrintBasedOnTemplateParameterBuilderTemplateComponent
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilder
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderGroupTemplateComponent
 import id.co.payment2go.terminalsdkhelper.common.printer.printbasedontemplateparameterbuilder.PrintBasedOnTemplateParameterBuilderTemplateComponent
@@ -13,21 +15,24 @@ class SettlementPrintTemplateFactory(
     private val branchCity: String,
     private val terminalId: String,
     private val merchantId: String,
-    private val cardType: String,
-    private val exp: String,
-    private val cardNumber: String,
-    private val cardMethod: String,
     private val date: String,
     private val time: String,
     private val batch: String,
-    private val trace: String,
-    private val ref: String,
-    private val appr: String,
-    private val amount: String,
-    private val version: String,
-    private val serialNumber: String
+    private val settlementSummaryGroupModelList: List<SettlementSummaryGroupModel>
 ) : PrintTemplateFactory() {
     override fun getPrintBasedOnTemplateParameterBuilder(): PrintBasedOnTemplateParameterBuilder {
+        val line = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "Line",
+            value = ""
+        )
+        val separator = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "Separator",
+            value = "-------------------------------------"
+        )
+        val headerImage = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "HeaderImage",
+            value = "bni.png"
+        )
         val branchName = PrintBasedOnTemplateParameterBuilderValueComponent(
             key = "BranchName",
             value = this.branchName
@@ -48,33 +53,9 @@ class SettlementPrintTemplateFactory(
             key = "MerchantId",
             value = this.merchantId
         )
-        val cardType = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CardType",
-            value = this.cardType
-        )
-        val exp = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Exp",
-            value = this.exp
-        )
-        val cardNumberWithType = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CardNumberWithType",
-            value = fun(): String {
-                val resultList = mutableListOf<String>()
-                if (cardNumber.isNotBlank()) {
-                    val cardNumber = CardUtil.panMasking(cardNumber, cardNumber)
-                    if (cardNumber.isBlank().not()) {
-                        resultList.add(cardNumber)
-                    }
-                }
-                if (cardMethod.isNotBlank()) {
-                    resultList.add("(${cardMethod})")
-                }
-                return resultList.joinToString(" ")
-            }()
-        )
-        val label = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Label",
-            value = "INSTALLMENT"
+        val transactionType = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "TransactionType",
+            value = "SETTLEMENT"
         )
         val date = PrintBasedOnTemplateParameterBuilderValueComponent(
             key = "Date",
@@ -88,90 +69,170 @@ class SettlementPrintTemplateFactory(
             key = "Batch",
             value = this.batch
         )
-        val trace = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Trace",
-            value = this.trace
+        val labelSettlement = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "LabelSettlement",
+            value = "SETTLEMENT"
         )
-        val ref = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Ref",
-            value = this.ref
+        val labelTransactionTotalByIssuer = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "LabelTransactionTotalByIssuer",
+            value = "TRANSACTION TOTAL BY ISSUER"
         )
-        val appr = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Appr",
-            value = this.appr
+        val labelSettlementClosed = PrintBasedOnTemplateParameterBuilderValueComponent(
+            key = "LabelTotalTransactionCredit",
+            value = "SETTLEMENT CLOSED"
         )
-        val amount = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Amount",
-            value = this.amount
-        )
-        val pinVerificationSuccessLabel = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "PinVerificationSuccessLabel",
-            value = "*** PIN VERIFICATION SUCCESS ***"
-        )
-        val totalAmountAgreementLabel = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "TotalAmountAgreementLabel",
-            value = "I AGREE TO PAY ABOVE TOTAL AMOUNT"
-        )
-        val accordingToCardLabel = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "AccordingToCardLabel",
-            value = "ACCORDING TO CARD ISSUER AGREEMENT"
-        )
-        val copyLabel = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "CopyLabel",
-            value = "*** CUSTOMER COPY ***"
-        )
-        val version = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Version",
-            value = this.version
-        )
-        val machineSerialNumber = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "MachineSerialNumber",
-            value = serialNumber
-        )
-        val line = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "Line",
-            value = ""
-        )
-        val headerImage = PrintBasedOnTemplateParameterBuilderValueComponent(
-            key = "HeaderImage",
-            value = "bni.png"
-        )
+        val settlementSummaryGroupValueComponent = mutableListOf<PrintBasedOnTemplateParameterBuilderValueComponent>()
+        val settlementSummaryGroupTemplateComponent = mutableListOf<BasePrintBasedOnTemplateParameterBuilderTemplateComponent>()
+
+        for (settlementSummaryGroupModelIndexedValue in settlementSummaryGroupModelList.withIndex()) {
+            val i = settlementSummaryGroupModelIndexedValue.index
+            val settlementSummaryGroupModel = settlementSummaryGroupModelIndexedValue.value
+            settlementSummaryGroupTemplateComponent.add(
+                PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                    valueComponent = line,
+                    key = "",
+                    value = "",
+                    alignment = "L",
+                    font = "S"
+                ),
+            )
+            val summaryGroupTitle = PrintBasedOnTemplateParameterBuilderValueComponent(
+                key = "SummaryGroupTitle-$i",
+                value = settlementSummaryGroupModel.title
+            )
+            settlementSummaryGroupValueComponent.add(summaryGroupTitle)
+            settlementSummaryGroupTemplateComponent.add(
+                PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                    valueComponent = summaryGroupTitle,
+                    key = "",
+                    value = "",
+                    alignment = "L",
+                    font = "M"
+                ),
+            )
+
+            val summaryModelList = settlementSummaryGroupModel.summaryModelList
+            for (summaryModelIndexedValue in summaryModelList.withIndex()) {
+                val i2 = summaryModelIndexedValue.index
+                val summaryModel = summaryModelIndexedValue.value
+
+                settlementSummaryGroupTemplateComponent.add(
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = line,
+                        key = "",
+                        value = "",
+                        alignment = "L",
+                        font = "S"
+                    ),
+                )
+                val summaryTitle = PrintBasedOnTemplateParameterBuilderValueComponent(
+                    key = "SummaryTitle-$i-$i2",
+                    value = summaryModel.title
+                )
+                settlementSummaryGroupValueComponent.add(summaryTitle)
+                settlementSummaryGroupTemplateComponent.add(
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = summaryTitle,
+                        key = "",
+                        value = "",
+                        alignment = "L",
+                        font = "S"
+                    ),
+                )
+
+                val subSummaryModelList = summaryModel.subSummaryList
+                for (subSummaryModelIndexedValue in subSummaryModelList.withIndex()) {
+                    val i3 = subSummaryModelIndexedValue.index
+                    val subSummaryModel = subSummaryModelIndexedValue.value
+                    val newSubSummaryValueComponentList = mutableListOf<PrintBasedOnTemplateParameterBuilderValueComponent>()
+                    val newSubSummaryTemplateComponentList = mutableListOf<PrintBasedOnTemplateParameterBuilderTemplateComponent>()
+
+                    var addingStep = 1
+                    fun addNewTemplateComponentFromValueList(value: String, rule: (() -> Boolean)? = null) {
+                        if (addingStep > 3) {
+                            return
+                        }
+                        var allowToBeAdded = true
+                        if (rule != null) {
+                            allowToBeAdded = rule()
+                        }
+                        if (allowToBeAdded) {
+                            val newSubSummaryValue = PrintBasedOnTemplateParameterBuilderValueComponent(
+                                key = "SubSummaryValue-$i-$i2-$i3-$addingStep",
+                                value = value
+                            )
+                            newSubSummaryValueComponentList.add(newSubSummaryValue)
+                            newSubSummaryTemplateComponentList.add(
+                                PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                                    valueComponent = newSubSummaryValue,
+                                    key = "",
+                                    value = "",
+                                    alignment = fun (): String {
+                                        return when (addingStep) {
+                                            1 -> "L"
+                                            2 -> "C"
+                                            3 -> "R"
+                                            else -> ""
+                                        }
+                                    }(),
+                                    font = "S"
+                                ),
+                            )
+                        }
+                        addingStep++
+                    }
+
+                    addNewTemplateComponentFromValueList(subSummaryModel.title) {
+                        subSummaryModel.title.isNotBlank()
+                    }
+                    addNewTemplateComponentFromValueList(subSummaryModel.count.toString()) {
+                        subSummaryModel.count != null
+                    }
+                    addNewTemplateComponentFromValueList(
+                        StringUtil.formatRupiahCurrency(subSummaryModel.amount.toString())
+                    )
+
+                    settlementSummaryGroupValueComponent.addAll(
+                        newSubSummaryValueComponentList
+                    )
+                    settlementSummaryGroupTemplateComponent.add(
+                        PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
+                            templateComponentList = newSubSummaryTemplateComponentList
+                        )
+                    )
+                }
+            }
+        }
+
         val builder = PrintBasedOnTemplateParameterBuilder()
             .addAllValueComponent(
                 listOf(
+                    line,
+                    separator,
                     headerImage,
                     branchName,
                     branchAddress,
                     branchCity,
                     terminalId,
                     merchantId,
-                    cardType,
-                    exp,
-                    cardNumberWithType,
-                    label,
+                    transactionType,
                     date,
                     time,
                     batch,
-                    trace,
-                    ref,
-                    appr,
-                    amount,
-                    pinVerificationSuccessLabel,
-                    totalAmountAgreementLabel,
-                    accordingToCardLabel,
-                    copyLabel,
-                    version,
-                    machineSerialNumber,
-                    line,
-                    headerImage,
+                    labelSettlement,
+                    labelTransactionTotalByIssuer,
+                    labelSettlementClosed
                 )
+            )
+            .addAllValueComponent(
+                settlementSummaryGroupValueComponent
             )
             .addAllTemplateComponent(
                 listOf(
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = headerImage,
                         key = "",
-                        value = "Test",
+                        value = "",
                         alignment = "C",
                         font = "S"
                     ),
@@ -185,41 +246,20 @@ class SettlementPrintTemplateFactory(
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = branchName,
                         key = "",
-                        value = "Test",
+                        value = "",
                         alignment = "C",
                         font = "S"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = branchAddress,
                         key = "",
-                        value = "Test",
+                        value = "",
                         alignment = "C",
                         font = "S"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = branchCity,
                         key = "",
-                        value = "Test",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = terminalId,
-                        key = "TERMINAL ID",
-                        value = "Test",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = merchantId,
-                        key = "MERCHANT ID",
                         value = "",
                         alignment = "C",
                         font = "S"
@@ -230,48 +270,34 @@ class SettlementPrintTemplateFactory(
                         value = "",
                         alignment = "C",
                         font = "S"
+                    ),
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = labelSettlement,
+                        key = "",
+                        value = "",
+                        alignment = "C",
+                        font = "M"
                     ),
                     PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
-                        templateComponentList = listOf(
+                        templateComponentList = mutableListOf(
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = cardType,
-                                key = "CARD TYPE",
+                                valueComponent = terminalId,
+                                key = "TID",
                                 value = "",
                                 alignment = "L",
                                 font = "S"
                             ),
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = exp,
-                                key = "EXP",
+                                valueComponent = merchantId,
+                                key = "MID",
                                 value = "",
                                 alignment = "R",
                                 font = "S"
-                            ),
+                            )
                         )
                     ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = cardNumberWithType,
-                        key = "",
-                        value = "",
-                        alignment = "L",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = label,
-                        key = "",
-                        value = "",
-                        alignment = "L",
-                        font = "L"
-                    ),
                     PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
-                        templateComponentList = listOf(
+                        templateComponentList = mutableListOf(
                             PrintBasedOnTemplateParameterBuilderTemplateComponent(
                                 valueComponent = date,
                                 key = "DATE",
@@ -285,142 +311,68 @@ class SettlementPrintTemplateFactory(
                                 value = "",
                                 alignment = "R",
                                 font = "S"
-                            ),
-                        )
-                    ),
-                    PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
-                        templateComponentList = listOf(
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = batch,
-                                key = "BATCH",
-                                value = "",
-                                alignment = "L",
-                                font = "S"
-                            ),
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = trace,
-                                key = "TRACE",
-                                value = "",
-                                alignment = "R",
-                                font = "S"
-                            ),
-                        )
-                    ),
-                    PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
-                        templateComponentList = listOf(
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = ref,
-                                key = "REF#",
-                                value = "",
-                                alignment = "L",
-                                font = "S"
-                            ),
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = appr,
-                                key = "APPR",
-                                value = "",
-                                alignment = "R",
-                                font = "S"
-                            ),
+                            )
                         )
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
+                        valueComponent = batch,
+                        key = "BATCH",
                         value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = amount,
-                        key = "Amount",
-                        value = "",
-                        alignment = "C",
+                        alignment = "L",
                         font = "S"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
                         valueComponent = line,
                         key = "",
                         value = "",
-                        alignment = "C",
+                        alignment = "L",
                         font = "S"
                     ),
                     PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
+                        valueComponent = labelTransactionTotalByIssuer,
+                        key = "",
+                        value = "",
+                        alignment = "C",
+                        font = "M"
+                    ),
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = separator,
                         key = "",
                         value = "",
                         alignment = "C",
                         font = "S"
                     ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = pinVerificationSuccessLabel,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = totalAmountAgreementLabel,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = accordingToCardLabel,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = copyLabel,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    ),
-                    PrintBasedOnTemplateParameterBuilderGroupTemplateComponent(
-                        templateComponentList = listOf(
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = machineSerialNumber,
-                                key = "",
-                                value = "",
-                                alignment = "R",
-                                font = "S"
-                            ),
-                            PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                                valueComponent = version,
-                                key = "",
-                                value = "",
-                                alignment = "L",
-                                font = "S"
-                            ),
-                        )
-                    ),
-                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
-                        valueComponent = line,
-                        key = "",
-                        value = "",
-                        alignment = "C",
-                        font = "S"
-                    )
                 )
             )
+            .addAllTemplateComponent(
+                settlementSummaryGroupTemplateComponent
+            )
+            .addAllTemplateComponent(
+                listOf(
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = line,
+                        key = "",
+                        value = "",
+                        alignment = "L",
+                        font = "S"
+                    ),
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = labelSettlementClosed,
+                        key = "",
+                        value = "",
+                        alignment = "C",
+                        font = "S"
+                    ),
+                    PrintBasedOnTemplateParameterBuilderTemplateComponent(
+                        valueComponent = line,
+                        key = "",
+                        value = "",
+                        alignment = "L",
+                        font = "S"
+                    ),
+                )
+            )
+
         return builder
     }
 }
