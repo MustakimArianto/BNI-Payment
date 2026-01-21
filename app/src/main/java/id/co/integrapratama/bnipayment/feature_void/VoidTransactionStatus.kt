@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,10 +17,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.co.integrapratama.bnipayment.R
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
-import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryButton
 import id.co.integrapratama.bnipayment.common.ui_component.SecondaryButton
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
+import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
 
 @Composable
 fun VoidTransactionStatus(
@@ -33,7 +32,6 @@ fun VoidTransactionStatus(
         Box(
             Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .padding(16.dp)
         ) {
             Column(
@@ -72,7 +70,6 @@ fun VoidTransactionStatus(
         Box(
             Modifier
                 .fillMaxSize()
-                .navigationBarsPadding()
                 .padding(16.dp)
         ) {
             Column(

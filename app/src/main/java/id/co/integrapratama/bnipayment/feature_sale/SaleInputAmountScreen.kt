@@ -93,22 +93,28 @@ fun InputAmountScreen(
             }
         }
 
-        Spacer(Modifier.weight(1f)) // Pushes keypad to bottom
+        Spacer(Modifier.weight(1f))
 
         CustomAmountKeypad(
             onNumberClick = { number ->
                 when (focusedField) {
                     FocusedField.AMOUNT -> {
                         val newAmount = amount + number
-                        // Don't allow leading zeros and respect max length
-                        if (newAmount.length <= 12 && !newAmount.startsWith("0")) {
+                        if (amount.isEmpty() && number.all { it == '0' }) {
+                            return@CustomAmountKeypad
+                        }
+
+                        if (newAmount.length <= 12) {
                             onAmountChanged(newAmount)
                         }
                     }
+
                     FocusedField.TIP -> {
                         val newTip = tip + number
-                        // Don't allow leading zeros and respect max length
-                        if (newTip.length <= 12 && !newTip.startsWith("0")) {
+                        if (tip.isEmpty() && number.all { it == '0' }) {
+                            return@CustomAmountKeypad
+                        }
+                        if (newTip.length <= 12) {
                             onTipChanged(newTip)
                         }
                     }

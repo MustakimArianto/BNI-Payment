@@ -12,7 +12,7 @@ data class SaleUiState(
     // Transaction data
     var isContactless: Boolean = false,
     var amount: String = "",
-    var tip: String = "0",
+    var tip: String = "",
     var cardNumber: String = "",
     var maskedCardNumber: String = "",
     var cardType: Int? = null,
@@ -49,7 +49,6 @@ data class SaleUiState(
     var transactionResultMessage: String = "",
     var reversalResultMessage: String = ""
 ) {
-    // Computed property that always reflects current value
     val title: String
         get() = if (isContactless) "Contactless" else "Sale"
     val cardOption: CardOption

@@ -5,5 +5,5 @@ import androidx.navigation.NavBackStackEntry
 
 class MerchantPinContentParameter(
     val navBackStackEntry: NavBackStackEntry,
-    val enableMerchantInputPinScope: @Composable (@Composable (MerchantInputPinScopeParameter) -> Unit) -> Unit
+    val renderPinInput: @Composable (@Composable (MerchantPinScope) -> Unit) -> Unit
 )

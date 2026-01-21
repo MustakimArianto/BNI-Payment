@@ -16,6 +16,8 @@ object DateUtils {
     val timeFormatScreenReceipt = SimpleDateFormat("HH:mm", locale)
     val dateFormatScreenReceipt = SimpleDateFormat("dd MMM yyyy", locale)
 
+    val voidListDateTimeFormat = SimpleDateFormat("dd MMM yyyy, HH.mm", locale)
+
     fun getFullTransactionDateTime(date: Date): String {
         return fullDateTimeFormat.format(date)
     }
@@ -59,4 +61,20 @@ object DateUtils {
     fun getScreenReceiptTransactionTime(date: Date): String {
         return timeFormatScreenReceipt.format(date) + " WIB"
     }
+
+    fun getScreenReceiptTransactionDate(dateTime: String): String {
+        val date = fullDateTimeFormat.parse(dateTime) ?: Date()
+        return dateFormatScreenReceipt.format(date)
+    }
+
+    fun getScreenReceiptTransactionTime(dateTime: String): String {
+        val date = fullDateTimeFormat.parse(dateTime) ?: Date()
+        return timeFormatScreenReceipt.format(date) + " WIB"
+    }
+
+    fun getVoidListTransactionDateTime(dateTime: String): String {
+        val date = fullDateTimeFormat.parse(dateTime) ?: Date()
+        return voidListDateTimeFormat.format(date)
+    }
+
 }

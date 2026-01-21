@@ -8,9 +8,11 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import id.co.integrapratama.bnipayment.common.ext.camelCase
 import id.co.integrapratama.bnipayment.common.ext.navigateFromCurrent
 import id.co.integrapratama.bnipayment.common.ext.navigateToHome
 import id.co.integrapratama.bnipayment.common.ext.sharedViewModel
+import id.co.integrapratama.bnipayment.common.maskCardNumber
 import id.co.integrapratama.bnipayment.common.ui_component.ErrorDialog
 import id.co.integrapratama.bnipayment.common.ui_component.LoadingDialog
 import id.co.integrapratama.bnipayment.feature_merchant_pin.merchantPinComposable
@@ -22,16 +24,16 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
     ) {
         merchantPinComposable<VoidRoute.InputMerchantPin>(
             navController = navController
-        ) {
-            it.enableMerchantInputPinScope { it2 ->
-                val action = it2.action
+        ) { contentParam ->
+            contentParam.renderPinInput { pinScope ->
+                val callbacks = pinScope.callbacks
 
-                action.enableSetTitleScope { it3 ->
-                    it3.enableLaunchScope("Void")
+                callbacks.setTitle { titleSetter ->
+                    titleSetter.invoke("Void")
                 }
 
-                action.enableOnAcceptPinScope { it3 ->
-                    it3.enableLaunchScope {
+                callbacks.onAccept { acceptHandler ->
+                    acceptHandler.invoke {
                         navController.navigateFromCurrent(
                             VoidRoute.InputTraceNo,
                             isInclusive = true
@@ -39,49 +41,41 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                     }
                 }
 
-                action.enableOnCancelPinScope { it3 ->
-                    it3.enableLaunchScope {
+                callbacks.onCancel { cancelHandler ->
+                    cancelHandler.invoke {
                         navController.navigateToHome()
                     }
                 }
             }
         }
 
-        composable<VoidRoute.InputTraceNo> {
-            val viewModel = it.sharedViewModel<VoidViewModel>(navController)
+        composable<VoidRoute.InputTraceNo> { backStackEntry ->
+            val viewModel = backStackEntry.sharedViewModel<VoidViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-            if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
-                LoadingDialog(message = uiState.loadingMessage)
-            }
 
             LaunchedEffect(uiState.hasConfirmVoid) {
                 if (uiState.hasConfirmVoid) {
-                    navController.navigateFromCurrent(VoidRoute.ConfirmVoid, true)
+                    navController.navigateFromCurrent(VoidRoute.ConfirmVoid, isInclusive = true)
                 }
             }
 
             VoidInputTraceNoScreen(
                 traceNo = uiState.traceNo,
                 onTraceNoChanged = { traceNo ->
-                    viewModel.onEvent(
-                        VoidUiEvent.OnTraceNoChange(traceNo)
-                    )
-                },
-                onNextClick = {
+                    viewModel.onEvent(VoidUiEvent.OnTraceNoChange(traceNo))
+                }, transactionList = uiState.transactionList,
+                onTraceClick = {
                     if (uiState.traceNo.isNotEmpty()) {
-                        viewModel.onEvent(
-                            VoidUiEvent.ConfirmVoid
-                        )
+                        viewModel.onEvent(VoidUiEvent.ConfirmVoid)
                     } else {
                         viewModel.onEvent(
-                            VoidUiEvent.SetErrorMessage(
-                                "Nominal tidak boleh kosong"
-                            )
+                            VoidUiEvent.SetErrorMessage("Trace number tidak boleh kosong")
                         )
                     }
-                },
-                onNavigationBack = { navController.navigateToHome() }
+                }, onTransactionItemClick = { transaction ->
+                    viewModel.onEvent(VoidUiEvent.OnTraceNoChange(transaction.invoice))
+                    viewModel.onEvent(VoidUiEvent.TransactionListClicked(transaction))
+                }
             )
 
             if (uiState.errorMessage.isNotEmpty()) {
@@ -94,13 +88,13 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
             }
         }
 
-        composable<VoidRoute.ConfirmVoid> {
-            val viewModel = it.sharedViewModel<VoidViewModel>(navController)
+        composable<VoidRoute.ConfirmVoid> { backStackEntry ->
+            val viewModel = backStackEntry.sharedViewModel<VoidViewModel>(navController)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(uiState.isTransactionFinished) {
                 if (uiState.isTransactionFinished) {
-                    navController.navigateFromCurrent(VoidRoute.TransactionStatus, true)
+                    navController.navigateFromCurrent(VoidRoute.TransactionStatus, isInclusive = true)
                 }
             }
 
@@ -113,24 +107,36 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                     title = "Void",
                     message = uiState.errorMessage,
                     textButton = "Ok",
-                    onButtonClicked = { navController.navigateToHome() })
-            }
-            if (uiState.voidRequestModel != null) {
-                VoidConfirmTransactionScreen(
-                    voidRequestModel = uiState.voidRequestModel!!,
-                    onSubmitVoid = {
-                        viewModel.onEvent(
-                            VoidUiEvent.SubmitVoid
-                        )
-                    },
-                    onBackClick = {
-                        navController.navigateToHome()
-                    }
+                    onButtonClicked = { navController.navigateToHome() }
                 )
             }
+
+            val amount = uiState.currentVoidTransaction!!.amount
+            val tip = uiState.currentVoidTransaction!!.tip
+
+
+            VoidConfirmTransactionScreen(
+                transaction = uiState.currentVoidTransaction!!,
+                maskedCardNo = maskCardNumber(uiState.currentVoidTransaction!!.cardNo),
+                cardName = uiState.currentVoidTransaction!!.customerName,
+                transactionDate = uiState.currentVoidTransaction!!.invoiceDate,
+                transactionTime = uiState.currentVoidTransaction!!.invoiceDate,
+                refNo = uiState.currentVoidTransaction!!.refNo,
+                mid = viewModel.getMid(),
+                method = "${uiState.currentVoidTransaction!!.cardClassification.camelCase()} Card",
+                amount = amount.toString(),
+                tip = tip.toString(),
+                traceNo = uiState.traceNo,
+                totalAmount = (amount + tip).toString(),
+                onVoidTransaction = {
+                    viewModel.onEvent(VoidUiEvent.SubmitVoid)
+                })
         }
 
-        composable<VoidRoute.TransactionStatus> {
+        composable<VoidRoute.TransactionStatus> { backStackEntry ->
+            val viewModel = backStackEntry.sharedViewModel<VoidViewModel>(navController)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
             fun navigateToHome() {
                 navController.navigateToHome()
             }
@@ -138,9 +144,6 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
             BackHandler {
                 navigateToHome()
             }
-
-            val viewModel = it.sharedViewModel<VoidViewModel>(navController)
-            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             if (uiState.isLoading && uiState.loadingMessage.isNotEmpty()) {
                 LoadingDialog(message = uiState.loadingMessage)
@@ -150,9 +153,7 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                 transactionResultMessage = uiState.transactionResultMessage,
                 onGoToHome = { navigateToHome() },
                 onPrintReceipt = {
-                    viewModel.onEvent(
-                    VoidUiEvent.PrintReceipt
-                    )
+                    viewModel.onEvent(VoidUiEvent.PrintReceipt)
                 }
             )
         }

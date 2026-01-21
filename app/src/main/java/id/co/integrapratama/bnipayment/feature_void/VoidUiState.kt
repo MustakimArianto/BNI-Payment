@@ -1,8 +1,8 @@
 package id.co.integrapratama.bnipayment.feature_void
 
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinType
+import id.co.integrapratama.sdk.feature_void.domain.ListVoidModel
 import id.co.integrapratama.sdk.feature_void.domain.VoidRequestModel
-import id.co.payment2go.terminalsdkhelper.common.emv.CardOption
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOfflinePinAction
 import id.co.payment2go.terminalsdkhelper.common.emv.OnInsertOnlinePinAction
 import id.co.payment2go.terminalsdkhelper.core.util.CardReadOutput
@@ -22,6 +22,8 @@ data class VoidUiState(
     var transactionDateTime: Date = Date(),
     var binType: BinType = BinType.UNKNOWN,
     val voidRequestModel: VoidRequestModel? = null,
+    val transactionList: List<ListVoidModel>? = null,
+    val currentVoidTransaction: ListVoidModel? = null,
 
     // Process flags
     val isLoading: Boolean = false,

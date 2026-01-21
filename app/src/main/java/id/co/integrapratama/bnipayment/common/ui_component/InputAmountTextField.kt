@@ -42,12 +42,7 @@ fun InputAmountTextField(
     var isFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(amount) {
-        // Don't update if the amount starts with zero (leading zero check)
-        if (amount.isNotEmpty() && amount.startsWith("0")) {
-            return@LaunchedEffect
-        }
-
-        if (amount != lastAmount && amount != unformatCurrency(textFieldValue.text.removePrefix("Rp"))) {
+        if (amount != lastAmount) {
             lastAmount = amount
             val formatted = if (amount.isNotEmpty()) {
                 "Rp${formatCurrency(amount)}"
@@ -61,7 +56,6 @@ fun InputAmountTextField(
         }
     }
 
-    // Determine text color
     val textColor = if (textFieldValue.text.isEmpty() || textFieldValue.text == "Rp") {
         TextGrayColor
     } else {
@@ -168,6 +162,6 @@ fun InputAmountTextField(
             disabledIndicatorColor = Color.LightGray
         ),
         singleLine = true,
-        readOnly = true  // Make it read-only to prevent system keyboard
+        readOnly = true
     )
 }
