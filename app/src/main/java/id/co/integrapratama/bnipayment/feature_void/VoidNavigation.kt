@@ -63,7 +63,8 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                 traceNo = uiState.traceNo,
                 onTraceNoChanged = { traceNo ->
                     viewModel.onEvent(VoidUiEvent.OnTraceNoChange(traceNo))
-                }, transactionList = uiState.transactionList,
+                },
+                transactionList = uiState.transactionList,
                 onTraceClick = {
                     if (uiState.traceNo.isNotEmpty()) {
                         viewModel.onEvent(VoidUiEvent.ConfirmVoid)
@@ -72,7 +73,8 @@ fun NavGraphBuilder.voidNavigation(navController: NavController) {
                             VoidUiEvent.SetErrorMessage("Trace number tidak boleh kosong")
                         )
                     }
-                }, onTransactionItemClick = { transaction ->
+                },
+                onTransactionItemClick = { transaction ->
                     viewModel.onEvent(VoidUiEvent.OnTraceNoChange(transaction.invoice))
                     viewModel.onEvent(VoidUiEvent.TransactionListClicked(transaction))
                 }
