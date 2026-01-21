@@ -9,7 +9,8 @@ fun getHomeMenuItems(
     onNavigateToContactlessSale: () -> Unit,
     onNavigateToVoid: () -> Unit,
     onNavigateToSettlement: () -> Unit,
-    onNavigateToInstallment: () -> Unit
+    onNavigateToInstallment: () -> Unit,
+    onNavigateToTapCash: () -> Unit
 ): List<MenuItem> = listOf(
     MenuItem(
         title = "Sale",
@@ -35,6 +36,11 @@ fun getHomeMenuItems(
         title = "Installment",
         selectedIcon = R.drawable.ic_installment,
         onClick = onNavigateToInstallment
+    ),
+    MenuItem(
+        title = "Tapcash",
+        selectedIcon = R.drawable.ic_tap_cash,
+        onClick = onNavigateToTapCash
     ),
 //    MenuItem(
 //        title = "Mini ATM",

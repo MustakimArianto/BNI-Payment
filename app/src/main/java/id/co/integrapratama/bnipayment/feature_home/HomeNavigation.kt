@@ -36,7 +36,8 @@ fun NavGraphBuilder.homeNavigation(navController: NavController) {
                 onNavigateToVoid = { navController.navigate(AppRoute.Void) },
                 onNavigateToSettlement = { navController.navigate(AppRoute.Settlement) },
                 onNavigateToInstallment = { navController.navigate(AppRoute.Installment) },
-                onNavigateToMerchantCare = { navController.navigate(HomeRoute.MerchantCare) }
+                onNavigateToMerchantCare = { navController.navigate(HomeRoute.MerchantCare) },
+                onNavigateToTapCash = { }
             )
         }
         composable<HomeRoute.MerchantCare> {
