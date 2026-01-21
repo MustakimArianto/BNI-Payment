@@ -5,6 +5,7 @@ import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
 import id.co.integrapratama.sdk.core.iso8583.IsoConfig
+import id.co.integrapratama.sdk.core.model.MTI
 import id.co.integrapratama.sdk.core.utils.DateUtils
 import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toResourceError
@@ -33,9 +34,7 @@ class InstallmentRepositoryImpl(
 ) : InstallmentRepository {
     companion object {
         private const val TAG = "InstallmentRepositoryImpl"
-        private const val FINANCIAL_REQUEST_MTI = "0200"
-        private const val SALE_DEBIT_PROCODE = "000000"
-        private const val SALE_CREDIT_PROCODE = "020000"
+        private const val INSTALLMENT_CREDIT_PROCODE = "080000"
     }
 
     override suspend fun getInstallmentPeriodList(): Flow<Resource<List<InstallmentPeriodModel>>> {
@@ -115,7 +114,7 @@ class InstallmentRepositoryImpl(
                 val requestData = if (cardClassification == CardClassification.DEBIT) {
                     mapOf(
                         2 to request.cardNo,
-                        3 to SALE_DEBIT_PROCODE,
+                        3 to INSTALLMENT_CREDIT_PROCODE,
                         4 to request.txnAmount.padAmount(),
                         11 to request.STAN.padStart(6, '0'),
                         14 to request.cardExpiry.replace("/", ""),
@@ -133,7 +132,7 @@ class InstallmentRepositoryImpl(
                     )
                 } else {
                     mapOf(
-                        3 to SALE_CREDIT_PROCODE,
+                        3 to INSTALLMENT_CREDIT_PROCODE,
                         4 to request.txnAmount.padAmount(),
                         11 to request.STAN.padStart(6, '0'),
                         12 to DateUtils.getTransactionTime(transactionDateTime), // Time
@@ -156,7 +155,7 @@ class InstallmentRepositoryImpl(
                 }
 
                 val packedData = isoRepository.createRequest(
-                    FINANCIAL_REQUEST_MTI,
+                    MTI.FINANCIAL.code,
                     requestData,
                     IsoConfig.genericSpec
                 )

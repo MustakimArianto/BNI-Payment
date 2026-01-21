@@ -6,10 +6,13 @@ import id.co.integrapratama.sdk.core.TerminalBatchManager
 import id.co.integrapratama.sdk.core.TraceNumberManager
 import id.co.integrapratama.sdk.core.data.local.AppDatabase
 import id.co.integrapratama.sdk.core.iso8583.Iso8583Repository
+import id.co.integrapratama.sdk.core.model.MTI
 import id.co.integrapratama.sdk.core.utils.DateUtils
+import id.co.integrapratama.sdk.core.utils.padAmount
 import id.co.integrapratama.sdk.core.utils.toResourceError
 import id.co.integrapratama.sdk.feature_bin_range.domain.BinRangeRepository
 import id.co.integrapratama.sdk.feature_print.domain.PrintRepository
+import id.co.integrapratama.sdk.feature_sale.data.local.CardTransactionEntity
 import id.co.integrapratama.sdk.feature_settlement.core.SettlementPrintTemplateFactory
 import id.co.integrapratama.sdk.feature_settlement.domain.PostSettlementAndBatchUploadResponseModel
 import id.co.integrapratama.sdk.feature_settlement.domain.SettlementRepository
@@ -37,10 +40,10 @@ class SettlementRepositoryImpl(
 ) : SettlementRepository {
     companion object {
         private const val TAG = "SettlementRepositoryImpl"
-        private const val SETTLEMENT_REQUEST_MTI = "0200"
         private const val SETTLEMENT_DEBIT_INITIAL_PROCODE = "920000"
         private const val SETTLEMENT_DEBIT_FINAL_PROCODE = "960000"
         private const val SETTLEMENT_CREDIT_PROCODE = "920000"
+        private const val BATCH_UPLOAD_PROCODE = "970000"
     }
 
     override fun getTotalSettlementSummary(): Flow<Resource<TotalSettlementSummaryModel>> {
@@ -102,231 +105,326 @@ class SettlementRepositoryImpl(
 
                 emit(Resource.Loading("Melakukan Settlement"))
 
-                val settlementSummaryGroupModelList = mutableListOf<SettlementSummaryGroupModel>()
-
                 // Get all trx from card transaction
                 val cardTransactionEntityList = db.cardTransactionDao().getAllTrxData()
 
-                // Debit Card
-                val debitSettlementSummaryGroupModel = SettlementSummaryGroupModel(
-                    title = "DEBIT CARD",
-                    summaryModelList = fun (): MutableList<SettlementSummaryModel> {
-                        val settlementSummaryModelList = mutableListOf<SettlementSummaryModel>()
-                        val debitCardTransactionEntityList = cardTransactionEntityList.filter {
-                            it.cardClassificationType?.lowercase() == "debit"
+                // Settlement
+                val processingCode = SETTLEMENT_DEBIT_INITIAL_PROCODE
+
+                val requestData = mapOf(
+                    2 to "1234567890123456",
+                    3 to processingCode,
+                    4 to "1".padAmount(),
+                    11 to "1".padStart(6, '0'),
+                    14 to "00/00".replace("/", ""),
+                    22 to "05" + "1",
+                    24 to "041", // NII
+                    25 to "00", // NII
+                    35 to "1234567890123456D12345678",
+                    37 to "000051000004", // RRN
+                    38 to "030059", // Approval Code
+                    41 to "12345678", // TID
+                    42 to "123456789012345", // MID
+                    52 to "FFFFFFFFFFFFFFFF",
+                    55 to "9F0203000000",
+                    62 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
+                )
+
+                val packedData = isoRepository.createRequest(
+                    MTI.SETTLEMENT.code,
+                    requestData,
+                )
+
+                isoRepository.sendAndReceive(packedData).collect { response ->
+                    when (response) {
+                        is Resource.Loading -> {
+                            emit(Resource.Loading("Melakukan settlement"))
                         }
-                        val debitCardTransactionEntityGroupMap = debitCardTransactionEntityList.groupBy {
-                            it.cardBinType ?: ""
-                        }
-                        if (debitCardTransactionEntityGroupMap.isEmpty()) {
-                            settlementSummaryModelList.add(
-                                SettlementSummaryModel(
-                                    title = "OTHER",
-                                    subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
-                                        val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
 
-                                        // SALE
-                                        val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "SALE",
-                                            count = 0,
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(saleSettlementSubSummaryModel)
+                        is Resource.Success -> {
+                            // Batch Upload
+                            val processingCode = BATCH_UPLOAD_PROCODE
 
-                                        // VOID
-                                        val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "VOID",
-                                            count = 0,
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(voidSettlementSubSummaryModel)
-
-                                        // TOTAL
-                                        val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "TOTAL",
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(totalSettlementSubSummaryModel)
-
-                                        return subSummaryModelList
-                                    }()
-                                )
+                            val requestData = mapOf(
+                                2 to "1234567890123456",
+                                3 to processingCode,
+                                4 to "1".padAmount(),
+                                11 to "1".padStart(6, '0'),
+                                14 to "00/00".replace("/", ""),
+                                22 to "05" + "1",
+                                24 to "041", // NII
+                                25 to "00", // NII
+                                35 to "1234567890123456D12345678",
+                                37 to "000051000004", // RRN
+                                38 to "030059", // Approval Code
+                                41 to "12345678", // TID
+                                42 to "123456789012345", // MID
+                                52 to "FFFFFFFFFFFFFFFF",
+                                55 to "9F0203000000",
+                                62 to "0006123456789012" // Private Use - Invoice or ECR Reference Number
                             )
-                        } else {
-                            debitCardTransactionEntityGroupMap.forEach { key, value ->
-                                val effectiveKey = key.ifBlank { "OTHER" }
-                                settlementSummaryModelList.add(
-                                    SettlementSummaryModel(
-                                        title = effectiveKey,
-                                        subSummaryList = fun(): MutableList<SettlementSubSummaryModel> {
-                                            val subSummaryModelList =
-                                                mutableListOf<SettlementSubSummaryModel>()
 
-                                            // SALE
-                                            val saleCardTransactionEntityList = value.filter {
-                                                it.saleType.lowercase() == "sale"
-                                            }
-                                            val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "SALE",
-                                                count = saleCardTransactionEntityList.size,
-                                                amount = saleCardTransactionEntityList.sumOf { it.amount / 100 }
-                                            )
-                                            subSummaryModelList.add(saleSettlementSubSummaryModel)
+                            val packedData = isoRepository.createRequest(
+                                MTI.BATCH_UPLOAD.code,
+                                requestData,
+                            )
 
-                                            // VOID
-                                            val voidCardTransactionEntityList = value.filter {
-                                                it.saleType.lowercase() == "void"
-                                            }
-                                            val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "VOID",
-                                                count = voidCardTransactionEntityList.size,
-                                                amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
-                                            )
-                                            subSummaryModelList.add(voidSettlementSubSummaryModel)
+                            isoRepository.sendAndReceive(packedData).collect { response ->
+                                when (response) {
+                                    is Resource.Loading -> {
+                                        emit(Resource.Loading("Melakukan settlement"))
+                                    }
 
-                                            // TOTAL
-                                            val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "TOTAL",
-                                                amount = saleSettlementSubSummaryModel.amount - voidSettlementSubSummaryModel.amount
-                                            )
-                                            subSummaryModelList.add(totalSettlementSubSummaryModel)
+                                    is Resource.Success -> {
+                                        preparePrintSettlement(
+                                            cardTransactionEntityList = cardTransactionEntityList,
+                                            currentDate = currentDate,
+                                        ) {
+                                            this.emit(it)
+                                        }
+                                    }
 
-                                            return subSummaryModelList
-                                        }()
-                                    )
-                                )
+                                    is Resource.Error -> {
+                                        emit(Resource.Error(response.message ?: "Terjadi kesalahan"))
+                                    }
+                                }
                             }
                         }
-                        return settlementSummaryModelList
-                    }()
-                )
-                settlementSummaryGroupModelList.add(debitSettlementSummaryGroupModel)
 
-                // Credit Card
-                val creditSettlementSummaryGroupModel = SettlementSummaryGroupModel(
-                    title = "CREDIT CARD",
-                    summaryModelList = fun (): MutableList<SettlementSummaryModel> {
-                        val settlementSummaryModelList = mutableListOf<SettlementSummaryModel>()
-                        val creditCardTransactionEntityList = cardTransactionEntityList.filter {
-                            it.cardClassificationType?.lowercase() == "credit"
+                        is Resource.Error -> {
+                            emit(Resource.Error(response.message ?: "Terjadi kesalahan"))
                         }
-                        val creditCardTransactionEntityGroupMap = creditCardTransactionEntityList.groupBy {
-                            it.cardBinType ?: ""
-                        }
-                        if (creditCardTransactionEntityGroupMap.isEmpty()) {
-                            settlementSummaryModelList.add(
-                                SettlementSummaryModel(
-                                    title = "OTHER",
-                                    subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
-                                        val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
-
-                                        // SALE
-                                        val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "SALE",
-                                            count = 0,
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(saleSettlementSubSummaryModel)
-
-                                        // VOID
-                                        val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "VOID",
-                                            count = 0,
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(voidSettlementSubSummaryModel)
-
-                                        // TOTAL
-                                        val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                            title = "TOTAL",
-                                            amount = 0
-                                        )
-                                        subSummaryModelList.add(totalSettlementSubSummaryModel)
-
-                                        return subSummaryModelList
-                                    }()
-                                )
-                            )
-                        } else {
-                            creditCardTransactionEntityGroupMap.forEach { key, value ->
-                                val effectiveKey = key.ifBlank { "OTHER" }
-                                settlementSummaryModelList.add(
-                                    SettlementSummaryModel(
-                                        title = effectiveKey,
-                                        subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
-                                            val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
-
-                                            // SALE
-                                            val saleCardTransactionEntityList = value.filter {
-                                                it.saleType.lowercase() == "sale"
-                                            }
-                                            val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "SALE",
-                                                count = saleCardTransactionEntityList.size,
-                                                amount = saleCardTransactionEntityList.sumOf { it.amount / 100 }
-                                            )
-                                            subSummaryModelList.add(saleSettlementSubSummaryModel)
-
-                                            // VOID
-                                            val voidCardTransactionEntityList = value.filter {
-                                                it.saleType.lowercase() == "void"
-                                            }
-                                            val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "VOID",
-                                                count = voidCardTransactionEntityList.size,
-                                                amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
-                                            )
-                                            subSummaryModelList.add(voidSettlementSubSummaryModel)
-
-                                            // TOTAL
-                                            val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
-                                                title = "TOTAL",
-                                                amount = saleSettlementSubSummaryModel.amount - voidSettlementSubSummaryModel.amount
-                                            )
-                                            subSummaryModelList.add(totalSettlementSubSummaryModel)
-
-                                            return subSummaryModelList
-                                        }()
-                                    )
-                                )
-                            }
-                        }
-                        return settlementSummaryModelList
-                    }()
-                )
-                settlementSummaryGroupModelList.add(creditSettlementSummaryGroupModel)
-
-                val settlementPrintTemplateFactory = SettlementPrintTemplateFactory(
-                    branchName = "DUMMY TRX",
-                    branchAddress = "JL. JENDRAL SUDIRMAN",
-                    branchCity = "JAKARTA",
-                    terminalId = "1234567890",
-                    merchantId = "1234567890",
-                    date = DateUtils.getReceiptTransactionDate(currentDate),
-                    time = DateUtils.getReceiptTransactionTime(currentDate),
-                    batch = batchManager.getCurrentBatch().toString().padStart(6, '0'),
-                    settlementSummaryGroupModelList = settlementSummaryGroupModelList
-                )
-                val settlementPrintBasedOnTemplateParameter = settlementPrintTemplateFactory.getPrintBasedOnTemplateParameter {}
-
-                db.cardTransactionDao().moveAllTrxToPreviousBatch()
-                traceNumberManager.reset()
-                batchManager.reset()
-                stanManager.resetStan()
-
-                emit(
-                    Resource.Success(
-                        PostSettlementAndBatchUploadResponseModel(
-                            isoResponse = byteArrayOf(),
-                            settlementPrintBasedOnTemplateParameter = settlementPrintBasedOnTemplateParameter
-                        )
-                    )
-                )
+                    }
+                }
             } catch (e: Exception) {
                 LogSdk.error(TAG, "postSettlementAndBatchUpload: ${e.stackTraceToString()}")
                 emit(e.toResourceError())
             }
         }.flowOn(Dispatchers.IO)
+    }
+
+    private suspend fun preparePrintSettlement(
+        cardTransactionEntityList: List<CardTransactionEntity>,
+        currentDate: Date,
+        onUpdate: suspend (Resource<PostSettlementAndBatchUploadResponseModel>) -> Unit
+    ) {
+        val settlementSummaryGroupModelList = mutableListOf<SettlementSummaryGroupModel>()
+
+        // Debit Card
+        val debitSettlementSummaryGroupModel = SettlementSummaryGroupModel(
+            title = "DEBIT CARD",
+            summaryModelList = fun (): MutableList<SettlementSummaryModel> {
+                val settlementSummaryModelList = mutableListOf<SettlementSummaryModel>()
+                val debitCardTransactionEntityList = cardTransactionEntityList.filter {
+                    it.cardClassificationType?.lowercase() == "debit"
+                }
+                val debitCardTransactionEntityGroupMap = debitCardTransactionEntityList.groupBy {
+                    it.cardBinType ?: ""
+                }
+                if (debitCardTransactionEntityGroupMap.isEmpty()) {
+                    settlementSummaryModelList.add(
+                        SettlementSummaryModel(
+                            title = "OTHER",
+                            subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
+                                val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
+
+                                // SALE
+                                val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "SALE",
+                                    count = 0,
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(saleSettlementSubSummaryModel)
+
+                                // VOID
+                                val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "VOID",
+                                    count = 0,
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(voidSettlementSubSummaryModel)
+
+                                // TOTAL
+                                val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "TOTAL",
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(totalSettlementSubSummaryModel)
+
+                                return subSummaryModelList
+                            }()
+                        )
+                    )
+                } else {
+                    debitCardTransactionEntityGroupMap.forEach { key, value ->
+                        val effectiveKey = key.ifBlank { "OTHER" }
+                        settlementSummaryModelList.add(
+                            SettlementSummaryModel(
+                                title = effectiveKey,
+                                subSummaryList = fun(): MutableList<SettlementSubSummaryModel> {
+                                    val subSummaryModelList =
+                                        mutableListOf<SettlementSubSummaryModel>()
+
+                                    // SALE
+                                    val saleCardTransactionEntityList = value.filter {
+                                        it.saleType.lowercase() == "sale"
+                                    }
+                                    val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "SALE",
+                                        count = saleCardTransactionEntityList.size,
+                                        amount = saleCardTransactionEntityList.sumOf { it.amount / 100 }
+                                    )
+                                    subSummaryModelList.add(saleSettlementSubSummaryModel)
+
+                                    // VOID
+                                    val voidCardTransactionEntityList = value.filter {
+                                        it.saleType.lowercase() == "void"
+                                    }
+                                    val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "VOID",
+                                        count = voidCardTransactionEntityList.size,
+                                        amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
+                                    )
+                                    subSummaryModelList.add(voidSettlementSubSummaryModel)
+
+                                    // TOTAL
+                                    val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "TOTAL",
+                                        amount = saleSettlementSubSummaryModel.amount - voidSettlementSubSummaryModel.amount
+                                    )
+                                    subSummaryModelList.add(totalSettlementSubSummaryModel)
+
+                                    return subSummaryModelList
+                                }()
+                            )
+                        )
+                    }
+                }
+                return settlementSummaryModelList
+            }()
+        )
+        settlementSummaryGroupModelList.add(debitSettlementSummaryGroupModel)
+
+        // Credit Card
+        val creditSettlementSummaryGroupModel = SettlementSummaryGroupModel(
+            title = "CREDIT CARD",
+            summaryModelList = fun (): MutableList<SettlementSummaryModel> {
+                val settlementSummaryModelList = mutableListOf<SettlementSummaryModel>()
+                val creditCardTransactionEntityList = cardTransactionEntityList.filter {
+                    it.cardClassificationType?.lowercase() == "credit"
+                }
+                val creditCardTransactionEntityGroupMap = creditCardTransactionEntityList.groupBy {
+                    it.cardBinType ?: ""
+                }
+                if (creditCardTransactionEntityGroupMap.isEmpty()) {
+                    settlementSummaryModelList.add(
+                        SettlementSummaryModel(
+                            title = "OTHER",
+                            subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
+                                val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
+
+                                // SALE
+                                val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "SALE",
+                                    count = 0,
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(saleSettlementSubSummaryModel)
+
+                                // VOID
+                                val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "VOID",
+                                    count = 0,
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(voidSettlementSubSummaryModel)
+
+                                // TOTAL
+                                val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                    title = "TOTAL",
+                                    amount = 0
+                                )
+                                subSummaryModelList.add(totalSettlementSubSummaryModel)
+
+                                return subSummaryModelList
+                            }()
+                        )
+                    )
+                } else {
+                    creditCardTransactionEntityGroupMap.forEach { key, value ->
+                        val effectiveKey = key.ifBlank { "OTHER" }
+                        settlementSummaryModelList.add(
+                            SettlementSummaryModel(
+                                title = effectiveKey,
+                                subSummaryList = fun (): MutableList<SettlementSubSummaryModel> {
+                                    val subSummaryModelList = mutableListOf<SettlementSubSummaryModel>()
+
+                                    // SALE
+                                    val saleCardTransactionEntityList = value.filter {
+                                        it.saleType.lowercase() == "sale"
+                                    }
+                                    val saleSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "SALE",
+                                        count = saleCardTransactionEntityList.size,
+                                        amount = saleCardTransactionEntityList.sumOf { it.amount / 100 }
+                                    )
+                                    subSummaryModelList.add(saleSettlementSubSummaryModel)
+
+                                    // VOID
+                                    val voidCardTransactionEntityList = value.filter {
+                                        it.saleType.lowercase() == "void"
+                                    }
+                                    val voidSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "VOID",
+                                        count = voidCardTransactionEntityList.size,
+                                        amount = -voidCardTransactionEntityList.sumOf { it.amount / 100 }
+                                    )
+                                    subSummaryModelList.add(voidSettlementSubSummaryModel)
+
+                                    // TOTAL
+                                    val totalSettlementSubSummaryModel = SettlementSubSummaryModel(
+                                        title = "TOTAL",
+                                        amount = saleSettlementSubSummaryModel.amount - voidSettlementSubSummaryModel.amount
+                                    )
+                                    subSummaryModelList.add(totalSettlementSubSummaryModel)
+
+                                    return subSummaryModelList
+                                }()
+                            )
+                        )
+                    }
+                }
+                return settlementSummaryModelList
+            }()
+        )
+        settlementSummaryGroupModelList.add(creditSettlementSummaryGroupModel)
+
+        val settlementPrintTemplateFactory = SettlementPrintTemplateFactory(
+            branchName = "DUMMY TRX",
+            branchAddress = "JL. JENDRAL SUDIRMAN",
+            branchCity = "JAKARTA",
+            terminalId = "1234567890",
+            merchantId = "1234567890",
+            date = DateUtils.getReceiptTransactionDate(currentDate),
+            time = DateUtils.getReceiptTransactionTime(currentDate),
+            batch = batchManager.getCurrentBatch().toString().padStart(6, '0'),
+            settlementSummaryGroupModelList = settlementSummaryGroupModelList
+        )
+        val settlementPrintBasedOnTemplateParameter = settlementPrintTemplateFactory.getPrintBasedOnTemplateParameter {}
+
+        db.cardTransactionDao().moveAllTrxToPreviousBatch()
+        traceNumberManager.reset()
+        batchManager.reset()
+        stanManager.resetStan()
+
+        onUpdate(
+            Resource.Success(
+                PostSettlementAndBatchUploadResponseModel(
+                    isoResponse = byteArrayOf(),
+                    settlementPrintBasedOnTemplateParameter = settlementPrintBasedOnTemplateParameter
+                )
+            )
+        )
     }
 
     override fun printSettlement(settlementPrintBasedOnTemplateParameter: PrintBasedOnTemplateParameter): Flow<Resource<Unit>> {

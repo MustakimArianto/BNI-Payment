@@ -40,16 +40,22 @@ class VoidRepositoryImpl @Inject constructor(
 ) : VoidRepository {
     companion object {
         private const val TAG = "SaleRepositoryImpl"
-        private const val SALE_DEBIT_PROCODE = "000000"
-        private const val SALE_CREDIT_PROCODE = "020000"
+        private const val VOID_DEBIT_PROCODE = "040000"
+        private const val VOID_CREDIT_PROCODE = "060000"
     }
 
     override suspend fun postVoidTransaction(
         voidRequestModel: VoidRequestModel
     ): Flow<Resource<ByteArray>> {
         return flow {
+            val cardClassification = voidRequestModel.cardClassificationType?.toCardClassification()
+
             val cardNo = voidRequestModel.pan
-            val processingCode = SALE_CREDIT_PROCODE
+            val processingCode = if (cardClassification == CardClassification.DEBIT) {
+                VOID_DEBIT_PROCODE
+            } else {
+                VOID_CREDIT_PROCODE
+            }
             val amount = voidRequestModel.amount.toString().padAmount()
             val transactionDateTime = Date()
             val stan = voidRequestModel.stan ?: ""
@@ -75,8 +81,6 @@ class VoidRepositoryImpl @Inject constructor(
 
             try {
                 emit(Resource.Loading("Mengirim void"))
-
-                val cardClassification = voidRequestModel.cardClassificationType?.toCardClassification()
 
                 reversalManager.saveVoidReversal(
                     if (cardClassification == CardClassification.DEBIT) {
@@ -444,7 +448,7 @@ class VoidRepositoryImpl @Inject constructor(
                     .asJsonObject
                     .get("processingCode")?.asString ?: ""
 
-                val cardClassification = if (processingCode == SALE_DEBIT_PROCODE) {
+                val cardClassification = if (processingCode == VOID_DEBIT_PROCODE) {
                     CardClassification.DEBIT
                 } else {
                     CardClassification.CREDIT
