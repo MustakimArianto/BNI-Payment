@@ -16,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import id.co.integrapratama.bnipayment.common.ui_component.CustomAmountKeypad
+import id.co.integrapratama.bnipayment.common.ui_component.CustomPinpad
 import id.co.integrapratama.bnipayment.common.ui_component.InputAmountTextField
 import id.co.integrapratama.bnipayment.common.ui_component.PrimaryToggle
 import id.co.integrapratama.bnipayment.common.ui_component.SmallText
 import id.co.integrapratama.bnipayment.common.ui_component.TopBar
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.SpacerSize
 import id.co.integrapratama.bnipayment.common.ui_component.spacer.VerticalSpacer
+import id.co.integrapratama.sdk.core.model.CustomPinpadUiBounds
 
 enum class FocusedField {
     AMOUNT, TIP, NONE
@@ -32,9 +34,15 @@ fun InputAmountScreen(
     title: String,
     amount: String,
     tip: String,
+    pin: String,
+    showPinpad: Boolean,
+    showOfflinePinpad: Boolean,
+    isPhysicalKeyboard: Boolean,
     onAmountChanged: (String) -> Unit,
     onTipChanged: (String) -> Unit,
     onOkClick: () -> Unit,
+    onButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
+    onOfflinePinButtonMapReady: (CustomPinpadUiBounds, List<CustomPinpadUiBounds>) -> Unit,
 ) {
     var isTipEnabled by remember { mutableStateOf(false) }
     var focusedField by remember { mutableStateOf(FocusedField.AMOUNT) }
@@ -144,6 +152,20 @@ fun InputAmountScreen(
                 }
             },
             onConfirmClick = onOkClick
+        )
+    }
+
+    if (showPinpad) {
+        CustomPinpad(
+            pin = pin,
+            isPhysicalKeyboard = isPhysicalKeyboard,
+            onUpdatePinpadMapping = onButtonMapReady
+        )
+    } else if (showOfflinePinpad) {
+        CustomPinpad(
+            pin = pin,
+            isPhysicalKeyboard = isPhysicalKeyboard,
+            onUpdatePinpadMapping = onOfflinePinButtonMapReady
         )
     }
 }

@@ -54,6 +54,26 @@ fun NavGraphBuilder.saleNavigation(navController: NavController) {
                 onTipChanged = { tip ->
                     viewModel.onEvent(SaleUiEvent.OnTipChange(tip))
                 },
+                pin = uiState.pin,
+                isPhysicalKeyboard = uiState.isPhysicalKeyboard,
+                showPinpad = uiState.isShowPinpad,
+                showOfflinePinpad = uiState.isShowOfflinePinpad,
+                onButtonMapReady = { containerInfo, pinpadMap ->
+                    viewModel.onEvent(
+                        SaleUiEvent.MappingPinpad(
+                            containerInfo = containerInfo,
+                            pinpadMap = pinpadMap
+                        )
+                    )
+                },
+                onOfflinePinButtonMapReady = { containerInfo, pinpadMap ->
+                    viewModel.onEvent(
+                        SaleUiEvent.MappingOfflinePinpad(
+                            containerInfo = containerInfo,
+                            pinpadMap = pinpadMap
+                        )
+                    )
+                },
                 onOkClick = {
                     if (uiState.amount.isNotEmpty() || uiState.amount == "0") {
                         if (!uiState.isContactless) {

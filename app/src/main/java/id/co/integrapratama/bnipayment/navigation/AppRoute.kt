@@ -32,4 +32,7 @@ sealed interface AppRoute {
 
     @Serializable
     data object Settlement : AppRoute
+
+    @Serializable
+    data object TapCash : AppRoute
 }

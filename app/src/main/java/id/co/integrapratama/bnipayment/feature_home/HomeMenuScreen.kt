@@ -41,7 +41,10 @@ import id.co.integrapratama.bnipayment.ui.theme.TextLightBlueColor
 
 @Composable
 fun HomeMenuScreen(
-    merchantName: String, merchantLocation: String, tid: String, mid: String,
+    merchantName: String,
+    merchantLocation: String,
+    tid: String,
+    mid: String,
     onNavigateToMiniATM: () -> Unit,
     onNavigateToSale: () -> Unit,
     onNavigateToContactlessSale: () -> Unit,
